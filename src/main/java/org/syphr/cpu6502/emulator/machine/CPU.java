@@ -7,6 +7,8 @@ import lombok.ToString;
 @ToString
 public class CPU
 {
+    private final Flags flags;
+
     private final Register accumulator;
 
     private final Stack stack;

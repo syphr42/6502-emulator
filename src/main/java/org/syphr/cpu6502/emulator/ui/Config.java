@@ -4,6 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.syphr.cpu6502.emulator.machine.Address;
 import org.syphr.cpu6502.emulator.machine.CPU;
+import org.syphr.cpu6502.emulator.machine.Flags;
 import org.syphr.cpu6502.emulator.machine.Reader;
 import org.syphr.cpu6502.emulator.machine.Register;
 import org.syphr.cpu6502.emulator.machine.Stack;
@@ -16,7 +17,7 @@ public class Config
     @Bean
     CPU createCPU(Stack stack, Reader reader, Writer writer)
     {
-        return new CPU(new Register(), stack, reader, writer);
+        return new CPU(Flags.builder().build(), new Register(), stack, reader, writer);
     }
 
     @Bean
