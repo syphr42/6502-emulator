@@ -46,7 +46,7 @@ public class CPU
     private Value evaluate(Expression expression)
     {
         return switch (expression) {
-            case Address addr -> reader.read(addr);
+            case Address address -> reader.read(address);
             case Value val -> val;
         };
     }
