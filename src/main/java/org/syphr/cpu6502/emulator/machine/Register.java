@@ -1,10 +1,10 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import lombok.ToString;
 import org.springframework.stereotype.Component;
 
+import java.util.HexFormat;
+
 @Component
-@ToString
 public class Register
 {
     private byte value;
@@ -21,11 +21,19 @@ public class Register
 
     public void store(Value value)
     {
-        this.value = value.toByte();
+        this.value = value.data();
     }
 
-    public byte value()
+    public Value value()
     {
-        return value;
+        return Value.of(value);
+    }
+
+    @Override
+    public String toString()
+    {
+        return Register.class.getSimpleName() + "[" +
+                "0x" + HexFormat.of().toHexDigits(value) +
+                ']';
     }
 }

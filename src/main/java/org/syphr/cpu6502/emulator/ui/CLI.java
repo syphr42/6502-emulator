@@ -29,13 +29,13 @@ public class CLI
 
     private Program testProgram()
     {
-        List<Operation> operations = List.of(lda(new Value.Decimal(1)),
+        List<Operation> operations = List.of(lda(Value.ofHex("FF")),
                                              inc(),
                                              inc(),
                                              pha(),
                                              dec(),
-                                             lda(new Address(new Value.Hex("12"), new Value.Hex("34"))),
-                                             sta(new Address(new Value.Decimal(2), new Value.Hex("09"))));
+                                             lda(Address.ofHex("1234")),
+                                             sta(Address.ofBits("101001")));
         return new Program(operations);
     }
 }

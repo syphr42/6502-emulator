@@ -2,36 +2,33 @@ package org.syphr.cpu6502.emulator.machine;
 
 import java.util.HexFormat;
 
-public sealed interface Value extends Expression
+public record Value(byte data) implements Expression
 {
-    record Binary(byte value) implements Value {}
-
-    record Decimal(int value) implements Value
+    public static Value of(byte b)
     {
-        public Decimal
-        {
-            if (value < 0 || value > 255) {
-                throw new IllegalArgumentException("Decimal value must be between 0 and 255");
-            }
-        }
+        return new Value(b);
     }
 
-    record Hex(String value) implements Value
+    public static Value of(int i)
     {
-        public Hex
-        {
-            if (value.length() > 2) {
-                throw new IllegalArgumentException("Hex value cannot be longer than a byte");
-            }
-        }
+        return new Value((byte) i);
     }
 
-    default byte toByte()
+    public static Value ofHex(String hex)
     {
-        return switch (this) {
-            case Value.Binary b -> b.value();
-            case Value.Decimal d -> (byte) d.value();
-            case Value.Hex h -> (byte) HexFormat.fromHexDigits(h.value());
-        };
+        return new Value((byte) Integer.parseInt(hex, 16));
+    }
+
+    public static Value ofBits(String bits)
+    {
+        return new Value((byte) Integer.parseInt(bits, 2));
+    }
+
+    @Override
+    public String toString()
+    {
+        return Value.class.getSimpleName() + "[" +
+                "0x" + HexFormat.of().toHexDigits(data) +
+                ']';
     }
 }

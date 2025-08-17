@@ -38,7 +38,7 @@ public class CPU
     private Value evaluate(Expression expression)
     {
         return switch (expression) {
-            case Address addr -> new Value.Decimal(reader.read(addr));
+            case Address addr -> Value.of(reader.read(addr));
             case Value val -> val;
         };
     }
@@ -50,6 +50,6 @@ public class CPU
 
     private void pullFromStack(Register register)
     {
-        register.store(new Value.Binary(stack.pop()));
+        register.store(stack.pop());
     }
 }

@@ -8,19 +8,19 @@ import java.util.concurrent.LinkedBlockingDeque;
 @ToString
 public class Stack
 {
-    private final Deque<Byte> data;
+    private final Deque<Value> data;
 
     public Stack(int size)
     {
         data = new LinkedBlockingDeque<>(size);
     }
 
-    public void push(byte b)
+    public void push(Value value)
     {
-        data.push(b);
+        data.push(value);
     }
 
-    public byte pop()
+    public Value pop()
     {
         return data.pop();
     }

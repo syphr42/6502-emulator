@@ -5,6 +5,7 @@ import org.springframework.context.annotation.Configuration;
 import org.syphr.cpu6502.emulator.machine.Address;
 import org.syphr.cpu6502.emulator.machine.Reader;
 import org.syphr.cpu6502.emulator.machine.Stack;
+import org.syphr.cpu6502.emulator.machine.Value;
 import org.syphr.cpu6502.emulator.machine.Writer;
 
 @Configuration
@@ -28,6 +29,6 @@ public class Config
     @Bean
     Writer createWriter()
     {
-        return (Address address, byte data) -> System.out.println("Write " + data + " to " + address);
+        return (Address address, Value data) -> System.out.println("Write " + data + " to " + address);
     }
 }
