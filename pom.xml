@@ -18,6 +18,7 @@
     <properties>
         <java.version>24</java.version>
 
+        <jspecify.version>1.0.0</jspecify.version>
         <spring-shell.version>3.4.1</spring-shell.version>
     </properties>
 
@@ -33,6 +34,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <optional>true</optional>
+        </dependency>
+        <dependency>
+            <groupId>org.jspecify</groupId>
+            <artifactId>jspecify</artifactId>
+            <version>${jspecify.version}</version>
         </dependency>
     </dependencies>
 
