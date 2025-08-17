@@ -1,7 +1,11 @@
-package org.syphr.cpu6502.emulator;
+package org.syphr.cpu6502.emulator.ui;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.syphr.cpu6502.emulator.machine.Address;
+import org.syphr.cpu6502.emulator.machine.Reader;
+import org.syphr.cpu6502.emulator.machine.Stack;
+import org.syphr.cpu6502.emulator.machine.Writer;
 
 @Configuration
 public class Config
