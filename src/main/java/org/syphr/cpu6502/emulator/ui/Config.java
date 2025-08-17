@@ -3,10 +3,9 @@ package org.syphr.cpu6502.emulator.ui;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.syphr.cpu6502.emulator.machine.Address;
+import org.syphr.cpu6502.emulator.machine.AddressHandler;
 import org.syphr.cpu6502.emulator.machine.CPU;
 import org.syphr.cpu6502.emulator.machine.Reader;
-import org.syphr.cpu6502.emulator.machine.Register;
-import org.syphr.cpu6502.emulator.machine.Stack;
 import org.syphr.cpu6502.emulator.machine.Value;
 import org.syphr.cpu6502.emulator.machine.Writer;
 
@@ -14,15 +13,15 @@ import org.syphr.cpu6502.emulator.machine.Writer;
 public class Config
 {
     @Bean
-    CPU createCPU(Stack stack, Reader reader, Writer writer)
+    CPU createCPU(AddressHandler addressHandler)
     {
-        return new CPU(new Register(), stack, reader, writer);
+        return new CPU(addressHandler, addressHandler);
     }
 
     @Bean
-    Stack createStack()
+    AddressHandler createAddressHandler(Reader reader, Writer writer)
     {
-        return new Stack(256);
+        return AddressHandler.of(reader, writer);
     }
 
     @Bean

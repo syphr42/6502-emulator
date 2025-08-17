@@ -1,15 +1,18 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
 import java.util.function.Consumer;
 
-@RequiredArgsConstructor
+@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
 @ToString
 public class CPU
 {
+    private static final int DEFAULT_STACK_SIZE = 256;
+
     private final Register accumulator;
 
     private final Stack stack;
@@ -21,6 +24,16 @@ public class CPU
 
     @Getter
     private Flags flags = Flags.builder().build();
+
+    public CPU(Reader reader, Writer writer)
+    {
+        this(DEFAULT_STACK_SIZE, reader, writer);
+    }
+
+    public CPU(int stackSize, Reader reader, Writer writer)
+    {
+        this(new Register(), new Stack(stackSize), reader, writer);
+    }
 
     public void execute(Program program)
     {
