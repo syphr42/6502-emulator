@@ -7,4 +7,8 @@ public sealed interface Operation
     record INC() implements Operation {}
 
     record LDA(Value value) implements Operation {}
+
+    record PHA() implements Operation {}
+
+    record PLA() implements Operation {}
 }

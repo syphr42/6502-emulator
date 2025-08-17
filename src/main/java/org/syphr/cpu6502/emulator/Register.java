@@ -26,6 +26,11 @@ public class Register
         this.value = toByte(value);
     }
 
+    public byte value()
+    {
+        return value;
+    }
+
     private byte toByte(Value value)
     {
         return switch (value) {
