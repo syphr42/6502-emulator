@@ -25,6 +25,11 @@ public class CPU
     @Getter
     private Flags flags = Flags.builder().build();
 
+    public CPU(AddressHandler addressHandler)
+    {
+        this(addressHandler, addressHandler);
+    }
+
     public CPU(Reader reader, Writer writer)
     {
         this(DEFAULT_STACK_SIZE, reader, writer);
