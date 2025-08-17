@@ -1,6 +1,8 @@
 package org.syphr.cpu6502.emulator;
 
-public sealed interface Value
+import java.util.HexFormat;
+
+public sealed interface Value extends Expression
 {
     record Binary(byte value) implements Value {}
 
@@ -22,5 +24,14 @@ public sealed interface Value
                 throw new IllegalArgumentException("Hex value cannot be longer than a byte");
             }
         }
+    }
+
+    default byte toByte()
+    {
+        return switch (this) {
+            case Value.Binary b -> b.value();
+            case Value.Decimal d -> (byte) d.value();
+            case Value.Hex h -> (byte) HexFormat.fromHexDigits(h.value());
+        };
     }
 }

@@ -22,7 +22,13 @@ public class CLI
 
     private Program testProgram()
     {
-        List<Operation> operations = List.of(new Operation.LDA(new Value.Decimal(1)), new Operation.INC(), new Operation.INC(), new Operation.PHA(), new Operation.DEC());
+        List<Operation> operations = List.of(new Operation.LDA(new Value.Decimal(1)),
+                                             new Operation.INC(),
+                                             new Operation.INC(),
+                                             new Operation.PHA(),
+                                             new Operation.DEC(),
+                                             new Operation.LDA(new Address(new Value.Hex("12"), new Value.Hex("34"))),
+                                             new Operation.STA(new Address(new Value.Decimal(2), new Value.Hex("09"))));
         return new Program(operations);
     }
 }

@@ -11,4 +11,19 @@ public class Config
     {
         return new Stack(256);
     }
+
+    @Bean
+    Reader createReader()
+    {
+        return (Address address) -> {
+            System.out.println("Read from " + address);
+            return (byte) 0;
+        };
+    }
+
+    @Bean
+    Writer createWriter()
+    {
+        return (Address address, byte data) -> System.out.println("Write " + data + " to " + address);
+    }
 }
