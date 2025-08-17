@@ -2,9 +2,7 @@ package org.syphr.cpu6502.emulator.machine;
 
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
-import org.springframework.stereotype.Component;
 
-@Component
 @RequiredArgsConstructor
 @ToString
 public class CPU
@@ -38,7 +36,7 @@ public class CPU
     private Value evaluate(Expression expression)
     {
         return switch (expression) {
-            case Address addr -> Value.of(reader.read(addr));
+            case Address addr -> reader.read(addr);
             case Value val -> val;
         };
     }

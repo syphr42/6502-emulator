@@ -1,10 +1,7 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import org.springframework.stereotype.Component;
-
 import java.util.HexFormat;
 
-@Component
 public class Register
 {
     private byte value;

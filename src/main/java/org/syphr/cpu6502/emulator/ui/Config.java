@@ -3,7 +3,9 @@ package org.syphr.cpu6502.emulator.ui;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.syphr.cpu6502.emulator.machine.Address;
+import org.syphr.cpu6502.emulator.machine.CPU;
 import org.syphr.cpu6502.emulator.machine.Reader;
+import org.syphr.cpu6502.emulator.machine.Register;
 import org.syphr.cpu6502.emulator.machine.Stack;
 import org.syphr.cpu6502.emulator.machine.Value;
 import org.syphr.cpu6502.emulator.machine.Writer;
@@ -12,7 +14,13 @@ import org.syphr.cpu6502.emulator.machine.Writer;
 public class Config
 {
     @Bean
-    public Stack createStack()
+    CPU createCPU(Stack stack, Reader reader, Writer writer)
+    {
+        return new CPU(new Register(), stack, reader, writer);
+    }
+
+    @Bean
+    Stack createStack()
     {
         return new Stack(256);
     }
@@ -21,14 +29,15 @@ public class Config
     Reader createReader()
     {
         return (Address address) -> {
-            System.out.println("Read from " + address);
-            return (byte) 0;
+            Value data = Value.of(0);
+            System.out.println("Read " + data + " from " + address);
+            return data;
         };
     }
 
     @Bean
     Writer createWriter()
     {
-        return (Address address, Value data) -> System.out.println("Write " + data + " to " + address);
+        return (Address address, Value data) -> System.out.println("Wrote " + data + " to " + address);
     }
 }
