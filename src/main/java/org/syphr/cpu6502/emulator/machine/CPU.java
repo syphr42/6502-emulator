@@ -1,14 +1,15 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+
+import java.util.function.Consumer;
 
 @RequiredArgsConstructor
 @ToString
 public class CPU
 {
-    private final Flags flags;
-
     private final Register accumulator;
 
     private final Stack stack;
@@ -18,19 +19,26 @@ public class CPU
     @ToString.Exclude
     private final Writer writer;
 
+    @Getter
+    private Flags flags = Flags.builder().build();
+
     public void execute(Program program)
     {
-        program.operations().forEach(this::process);
+        program.operations().forEach(this::execute);
     }
 
-    private void process(Operation operation)
+    private void execute(Operation operation)
     {
         switch (operation) {
-            case Operation.DEC _ -> accumulator.decrement();
-            case Operation.INC _ -> accumulator.increment();
-            case Operation.LDA lda -> accumulator.store(evaluate(lda.expression()));
+            case Operation.AND and ->
+                    updateRegister(accumulator, r -> r.store(r.value().and(evaluate(and.expression()))));
+            case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
+            case Operation.INC _ -> updateRegister(accumulator, Register::increment);
+            case Operation.LDA lda -> updateRegister(accumulator, r -> accumulator.store(evaluate(lda.expression())));
+            case Operation.ORA ora ->
+                    updateRegister(accumulator, r -> r.store(r.value().or(evaluate(ora.expression()))));
             case Operation.PHA _ -> pushToStack(accumulator);
-            case Operation.PLA _ -> pullFromStack(accumulator);
+            case Operation.PLA _ -> updateRegister(accumulator, this::pullFromStack);
             case Operation.STA sta -> writer.write(sta.address(), accumulator.value());
         }
     }
@@ -43,6 +51,12 @@ public class CPU
         };
     }
 
+    private void updateRegister(Register register, Consumer<Register> action)
+    {
+        action.accept(register);
+        flags = flags.toBuilder().negative(register.isNegative()).zero(register.isZero()).build();
+    }
+
     private void pushToStack(Register register)
     {
         stack.push(register.value());
@@ -50,6 +64,6 @@ public class CPU
 
     private void pullFromStack(Register register)
     {
-        register.store(stack.pop());
+        updateRegister(register, r -> r.store(stack.pop()));
     }
 }

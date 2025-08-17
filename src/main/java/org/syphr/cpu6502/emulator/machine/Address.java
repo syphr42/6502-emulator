@@ -27,8 +27,6 @@ public record Address(short data) implements Expression
     @Override
     public String toString()
     {
-        return Address.class.getSimpleName() + "[" +
-                "0x" + HexFormat.of().toHexDigits(data) +
-                ']';
+        return Address.class.getSimpleName() + "[" + "0x" + HexFormat.of().toHexDigits(data) + ']';
     }
 }

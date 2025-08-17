@@ -16,6 +16,16 @@ public class Register
         value++;
     }
 
+    public boolean isNegative()
+    {
+        return value < 0;
+    }
+
+    public boolean isZero()
+    {
+        return value == 0;
+    }
+
     public void store(Value value)
     {
         this.value = value.data();
@@ -29,8 +39,6 @@ public class Register
     @Override
     public String toString()
     {
-        return Register.class.getSimpleName() + "[" +
-                "0x" + HexFormat.of().toHexDigits(value) +
-                ']';
+        return Register.class.getSimpleName() + "[" + "0x" + HexFormat.of().toHexDigits(value) + ']';
     }
 }
