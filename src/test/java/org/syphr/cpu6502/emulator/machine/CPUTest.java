@@ -9,8 +9,6 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.util.List;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.verify;
@@ -52,7 +50,7 @@ class CPUTest
         var op = Operation.and(Value.ofHex(input));
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -73,7 +71,7 @@ class CPUTest
         var op = Operation.dec();
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -94,7 +92,7 @@ class CPUTest
         var op = Operation.inc();
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -115,7 +113,7 @@ class CPUTest
         var op = Operation.lda(Value.ofHex(input));
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -138,7 +136,7 @@ class CPUTest
         var op = Operation.ora(Value.ofHex(input));
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -157,7 +155,7 @@ class CPUTest
         var op = Operation.pha();
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertThat(stack.pop()).isEqualTo(Value.ofHex(initAcc));
@@ -174,7 +172,7 @@ class CPUTest
         var op = Operation.pla();
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
@@ -194,7 +192,7 @@ class CPUTest
         var op = Operation.sta(addr);
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         verify(writer).write(addr, Value.ofHex(initAcc));
@@ -213,7 +211,7 @@ class CPUTest
         when(reader.read(address)).thenReturn(returnedValue);
 
         // when
-        cpu.execute(new Program(List.of(op)));
+        cpu.execute(op);
 
         // then
         assertThat(accumulator.value()).isEqualTo(returnedValue);

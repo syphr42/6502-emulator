@@ -1,13 +1,12 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import lombok.AccessLevel;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Consumer;
 
-@RequiredArgsConstructor(access = AccessLevel.PACKAGE)
+@Slf4j
 @ToString
 public class CPU
 {
@@ -21,6 +20,8 @@ public class CPU
     private final Reader reader;
     @ToString.Exclude
     private final Writer writer;
+
+    private final ProgramManager programManager;
 
     @Getter
     private Flags flags = Flags.builder().build();
@@ -40,12 +41,33 @@ public class CPU
         this(new Register(), new Stack(stackSize), reader, writer);
     }
 
-    public void execute(Program program)
+    CPU(Register accumulator, Stack stack, Reader reader, Writer writer)
     {
-        program.operations().forEach(this::execute);
+        this.accumulator = accumulator;
+        this.stack = stack;
+        this.reader = reader;
+        this.writer = writer;
+
+        programManager = new ProgramManager(reader);
     }
 
-    private void execute(Operation operation)
+    public void start()
+    {
+        var start = Address.of(programManager.next(), programManager.next());
+        programManager.jump(start);
+
+        while (!Thread.interrupted()) {
+            execute(Operation.next(programManager));
+            log.info(this.toString());
+        }
+    }
+
+    public void reset()
+    {
+        programManager.reset();
+    }
+
+    void execute(Operation operation)
     {
         switch (operation) {
             case Operation.AND and ->
@@ -53,6 +75,7 @@ public class CPU
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
             case Operation.LDA lda -> updateRegister(accumulator, r -> accumulator.store(evaluate(lda.expression())));
+            case Operation.NOP _ -> {}
             case Operation.ORA ora ->
                     updateRegister(accumulator, r -> r.store(r.value().or(evaluate(ora.expression()))));
             case Operation.PHA _ -> pushToStack(accumulator);

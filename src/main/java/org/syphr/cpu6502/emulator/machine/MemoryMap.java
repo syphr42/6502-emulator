@@ -1,8 +1,11 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.extern.slf4j.Slf4j;
+
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 public class MemoryMap implements AddressHandler
 {
     private final Map<Address, Value> map;
@@ -16,12 +19,15 @@ public class MemoryMap implements AddressHandler
     public Value read(Address address)
     {
         Value value = map.get(address);
-        return value == null ? Value.ZERO : value;
+        value = value == null ? Value.ZERO : value;
+        log.info("Read {} from {}", value, address);
+        return value;
     }
 
     @Override
     public void write(Address address, Value value)
     {
         map.put(address, value);
+        log.info("Wrote {} to {}", value, address);
     }
 }
