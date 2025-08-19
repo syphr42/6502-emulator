@@ -79,10 +79,10 @@ class CPUTest
                 "FF, FF, FF, true, false",
                 "FF, 00, 00, false, true",
                 "04, 07, 04, false, false"})
-    void execute_AND(String initAcc, String input, String expected, boolean isNegative, boolean isZero)
+    void execute_AND(String acc, String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var op = Operation.and(Value.ofHex(input));
 
         // when
@@ -100,10 +100,10 @@ class CPUTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})
-    void execute_DEC(String initAcc, String expected, boolean isNegative, boolean isZero)
+    void execute_DEC(String acc, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var op = Operation.dec();
 
         // when
@@ -121,10 +121,10 @@ class CPUTest
     @CsvSource({"FF, 00, false, true",
                 "00, 01, false, false",
                 "FE, FF, true, false"})
-    void execute_INC(String initAcc, String expected, boolean isNegative, boolean isZero)
+    void execute_INC(String acc, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var op = Operation.inc();
 
         // when
@@ -165,10 +165,10 @@ class CPUTest
                 "FF, FF, FF, true, false",
                 "FF, 00, FF, true, false",
                 "04, 07, 07, false, false"})
-    void execute_ORA(String initAcc, String input, String expected, boolean isNegative, boolean isZero)
+    void execute_ORA(String acc, String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var op = Operation.ora(Value.ofHex(input));
 
         // when
@@ -184,17 +184,17 @@ class CPUTest
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_PHA(String initAcc)
+    void execute_PHA(String acc)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var op = Operation.pha();
 
         // when
         cpu.execute(op);
 
         // then
-        assertThat(stack.pop()).isEqualTo(Value.ofHex(initAcc));
+        assertThat(stack.pop()).isEqualTo(Value.ofHex(acc));
     }
 
     @ParameterizedTest
@@ -220,10 +220,10 @@ class CPUTest
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_STA(String initAcc)
+    void execute_STA(String acc)
     {
         // given
-        accumulator.store(Value.ofHex(initAcc));
+        accumulator.store(Value.ofHex(acc));
         var addr = Address.ofHex("1234");
         var op = Operation.sta(addr);
 
@@ -231,7 +231,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        verify(writer).write(addr, Value.ofHex(initAcc));
+        verify(writer).write(addr, Value.ofHex(acc));
     }
 
     @Test
