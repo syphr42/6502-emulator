@@ -1,30 +1,35 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
 public sealed interface Operation
 {
-    static Operation next(ProgramManager programManager)
+    static Operation next(Iterator<Value> program)
     {
-        Value opCode = programManager.next();
+        if (!program.hasNext()) {
+            throw new IllegalStateException("Program has no operations left!");
+        }
+
+        Value opCode = program.next();
         return switch (opCode.data()) {
-            case 0x09 -> ora(programManager.next());
-            case 0x0D -> ora(Address.of(programManager.next(), programManager.next()));
+            case 0x09 -> ora(program.next());
+            case 0x0D -> ora(Address.of(program.next(), program.next()));
             case 0x1A -> inc();
-            case 0x29 -> and(programManager.next());
-            case 0x2D -> and(Address.of(programManager.next(), programManager.next()));
+            case 0x29 -> and(program.next());
+            case 0x2D -> and(Address.of(program.next(), program.next()));
             case 0x3A -> dec();
             case 0x48 -> pha();
-            case 0x4C -> jmp(Address.of(programManager.next(), programManager.next()));
+            case 0x4C -> jmp(Address.of(program.next(), program.next()));
             case 0x68 -> pla();
-            case 0x69 -> adc(programManager.next());
-            case 0x6D -> adc(Address.of(programManager.next(), programManager.next()));
-            case (byte) 0x8D -> sta(Address.of(programManager.next(), programManager.next()));
-            case (byte) 0xA9 -> lda(programManager.next());
-            case (byte) 0xAD -> lda(Address.of(programManager.next(), programManager.next()));
+            case 0x69 -> adc(program.next());
+            case 0x6D -> adc(Address.of(program.next(), program.next()));
+            case (byte) 0x8D -> sta(Address.of(program.next(), program.next()));
+            case (byte) 0xA9 -> lda(program.next());
+            case (byte) 0xAD -> lda(Address.of(program.next(), program.next()));
             case (byte) 0xEA -> nop();
-            default -> throw new UnsupportedOperationException("Unsupported op code found: " + opCode);
+            default -> throw new UnsupportedOperationException("Unsupported op code: " + opCode);
         };
     }
 
