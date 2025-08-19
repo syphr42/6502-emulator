@@ -62,80 +62,38 @@ public sealed interface Operation
         };
     }
 
+    // @formatter:off
     record ADC(Expression expression) implements Operation {}
-
-    static ADC adc(Expression expression)
-    {
-        return new ADC(expression);
-    }
+    static ADC adc(Expression expression) { return new ADC(expression); }
 
     record AND(Expression expression) implements Operation {}
-
-    static AND and(Expression expression)
-    {
-        return new AND(expression);
-    }
+    static AND and(Expression expression) { return new AND(expression); }
 
     record DEC() implements Operation {}
-
-    static DEC dec()
-    {
-        return new DEC();
-    }
+    static DEC dec() { return new DEC(); }
 
     record INC() implements Operation {}
-
-    static INC inc()
-    {
-        return new INC();
-    }
+    static INC inc() { return new INC(); }
 
     record JMP(Address address) implements Operation {}
-
-    static JMP jmp(Address address)
-    {
-        return new JMP(address);
-    }
+    static JMP jmp(Address address) { return new JMP(address); }
 
     record LDA(Expression expression) implements Operation {}
-
-    static LDA lda(Expression expression)
-    {
-        return new LDA(expression);
-    }
+    static LDA lda(Expression expression) { return new LDA(expression); }
 
     record NOP() implements Operation {}
-
-    static NOP nop()
-    {
-        return new NOP();
-    }
+    static NOP nop() { return new NOP(); }
 
     record ORA(Expression expression) implements Operation {}
-
-    static ORA ora(Expression expression)
-    {
-        return new ORA(expression);
-    }
+    static ORA ora(Expression expression) { return new ORA(expression); }
 
     record PHA() implements Operation {}
-
-    static PHA pha()
-    {
-        return new PHA();
-    }
+    static PHA pha() { return new PHA(); }
 
     record PLA() implements Operation {}
-
-    static PLA pla()
-    {
-        return new PLA();
-    }
+    static PLA pla() { return new PLA(); }
 
     record STA(Address address) implements Operation {}
-
-    static STA sta(Address address)
-    {
-        return new STA(address);
-    }
+    static STA sta(Address address) { return new STA(address); }
+    // @formatter:on
 }
