@@ -1,6 +1,5 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import java.util.HexFormat;
 import java.util.List;
 
 public record Address(short data) implements Expression
@@ -43,6 +42,6 @@ public record Address(short data) implements Expression
     @Override
     public String toString()
     {
-        return Address.class.getSimpleName() + "[" + "0x" + HexFormat.of().toHexDigits(data) + ']';
+        return Address.class.getSimpleName() + "[0x%04X]".formatted(data);
     }
 }

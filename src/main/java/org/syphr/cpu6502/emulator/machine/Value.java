@@ -1,7 +1,5 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import java.util.HexFormat;
-
 public record Value(byte data) implements Expression
 {
     public static Value ZERO = Value.of(0);
@@ -39,6 +37,6 @@ public record Value(byte data) implements Expression
     @Override
     public String toString()
     {
-        return Value.class.getSimpleName() + "[" + "0x" + HexFormat.of().toHexDigits(data) + ']';
+        return Value.class.getSimpleName() + "[0x%02X]".formatted(data);
     }
 }

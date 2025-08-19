@@ -1,29 +1,33 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.Consumer;
 
 @Slf4j
-@ToString
+@ToString(onlyExplicitlyIncluded = true)
 public class CPU
 {
     private static final int DEFAULT_STACK_SIZE = 256;
 
+    @ToString.Include
     private final Register accumulator;
 
+    @ToString.Include
     private final Stack stack;
 
-    @ToString.Exclude
     private final Reader reader;
-    @ToString.Exclude
     private final Writer writer;
 
     private final ProgramManager programManager;
 
     @Getter
+    @Setter(AccessLevel.PACKAGE)
+    @ToString.Include
     private Flags flags = Flags.builder().build();
 
     public CPU(AddressHandler addressHandler)
@@ -70,6 +74,8 @@ public class CPU
     void execute(Operation operation)
     {
         switch (operation) {
+            case Operation.ADC adc -> updateRegister(accumulator,
+                                                     r -> addWithCarry(r, evaluate(adc.expression())));
             case Operation.AND and ->
                     updateRegister(accumulator, r -> r.store(r.value().and(evaluate(and.expression()))));
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
@@ -106,5 +112,21 @@ public class CPU
     private void pullFromStack(Register register)
     {
         updateRegister(register, r -> r.store(stack.pop()));
+    }
+
+    private void addWithCarry(Register register, Value value)
+    {
+        byte r = register.value().data();
+        byte v = value.data();
+        byte c = flags.carryBit();
+
+        int signedResult = r + v + c;
+        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
+
+        int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(v) + c;
+        boolean carry = unsignedResult > 255;
+
+        register.store(Value.of(unsignedResult));
+        flags = Flags.builder().overflow(overflow).carry(carry).build();
     }
 }

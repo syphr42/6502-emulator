@@ -38,6 +38,42 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"01, 01, 0, 02, false, false, false, false",
+                "F0, 01, 0, F1, true, false, false, false",
+                "01, FF, 0, 00, false, false, true, true",
+                "02, FF, 0, 01, false, false, false, true",
+                "7F, 01, 0, 80, true, true, false, false",
+                "FF, FF, 0, FE, true, false, false, true",
+                "80, FF, 0, 7F, false, true, false, true",
+                "3F, 40, 1, 80, true, true, false, false"})
+    void execute_ADC(String acc,
+                     String input,
+                     int carry,
+                     String expected,
+                     boolean isNegative,
+                     boolean isOverflow,
+                     boolean isZero,
+                     boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+        var op = Operation.adc(Value.ofHex(input));
+        cpu.setFlags(Flags.builder().carry(carry != 0).build());
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
+                                                                  .negative(isNegative)
+                                                                  .overflow(isOverflow)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, 00, 00, false, true",
                 "00, FF, 00, false, true",
                 "FF, FF, FF, true, false",

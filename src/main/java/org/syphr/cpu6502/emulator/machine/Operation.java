@@ -7,46 +7,60 @@ public sealed interface Operation
 {
     static Operation next(ProgramManager programManager)
     {
-        return switch (programManager.next().data()) {
-            case 9 -> ora(programManager.next()); // 09
-            case 13 -> ora(Address.of(programManager.next(), programManager.next())); // 0D
-            case 26 -> inc(); // 1A
-            case 41 -> and(programManager.next()); // 29
-            case 45 -> and(Address.of(programManager.next(), programManager.next())); // 2D
-            case 58 -> dec(); // 3A
-            case 72 -> pha(); // 48
-            case 104 -> pla(); // 68
-            case -115 -> sta(Address.of(programManager.next(), programManager.next())); // 8D
-            case -87 -> lda(programManager.next()); // A9
-            case -83 -> lda(Address.of(programManager.next(), programManager.next())); // AD
-            case -22 -> nop(); // EA
-            default -> nop();
+        Value opCode = programManager.next();
+        return switch (opCode.data()) {
+            case 0x09 -> ora(programManager.next());
+            case 0x0D -> ora(Address.of(programManager.next(), programManager.next()));
+            case 0x1A -> inc();
+            case 0x29 -> and(programManager.next());
+            case 0x2D -> and(Address.of(programManager.next(), programManager.next()));
+            case 0x3A -> dec();
+            case 0x48 -> pha();
+            case 0x68 -> pla();
+            case 0x69 -> adc(programManager.next());
+            case 0x6D -> adc(Address.of(programManager.next(), programManager.next()));
+            case (byte) 0x8D -> sta(Address.of(programManager.next(), programManager.next()));
+            case (byte) 0xA9 -> lda(programManager.next());
+            case (byte) 0xAD -> lda(Address.of(programManager.next(), programManager.next()));
+            case (byte) 0xEA -> nop();
+            default -> throw new UnsupportedOperationException("Unsupported op code found: " + opCode);
         };
     }
 
     static List<Value> toValues(Operation operation)
     {
         return switch (operation) {
+            case Operation.ADC adc -> switch (adc.expression()) {
+                case Address a -> Stream.concat(Stream.of(Value.of(0x6D)), a.values().stream()).toList();
+                case Value v -> List.of(Value.of(0x69), v);
+            };
             case Operation.AND and -> switch (and.expression()) {
-                case Address a -> Stream.concat(Stream.of(Value.ofHex("2D")), a.values().stream()).toList();
-                case Value v -> List.of(Value.ofHex("29"), v);
+                case Address a -> Stream.concat(Stream.of(Value.of(0x2D)), a.values().stream()).toList();
+                case Value v -> List.of(Value.of(0x29), v);
             };
-            case Operation.DEC _ -> List.of(Value.ofHex("3A"));
-            case Operation.INC _ -> List.of(Value.ofHex("1A"));
+            case Operation.DEC _ -> List.of(Value.of(0x3A));
+            case Operation.INC _ -> List.of(Value.of(0x1A));
             case Operation.LDA lda -> switch (lda.expression()) {
-                case Address a -> Stream.concat(Stream.of(Value.ofHex("AD")), a.values().stream()).toList();
-                case Value v -> List.of(Value.ofHex("A9"), v);
+                case Address a -> Stream.concat(Stream.of(Value.of(0xAD)), a.values().stream()).toList();
+                case Value v -> List.of(Value.of(0xA9), v);
             };
-            case Operation.NOP _ -> List.of(Value.ofHex("EA"));
+            case Operation.NOP _ -> List.of(Value.of(0xEA));
             case Operation.ORA ora -> switch (ora.expression()) {
-                case Address a -> Stream.concat(Stream.of(Value.ofHex("0D")), a.values().stream()).toList();
-                case Value v -> List.of(Value.ofHex("09"), v);
+                case Address a -> Stream.concat(Stream.of(Value.of(0x0D)), a.values().stream()).toList();
+                case Value v -> List.of(Value.of(0x09), v);
             };
-            case Operation.PHA _ -> List.of(Value.ofHex("48"));
-            case Operation.PLA _ -> List.of(Value.ofHex("68"));
+            case Operation.PHA _ -> List.of(Value.of(0x48));
+            case Operation.PLA _ -> List.of(Value.of(0x68));
             case Operation.STA sta ->
-                    Stream.concat(Stream.of(Value.ofHex("8D")), sta.address().values().stream()).toList();
+                    Stream.concat(Stream.of(Value.of(0x8D)), sta.address().values().stream()).toList();
         };
+    }
+
+    record ADC(Expression expression) implements Operation {}
+
+    static ADC adc(Expression expression)
+    {
+        return new ADC(expression);
     }
 
     record AND(Expression expression) implements Operation {}

@@ -13,8 +13,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import static org.syphr.cpu6502.emulator.machine.Operation.inc;
-import static org.syphr.cpu6502.emulator.machine.Operation.lda;
+import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
 @ShellComponent
 @RequiredArgsConstructor
@@ -37,7 +36,8 @@ public class CLI
     {
         List<Operation> operations = List.of(lda(Value.ZERO),
                                              inc(),
-                                             inc());
+                                             inc(),
+                                             nop());
 
         Map<Address, Value> memory = new HashMap<>(toMap(Address.ofHex("0000"), operations));
         memory.put(Address.ofHex("FFFC"), Value.ZERO);
