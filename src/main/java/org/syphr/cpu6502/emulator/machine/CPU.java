@@ -71,6 +71,11 @@ public class CPU
         programManager.reset();
     }
 
+    public Address getProgramCounter()
+    {
+        return programManager.getProgramCounter();
+    }
+
     void execute(Operation operation)
     {
         switch (operation) {
@@ -80,6 +85,7 @@ public class CPU
                     updateRegister(accumulator, r -> r.store(r.value().and(evaluate(and.expression()))));
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
+            case Operation.JMP jmp -> programManager.jump(jmp.address());
             case Operation.LDA lda -> updateRegister(accumulator, r -> accumulator.store(evaluate(lda.expression())));
             case Operation.NOP _ -> {}
             case Operation.ORA ora ->

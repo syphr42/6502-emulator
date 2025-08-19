@@ -34,14 +34,16 @@ public class CLI
 
     private MemoryMap createMemoryMap()
     {
+        var programStart = Address.of(0x0000);
         List<Operation> operations = List.of(lda(Value.ZERO),
                                              inc(),
                                              inc(),
-                                             nop());
+                                             nop(),
+                                             jmp(programStart));
 
-        Map<Address, Value> memory = new HashMap<>(toMap(Address.ofHex("0000"), operations));
-        memory.put(Address.ofHex("FFFC"), Value.ZERO);
-        memory.put(Address.ofHex("FFFD"), Value.ZERO);
+        Map<Address, Value> memory = new HashMap<>(toMap(programStart, operations));
+        memory.put(Address.of(0xFFFC), programStart.low());
+        memory.put(Address.of(0xFFFD), programStart.high());
 
         return new MemoryMap(memory);
     }

@@ -34,9 +34,19 @@ public record Address(short data) implements Expression
         return Address.of(data + 1);
     }
 
-    public List<Value> values()
+    public Value low()
     {
-        return List.of(Value.of(data), Value.of(data >> 8));
+        return Value.of(data);
+    }
+
+    public Value high()
+    {
+        return Value.of(data >> 8);
+    }
+
+    public List<Value> bytes()
+    {
+        return List.of(low(), high());
     }
 
     @Override

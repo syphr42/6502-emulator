@@ -1,16 +1,18 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 
 import java.util.Iterator;
 
 @RequiredArgsConstructor
-public class ProgramManager implements Iterator<Value>
+class ProgramManager implements Iterator<Value>
 {
-    private static final Address RESET_ADDRESS = Address.ofHex("FFFC");
+    private static final Address RESET_ADDRESS = Address.of(0xFFFC);
 
     private final Reader reader;
 
+    @Getter
     private Address programCounter = RESET_ADDRESS;
 
     @Override

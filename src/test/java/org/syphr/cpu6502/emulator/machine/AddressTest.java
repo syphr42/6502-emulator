@@ -64,26 +64,52 @@ class AddressTest
     void of_LowHigh()
     {
         // given
-        var high = Value.ofHex("12");
-        var low = Value.ofHex("34");
+        var high = Value.of(0x12);
+        var low = Value.of(0x34);
 
         // when
         var result = Address.of(low, high);
 
         // then
-        assertThat(result).isEqualTo(Address.ofHex("1234"));
+        assertThat(result).isEqualTo(Address.of(0x1234));
     }
 
     @Test
-    void values()
+    void low()
     {
         // given
-        var address = Address.ofHex("1234");
+        var address = Address.of(0x1234);
 
         // when
-        List<Value> result = address.values();
+        Value result = address.low();
 
         // then
-        assertThat(result).containsExactly(Value.ofHex("34"), Value.ofHex("12"));
+        assertThat(result).isEqualTo(Value.of(0x34));
+    }
+
+    @Test
+    void high()
+    {
+        // given
+        var address = Address.of(0x1234);
+
+        // when
+        Value result = address.high();
+
+        // then
+        assertThat(result).isEqualTo(Value.of(0x12));
+    }
+
+    @Test
+    void bytes()
+    {
+        // given
+        var address = Address.of(0x1234);
+
+        // when
+        List<Value> result = address.bytes();
+
+        // then
+        assertThat(result).containsExactly(Value.of(0x34), Value.of(0x12));
     }
 }

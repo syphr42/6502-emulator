@@ -138,6 +138,20 @@ class CPUTest
                                                                   .build()));
     }
 
+    @Test
+    void execute_JMP()
+    {
+        // given
+        Address address = Address.of(0x1234);
+        var op = Operation.jmp(address);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(cpu.getProgramCounter()).isEqualTo(address);
+    }
+
     @ParameterizedTest
     @CsvSource({"00, 00, false, true",
                 "01, 01, false, false",
