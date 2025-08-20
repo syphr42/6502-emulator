@@ -83,7 +83,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .overflow(isOverflow)
@@ -127,7 +127,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -173,7 +173,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -194,7 +194,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -266,7 +266,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -308,7 +308,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -344,7 +344,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(accumulator.value().data()).isEqualTo((byte) Integer.parseInt(expected, 16)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
