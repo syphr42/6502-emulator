@@ -15,6 +15,7 @@ public sealed interface Operation
         Value opCode = program.next();
         return switch (opCode.data()) {
             case 0x09 -> ora(program.next());
+            case 0x0A -> asl();
             case 0x0D -> ora(Address.of(program.next(), program.next()));
             case 0x1A -> inc();
             case 0x20 -> jsr(Address.of(program.next(), program.next()));
@@ -46,6 +47,7 @@ public sealed interface Operation
                 case Address a -> Stream.concat(Stream.of(Value.of(0x2D)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0x29), v);
             };
+            case Operation.ASL _ -> List.of(Value.of(0x0A));
             case Operation.DEC _ -> List.of(Value.of(0x3A));
             case Operation.INC _ -> List.of(Value.of(0x1A));
             case Operation.JMP jmp -> Stream.concat(Stream.of(Value.of(0x4C)), jmp.address().bytes().stream()).toList();
@@ -72,6 +74,9 @@ public sealed interface Operation
 
     record AND(Expression expression) implements Operation {}
     static AND and(Expression expression) { return new AND(expression); }
+
+    record ASL() implements Operation {}
+    static ASL asl() { return new ASL(); }
 
     record DEC() implements Operation {}
     static DEC dec() { return new DEC(); }
@@ -102,7 +107,6 @@ public sealed interface Operation
 
     record RTS() implements Operation {}
     static RTS rts() { return new RTS(); }
-
 
     record STA(Address address) implements Operation {}
     static STA sta(Address address) { return new STA(address); }

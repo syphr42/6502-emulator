@@ -135,6 +135,31 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00000000, 00000000, false, true, false",
+                "00000001, 00000010, false, false, false",
+                "10000000, 00000000, false, true, true",
+                "10101010, 01010100, false, false, true",
+                "01010101, 10101010, true, false, false",
+                "11000000, 10000000, true, false, true"})
+    void execute_ASL_Accumulator(String acc, String expected, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofBits(acc));
+        var op = Operation.asl();
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofBits(expected)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})

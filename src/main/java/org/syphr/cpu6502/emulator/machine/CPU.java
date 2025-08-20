@@ -82,6 +82,7 @@ public class CPU
             case Operation.ADC(Expression e) -> updateRegister(accumulator,
                                                                r -> addWithCarry(r, evaluate(e)));
             case Operation.AND(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().and(evaluate(e))));
+            case Operation.ASL _ -> updateRegister(accumulator, this::shiftLeft);
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
             case Operation.JMP(Address a) -> programManager.jump(a);
@@ -123,7 +124,7 @@ public class CPU
 
     private void pullFromStack(Register register)
     {
-        updateRegister(register, r -> r.store(stack.pop()));
+        register.store(stack.pop());
     }
 
     private void addWithCarry(Register register, Value value)
@@ -140,5 +141,13 @@ public class CPU
 
         register.store(Value.of(unsignedResult));
         flags = Flags.builder().overflow(overflow).carry(carry).build();
+    }
+
+    private void shiftLeft(Register register)
+    {
+        byte r = register.value().data();
+
+        register.store(Value.of(r << 1));
+        flags = Flags.builder().carry((r & 0x80) != 0).build();
     }
 }
