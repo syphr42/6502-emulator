@@ -1,6 +1,8 @@
 package org.syphr.cpu6502.emulator.machine;
 
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 
 import java.util.List;
 
@@ -74,6 +76,21 @@ class AddressTest
         assertThat(result).isEqualTo(Address.of(0x1234));
     }
 
+    @ParameterizedTest
+    @CsvSource({"0000, 0001",
+                "FFFF, 0000"})
+    void increment(String input, String expected)
+    {
+        // given
+        var start = Address.ofHex(input);
+
+        // when
+        Address result = start.increment();
+
+        // then
+        assertThat(result).isEqualTo(Address.ofHex(expected));
+    }
+
     @Test
     void low()
     {
@@ -111,5 +128,18 @@ class AddressTest
 
         // then
         assertThat(result).containsExactly(Value.of(0x34), Value.of(0x12));
+    }
+
+    @Test
+    void toStringTest()
+    {
+        // given
+        var address = Address.of(0x1234);
+
+        // when
+        String result = address.toString();
+
+        // then
+        assertThat(result).isEqualTo(Address.class.getSimpleName() + "[0x1234]");
     }
 }

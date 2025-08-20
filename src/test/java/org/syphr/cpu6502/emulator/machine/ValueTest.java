@@ -101,4 +101,17 @@ class ValueTest
         // then
         assertThat(result).isEqualTo(Value.ofHex(expected));
     }
+
+    @Test
+    void toStringTest()
+    {
+        // given
+        var value = Value.of(0x12);
+
+        // when
+        String result = value.toString();
+
+        // then
+        assertThat(result).isEqualTo(Value.class.getSimpleName() + "[0x12]");
+    }
 }
