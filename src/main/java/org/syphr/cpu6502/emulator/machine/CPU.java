@@ -79,19 +79,25 @@ public class CPU
     void execute(Operation operation)
     {
         switch (operation) {
-            case Operation.ADC adc -> updateRegister(accumulator,
-                                                     r -> addWithCarry(r, evaluate(adc.expression())));
-            case Operation.AND and ->
-                    updateRegister(accumulator, r -> r.store(r.value().and(evaluate(and.expression()))));
+            case Operation.ADC(Expression e) -> updateRegister(accumulator,
+                                                               r -> addWithCarry(r, evaluate(e)));
+            case Operation.AND(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().and(evaluate(e))));
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
-            case Operation.JMP jmp -> programManager.jump(jmp.address());
-            case Operation.LDA lda -> updateRegister(accumulator, r -> accumulator.store(evaluate(lda.expression())));
+            case Operation.JMP(Address a) -> programManager.jump(a);
+            case Operation.JSR(Address a) -> {
+                stack.pushAll(getProgramCounter().bytes().reversed());
+                programManager.jump(a);
+            }
+            case Operation.LDA(Expression e) -> updateRegister(accumulator, r -> accumulator.store(evaluate(e)));
             case Operation.NOP _ -> {}
-            case Operation.ORA ora ->
-                    updateRegister(accumulator, r -> r.store(r.value().or(evaluate(ora.expression()))));
+            case Operation.ORA(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().or(evaluate(e))));
             case Operation.PHA _ -> pushToStack(accumulator);
             case Operation.PLA _ -> updateRegister(accumulator, this::pullFromStack);
+            case Operation.RTS _ -> {
+                var address = Address.of(stack.pop(), stack.pop());
+                programManager.jump(address);
+            }
             case Operation.STA sta -> writer.write(sta.address(), accumulator.value());
         }
     }

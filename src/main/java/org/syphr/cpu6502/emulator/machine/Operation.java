@@ -17,11 +17,13 @@ public sealed interface Operation
             case 0x09 -> ora(program.next());
             case 0x0D -> ora(Address.of(program.next(), program.next()));
             case 0x1A -> inc();
+            case 0x20 -> jsr(Address.of(program.next(), program.next()));
             case 0x29 -> and(program.next());
             case 0x2D -> and(Address.of(program.next(), program.next()));
             case 0x3A -> dec();
             case 0x48 -> pha();
             case 0x4C -> jmp(Address.of(program.next(), program.next()));
+            case 0x60 -> rts();
             case 0x68 -> pla();
             case 0x69 -> adc(program.next());
             case 0x6D -> adc(Address.of(program.next(), program.next()));
@@ -47,6 +49,7 @@ public sealed interface Operation
             case Operation.DEC _ -> List.of(Value.of(0x3A));
             case Operation.INC _ -> List.of(Value.of(0x1A));
             case Operation.JMP jmp -> Stream.concat(Stream.of(Value.of(0x4C)), jmp.address().bytes().stream()).toList();
+            case Operation.JSR jsr -> Stream.concat(Stream.of(Value.of(0x20)), jsr.address().bytes().stream()).toList();
             case Operation.LDA lda -> switch (lda.expression()) {
                 case Address a -> Stream.concat(Stream.of(Value.of(0xAD)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0xA9), v);
@@ -58,6 +61,7 @@ public sealed interface Operation
             };
             case Operation.PHA _ -> List.of(Value.of(0x48));
             case Operation.PLA _ -> List.of(Value.of(0x68));
+            case Operation.RTS _ -> List.of(Value.of(0x60));
             case Operation.STA sta -> Stream.concat(Stream.of(Value.of(0x8D)), sta.address().bytes().stream()).toList();
         };
     }
@@ -78,6 +82,9 @@ public sealed interface Operation
     record JMP(Address address) implements Operation {}
     static JMP jmp(Address address) { return new JMP(address); }
 
+    record JSR(Address address) implements Operation {}
+    static JSR jsr(Address address) { return new JSR(address); }
+
     record LDA(Expression expression) implements Operation {}
     static LDA lda(Expression expression) { return new LDA(expression); }
 
@@ -92,6 +99,10 @@ public sealed interface Operation
 
     record PLA() implements Operation {}
     static PLA pla() { return new PLA(); }
+
+    record RTS() implements Operation {}
+    static RTS rts() { return new RTS(); }
+
 
     record STA(Address address) implements Operation {}
     static STA sta(Address address) { return new STA(address); }

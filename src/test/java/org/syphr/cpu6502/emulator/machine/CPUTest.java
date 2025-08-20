@@ -37,6 +37,25 @@ class CPUTest
         cpu = new CPU(accumulator, stack, reader, writer);
     }
 
+    @Test
+    void execute_ADC_Absolute()
+    {
+        // given
+        accumulator.store(Value.of(0x01));
+
+        Address target = Address.of(0x1234);
+        Value value = Value.of(0x10);
+        when(reader.read(target)).thenReturn(value);
+
+        var op = Operation.adc(target);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(accumulator.value()).isEqualTo(Value.of(0x11));
+    }
+
     @ParameterizedTest
     @CsvSource({"01, 01, 0, 02, false, false, false, false",
                 "F0, 01, 0, F1, true, false, false, false",
@@ -46,14 +65,14 @@ class CPUTest
                 "FF, FF, 0, FE, true, false, false, true",
                 "80, FF, 0, 7F, false, true, false, true",
                 "3F, 40, 1, 80, true, true, false, false"})
-    void execute_ADC(String acc,
-                     String input,
-                     int carry,
-                     String expected,
-                     boolean isNegative,
-                     boolean isOverflow,
-                     boolean isZero,
-                     boolean isCarry)
+    void execute_ADC_Immediate(String acc,
+                               String input,
+                               int carry,
+                               String expected,
+                               boolean isNegative,
+                               boolean isOverflow,
+                               boolean isZero,
+                               boolean isCarry)
     {
         // given
         accumulator.store(Value.ofHex(acc));
@@ -73,13 +92,32 @@ class CPUTest
                                                                   .build()));
     }
 
+    @Test
+    void execute_AND_Absolute()
+    {
+        // given
+        accumulator.store(Value.of(0b1100));
+
+        Address target = Address.of(0x1234);
+        Value value = Value.of(0b0101);
+        when(reader.read(target)).thenReturn(value);
+
+        var op = Operation.and(target);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(accumulator.value()).isEqualTo(Value.of(0b0100));
+    }
+
     @ParameterizedTest
     @CsvSource({"00, 00, 00, false, true",
                 "00, FF, 00, false, true",
                 "FF, FF, FF, true, false",
                 "FF, 00, 00, false, true",
                 "04, 07, 04, false, false"})
-    void execute_AND(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    void execute_AND_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
         accumulator.store(Value.ofHex(acc));
@@ -100,7 +138,7 @@ class CPUTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})
-    void execute_DEC(String acc, String expected, boolean isNegative, boolean isZero)
+    void execute_DEC_Accumulator(String acc, String expected, boolean isNegative, boolean isZero)
     {
         // given
         accumulator.store(Value.ofHex(acc));
@@ -121,7 +159,7 @@ class CPUTest
     @CsvSource({"FF, 00, false, true",
                 "00, 01, false, false",
                 "FE, FF, true, false"})
-    void execute_INC(String acc, String expected, boolean isNegative, boolean isZero)
+    void execute_INC_Accumulator(String acc, String expected, boolean isNegative, boolean isZero)
     {
         // given
         accumulator.store(Value.ofHex(acc));
@@ -139,7 +177,7 @@ class CPUTest
     }
 
     @Test
-    void execute_JMP()
+    void execute_JMP_Absolute()
     {
         // given
         Address address = Address.of(0x1234);
@@ -152,11 +190,48 @@ class CPUTest
         assertThat(cpu.getProgramCounter()).isEqualTo(address);
     }
 
+    @Test
+    void execute_JSR_Absolute()
+    {
+        // given
+        var start = Address.of(0x1234);
+        cpu.execute(Operation.jmp(start));
+
+        var target = Address.of(0x3000);
+        var op = Operation.jsr(target);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
+                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start));
+    }
+
+    @Test
+    void execute_LDA_Absolute()
+    {
+        // given
+        accumulator.store(Value.ZERO);
+
+        Address target = Address.of(0x1234);
+        Value value = Value.of(0x10);
+        when(reader.read(target)).thenReturn(value);
+
+        var op = Operation.lda(target);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(accumulator.value()).isEqualTo(value);
+    }
+
     @ParameterizedTest
     @CsvSource({"00, 00, false, true",
                 "01, 01, false, false",
                 "FF, FF, true, false"})
-    void execute_LDA(String input, String expected, boolean isNegative, boolean isZero)
+    void execute_LDA_Immediate(String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
         accumulator.store(Value.ZERO);
@@ -171,6 +246,25 @@ class CPUTest
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
                                                                   .build()));
+    }
+
+    @Test
+    void execute_ORA_Absolute()
+    {
+        // given
+        accumulator.store(Value.of(0b1100));
+
+        Address target = Address.of(0x1234);
+        Value value = Value.of(0b0101);
+        when(reader.read(target)).thenReturn(value);
+
+        var op = Operation.ora(target);
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(accumulator.value()).isEqualTo(Value.of(0b1101));
     }
 
     @ParameterizedTest
@@ -198,7 +292,7 @@ class CPUTest
 
     @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_PHA(String acc)
+    void execute_PHA_Stack(String acc)
     {
         // given
         accumulator.store(Value.ofHex(acc));
@@ -215,7 +309,7 @@ class CPUTest
     @CsvSource({"00, 00, false, true",
                 "01, 01, false, false",
                 "FF, FF, true, false"})
-    void execute_PLA(String initStack, String expected, boolean isNegative, boolean isZero)
+    void execute_PLA_Stack(String initStack, String expected, boolean isNegative, boolean isZero)
     {
         // given
         stack.push(Value.ofHex(initStack));
@@ -232,38 +326,39 @@ class CPUTest
                                                                   .build()));
     }
 
+    @Test
+    void execute_RTS_Stack()
+    {
+        // given
+        var start = Address.of(0x1234);
+        cpu.execute(Operation.jmp(start));
+
+        var target = Address.of(0x3000);
+        cpu.execute(Operation.jsr(target));
+
+        var op = Operation.rts();
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(start),
+                  () -> assertThat(stack.isEmpty()).isTrue());
+    }
+
     @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_STA(String acc)
+    void execute_STA_Absolute(String acc)
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var addr = Address.ofHex("1234");
-        var op = Operation.sta(addr);
+        var target = Address.of(0x1234);
+        var op = Operation.sta(target);
 
         // when
         cpu.execute(op);
 
         // then
-        verify(writer).write(addr, Value.ofHex(acc));
-    }
-
-    @Test
-    void execute_AddressProvided_AddressResolves()
-    {
-        // given
-        accumulator.store(Value.ofHex("00"));
-
-        Address address = Address.ofHex("1234");
-        var op = Operation.lda(address);
-
-        Value returnedValue = Value.ofHex("FF");
-        when(reader.read(address)).thenReturn(returnedValue);
-
-        // when
-        cpu.execute(op);
-
-        // then
-        assertThat(accumulator.value()).isEqualTo(returnedValue);
+        verify(writer).write(target, Value.ofHex(acc));
     }
 }
