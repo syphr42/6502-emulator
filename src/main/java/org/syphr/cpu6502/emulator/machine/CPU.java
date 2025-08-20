@@ -83,6 +83,11 @@ public class CPU
                                                                r -> addWithCarry(r, evaluate(e)));
             case Operation.AND(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().and(evaluate(e))));
             case Operation.ASL _ -> updateRegister(accumulator, this::shiftLeft);
+            case Operation.BCC(Value v) -> {
+                if (!flags.carry()) {
+                    programManager.jump(getProgramCounter().plus(v));
+                }
+            }
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
             case Operation.JMP(Address a) -> programManager.jump(a);

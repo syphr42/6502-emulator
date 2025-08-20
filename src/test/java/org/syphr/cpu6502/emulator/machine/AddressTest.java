@@ -91,6 +91,24 @@ class AddressTest
         assertThat(result).isEqualTo(Address.ofHex(expected));
     }
 
+    @ParameterizedTest
+    @CsvSource({"0000, 01, 0001",
+                "0000, FF, 00FF",
+                "00F0, 0F, 00FF",
+                "FFFF, 01, 0000",
+                "FFF0, 10, 0000"})
+    void plus(String input, String displacement, String expected)
+    {
+        // given
+        var start = Address.ofHex(input);
+
+        // when
+        Address result = start.plus(Value.ofHex(displacement));
+
+        // then
+        assertThat(result).isEqualTo(Address.ofHex(expected));
+    }
+
     @Test
     void low()
     {

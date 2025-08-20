@@ -160,6 +160,27 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"0001, 10, 1, 0001",
+                "0001, 10, 0, 0011",
+                "00FE, 02, 0, 0100",
+                "0000, FF, 0, 00FF",
+                "FFFF, 01, 0, 0000"})
+    void execute_BCC_ProgramCounterRelative(String start, String displacement, int carry, String expected)
+    {
+        // given
+        cpu.execute(Operation.jmp(Address.ofHex(start)));
+        cpu.setFlags(Flags.builder().carry(carry != 0).build());
+
+        var op = Operation.bcc(Value.ofHex(displacement));
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expected));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})

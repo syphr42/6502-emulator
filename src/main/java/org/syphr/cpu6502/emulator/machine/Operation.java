@@ -29,6 +29,7 @@ public sealed interface Operation
             case 0x69 -> adc(program.next());
             case 0x6D -> adc(Address.of(program.next(), program.next()));
             case (byte) 0x8D -> sta(Address.of(program.next(), program.next()));
+            case (byte) 0x90 -> bcc(program.next());
             case (byte) 0xA9 -> lda(program.next());
             case (byte) 0xAD -> lda(Address.of(program.next(), program.next()));
             case (byte) 0xEA -> nop();
@@ -39,32 +40,33 @@ public sealed interface Operation
     static List<Value> toValues(Operation operation)
     {
         return switch (operation) {
-            case Operation.ADC adc -> switch (adc.expression()) {
+            case Operation.ADC(Expression e) -> switch (e) {
                 case Address a -> Stream.concat(Stream.of(Value.of(0x6D)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0x69), v);
             };
-            case Operation.AND and -> switch (and.expression()) {
+            case Operation.AND(Expression e) -> switch (e) {
                 case Address a -> Stream.concat(Stream.of(Value.of(0x2D)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0x29), v);
             };
             case Operation.ASL _ -> List.of(Value.of(0x0A));
+            case Operation.BCC(Value v) -> List.of(Value.of(0x90), v);
             case Operation.DEC _ -> List.of(Value.of(0x3A));
             case Operation.INC _ -> List.of(Value.of(0x1A));
-            case Operation.JMP jmp -> Stream.concat(Stream.of(Value.of(0x4C)), jmp.address().bytes().stream()).toList();
-            case Operation.JSR jsr -> Stream.concat(Stream.of(Value.of(0x20)), jsr.address().bytes().stream()).toList();
-            case Operation.LDA lda -> switch (lda.expression()) {
+            case Operation.JMP(Address a) -> Stream.concat(Stream.of(Value.of(0x4C)), a.bytes().stream()).toList();
+            case Operation.JSR(Address a) -> Stream.concat(Stream.of(Value.of(0x20)), a.bytes().stream()).toList();
+            case Operation.LDA(Expression e) -> switch (e) {
                 case Address a -> Stream.concat(Stream.of(Value.of(0xAD)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0xA9), v);
             };
             case Operation.NOP _ -> List.of(Value.of(0xEA));
-            case Operation.ORA ora -> switch (ora.expression()) {
+            case Operation.ORA(Expression e) -> switch (e) {
                 case Address a -> Stream.concat(Stream.of(Value.of(0x0D)), a.bytes().stream()).toList();
                 case Value v -> List.of(Value.of(0x09), v);
             };
             case Operation.PHA _ -> List.of(Value.of(0x48));
             case Operation.PLA _ -> List.of(Value.of(0x68));
             case Operation.RTS _ -> List.of(Value.of(0x60));
-            case Operation.STA sta -> Stream.concat(Stream.of(Value.of(0x8D)), sta.address().bytes().stream()).toList();
+            case Operation.STA(Address a) -> Stream.concat(Stream.of(Value.of(0x8D)), a.bytes().stream()).toList();
         };
     }
 
@@ -77,6 +79,9 @@ public sealed interface Operation
 
     record ASL() implements Operation {}
     static ASL asl() { return new ASL(); }
+
+    record BCC(Value displacement) implements Operation {}
+    static BCC bcc(Value displacement) { return new BCC(displacement); }
 
     record DEC() implements Operation {}
     static DEC dec() { return new DEC(); }

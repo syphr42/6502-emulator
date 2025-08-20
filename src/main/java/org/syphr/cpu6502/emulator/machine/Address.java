@@ -34,6 +34,11 @@ public record Address(short data) implements Expression
         return Address.of(data + 1);
     }
 
+    public Address plus(Value v)
+    {
+        return Address.of(data + Byte.toUnsignedInt(v.data()));
+    }
+
     public Value low()
     {
         return Value.of(data);
