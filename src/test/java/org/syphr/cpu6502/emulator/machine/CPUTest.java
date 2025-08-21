@@ -34,7 +34,7 @@ class CPUTest
         accumulator = new Register();
         stack = new Stack(256);
 
-        cpu = new CPU(accumulator, stack, reader, writer);
+        cpu = new CPU(accumulator, stack, ClockSpeed.ONE_GHZ, reader, writer);
     }
 
     @Test

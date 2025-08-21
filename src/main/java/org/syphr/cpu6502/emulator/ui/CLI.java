@@ -5,6 +5,7 @@ import org.springframework.shell.standard.ShellComponent;
 import org.springframework.shell.standard.ShellMethod;
 import org.syphr.cpu6502.emulator.machine.Address;
 import org.syphr.cpu6502.emulator.machine.CPU;
+import org.syphr.cpu6502.emulator.machine.ClockSpeed;
 import org.syphr.cpu6502.emulator.machine.MemoryMap;
 import org.syphr.cpu6502.emulator.machine.Operation;
 import org.syphr.cpu6502.emulator.machine.Value;
@@ -22,7 +23,7 @@ public class CLI
     @ShellMethod(key = "execute")
     public void execute()
     {
-        var cpu = new CPU(createMemoryMap());
+        var cpu = new CPU(ClockSpeed.ONE_HZ, createMemoryMap());
 
         System.out.println("CPU initial state: " + cpu);
         try {

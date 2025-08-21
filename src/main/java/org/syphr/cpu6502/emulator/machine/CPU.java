@@ -23,6 +23,7 @@ public class CPU
     private final Reader reader;
     private final Writer writer;
 
+    private final Clock clock;
     private final ProgramManager programManager;
 
     @Getter
@@ -30,28 +31,29 @@ public class CPU
     @ToString.Include
     private Flags flags = Flags.builder().build();
 
-    public CPU(AddressHandler addressHandler)
+    public CPU(ClockSpeed clockSpeed, AddressHandler addressHandler)
     {
-        this(addressHandler, addressHandler);
+        this(clockSpeed, addressHandler, addressHandler);
     }
 
-    public CPU(Reader reader, Writer writer)
+    public CPU(ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
-        this(DEFAULT_STACK_SIZE, reader, writer);
+        this(DEFAULT_STACK_SIZE, clockSpeed, reader, writer);
     }
 
-    public CPU(int stackSize, Reader reader, Writer writer)
+    public CPU(int stackSize, ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
-        this(new Register(), new Stack(stackSize), reader, writer);
+        this(new Register(), new Stack(stackSize), clockSpeed, reader, writer);
     }
 
-    CPU(Register accumulator, Stack stack, Reader reader, Writer writer)
+    CPU(Register accumulator, Stack stack, ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
         this.stack = stack;
         this.reader = reader;
         this.writer = writer;
 
+        clock = new Clock(clockSpeed, this::executeNextOperation);
         programManager = new ProgramManager(reader);
     }
 
@@ -59,11 +61,7 @@ public class CPU
     {
         var start = Address.of(programManager.next(), programManager.next());
         programManager.jump(start);
-
-        while (!Thread.interrupted()) {
-            execute(Operation.next(programManager));
-            log.info(this.toString());
-        }
+        clock.start();
     }
 
     public void reset()
@@ -74,6 +72,12 @@ public class CPU
     public Address getProgramCounter()
     {
         return programManager.getProgramCounter();
+    }
+
+    void executeNextOperation()
+    {
+        execute(Operation.next(programManager));
+        log.info(this.toString());
     }
 
     void execute(Operation operation)
