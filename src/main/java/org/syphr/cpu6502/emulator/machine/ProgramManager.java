@@ -2,14 +2,17 @@ package org.syphr.cpu6502.emulator.machine;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 import java.util.Iterator;
 
+@Slf4j
 @RequiredArgsConstructor
 class ProgramManager implements Iterator<Value>
 {
     private static final Address RESET_ADDRESS = Address.of(0xFFFC);
 
+    private final Clock clock;
     private final Reader reader;
 
     @Getter
@@ -18,6 +21,8 @@ class ProgramManager implements Iterator<Value>
     @Override
     public Value next()
     {
+        clock.nextCycle();
+
         Value value = reader.read(programCounter);
         programCounter = programCounter.increment();
 
@@ -32,6 +37,8 @@ class ProgramManager implements Iterator<Value>
 
     public void jump(Address address)
     {
+        clock.nextCycle();
+        log.info("Jump to {}", address);
         programCounter = address;
     }
 

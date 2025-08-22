@@ -43,25 +43,38 @@ public class CPU
 
     public CPU(int stackSize, ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
-        this(new Register(), new Stack(stackSize), clockSpeed, reader, writer);
+        this(new Register(), new Stack(stackSize), new Clock(clockSpeed), reader, writer);
     }
 
-    CPU(Register accumulator, Stack stack, ClockSpeed clockSpeed, Reader reader, Writer writer)
+    CPU(Register accumulator, Stack stack, Clock clock, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
         this.stack = stack;
         this.reader = reader;
         this.writer = writer;
+        this.clock = clock;
 
-        clock = new Clock(clockSpeed, this::executeNextOperation);
-        programManager = new ProgramManager(reader);
+        programManager = new ProgramManager(clock, reader);
     }
 
     public void start()
     {
-        var start = Address.of(programManager.next(), programManager.next());
-        programManager.jump(start);
-        clock.start();
+        var clockThread = new Thread(clock, "Clock");
+        clockThread.start();
+
+        try {
+            var programAddress = Address.of(programManager.next(), programManager.next());
+            programManager.jump(programAddress);
+
+            while (!Thread.interrupted()) {
+                execute(Operation.next(programManager));
+                log.info(this.toString());
+            }
+        } catch (HaltException e) {
+            // stop execution
+        } finally {
+            clockThread.interrupt();
+        }
     }
 
     public void reset()
@@ -72,12 +85,6 @@ public class CPU
     public Address getProgramCounter()
     {
         return programManager.getProgramCounter();
-    }
-
-    void executeNextOperation()
-    {
-        execute(Operation.next(programManager));
-        log.info(this.toString());
     }
 
     void execute(Operation operation)

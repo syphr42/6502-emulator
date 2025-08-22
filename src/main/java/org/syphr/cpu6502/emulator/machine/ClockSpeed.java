@@ -11,6 +11,6 @@ public record ClockSpeed(Duration cycle)
 
     public ClockSpeed times(int multiplier)
     {
-        return new ClockSpeed(this.cycle.multipliedBy(multiplier));
+        return new ClockSpeed(this.cycle.dividedBy(multiplier));
     }
 }

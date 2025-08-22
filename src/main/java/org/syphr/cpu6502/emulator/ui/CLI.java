@@ -23,7 +23,7 @@ public class CLI
     @ShellMethod(key = "execute")
     public void execute()
     {
-        var cpu = new CPU(ClockSpeed.ONE_HZ, createMemoryMap());
+        var cpu = new CPU(ClockSpeed.ONE_HZ.times(2), createMemoryMap());
 
         System.out.println("CPU initial state: " + cpu);
         try {

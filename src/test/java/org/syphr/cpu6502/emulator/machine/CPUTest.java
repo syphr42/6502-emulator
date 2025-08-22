@@ -21,6 +21,9 @@ class CPUTest
     Stack stack;
 
     @Mock
+    Clock clock;
+
+    @Mock
     Reader reader;
 
     @Mock
@@ -34,7 +37,7 @@ class CPUTest
         accumulator = new Register();
         stack = new Stack(256);
 
-        cpu = new CPU(accumulator, stack, ClockSpeed.ONE_GHZ, reader, writer);
+        cpu = new CPU(accumulator, stack, clock, reader, writer);
     }
 
     @Test
