@@ -10,7 +10,6 @@ import java.util.Iterator;
 @RequiredArgsConstructor
 class ProgramManager implements Iterator<Value>
 {
-    private final Clock clock;
     private final Reader reader;
 
     @Getter
@@ -19,8 +18,6 @@ class ProgramManager implements Iterator<Value>
     @Override
     public Value next()
     {
-        clock.nextCycle();
-
         Value value = reader.read(programCounter);
         programCounter = programCounter.increment();
 
@@ -35,13 +32,7 @@ class ProgramManager implements Iterator<Value>
 
     public void setProgramCounter(Address address)
     {
-        clock.nextCycle();
-        log.info("Program counter set to {}", address);
         programCounter = address;
-    }
-
-    public void reset()
-    {
-        programCounter = Address.RESET;
+        log.info("Program counter set to {}", address);
     }
 }

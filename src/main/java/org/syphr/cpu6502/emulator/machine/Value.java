@@ -34,6 +34,16 @@ public record Value(byte data) implements Expression
         return Value.of(data | other.data);
     }
 
+    public Value increment()
+    {
+        return Value.of(data + 1);
+    }
+
+    public Value decrement()
+    {
+        return Value.of(data - 1);
+    }
+
     @Override
     public String toString()
     {

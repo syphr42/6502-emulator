@@ -1,44 +1,51 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import java.util.HexFormat;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.extern.slf4j.Slf4j;
 
+import java.util.BitSet;
+
+@Slf4j
+@RequiredArgsConstructor
+@ToString(onlyExplicitlyIncluded = true)
 public class Register
 {
-    private byte value;
+    @ToString.Include
+    private Value value = Value.ZERO;
 
     public void decrement()
     {
-        value--;
+        value = value.decrement();
     }
 
     public void increment()
     {
-        value++;
+        value = value.increment();
     }
 
     public boolean isNegative()
     {
-        return value < 0;
+        return value.data() < 0;
     }
 
     public boolean isZero()
     {
-        return value == 0;
+        return value.data() == 0;
     }
 
     public void store(Value value)
     {
-        this.value = value.data();
+        this.value = value;
     }
 
     public Value value()
     {
-        return Value.of(value);
+        return value;
     }
 
-    @Override
-    public String toString()
+    public BitSet toBits()
     {
-        return Register.class.getSimpleName() + "[" + "0x" + HexFormat.of().toHexDigits(value) + ']';
+        return BitSet.valueOf(new byte[] {value.data()});
     }
 }

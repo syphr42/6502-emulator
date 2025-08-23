@@ -2,6 +2,7 @@ package org.syphr.cpu6502.emulator.machine;
 
 import lombok.AccessLevel;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -29,7 +30,7 @@ public class CPU
     @Getter
     @Setter(AccessLevel.PACKAGE)
     @ToString.Include
-    private Flags flags = Flags.builder().build();
+    private Flags flags = Flags.builder().user(true).breakCommand(true).decimal(false).irqDisable(true).build();
 
     public CPU(ClockSpeed clockSpeed, AddressHandler addressHandler)
     {
@@ -43,18 +44,23 @@ public class CPU
 
     public CPU(int stackSize, ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
-        this(new Register(), new Stack(stackSize), new Clock(clockSpeed), reader, writer);
+        this(stackSize, new Clock(clockSpeed), reader, writer);
+    }
+
+    private CPU(int stackSize, Clock clock, Reader reader, Writer writer)
+    {
+        this(new Register(), new Stack(stackSize, clock), clock, reader, writer);
     }
 
     CPU(Register accumulator, Stack stack, Clock clock, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
         this.stack = stack;
-        this.reader = reader;
-        this.writer = writer;
+        this.reader = new ClockedReader(reader, clock);
+        this.writer = new ClockedWriter(writer, clock);
         this.clock = clock;
 
-        programManager = new ProgramManager(clock, reader);
+        programManager = new ProgramManager(this.reader);
     }
 
     public void start()
@@ -62,12 +68,20 @@ public class CPU
         var clockThread = new Thread(clock, "Clock");
         clockThread.start();
 
+        // mimic startup actions
+        log.info("Performing startup sequence");
+        clock.nextCycle();
+        clock.nextCycle();
+        clock.nextCycle();
+        clock.nextCycle();
+        clock.nextCycle();
+
         try {
             var programAddress = Address.of(programManager.next(), programManager.next());
             programManager.setProgramCounter(programAddress);
 
             while (!Thread.interrupted()) {
-                execute(Operation.next(programManager));
+                executeNext();
                 log.info(this.toString());
             }
         } catch (HaltException e) {
@@ -77,14 +91,17 @@ public class CPU
         }
     }
 
-    public void reset()
-    {
-        programManager.reset();
-    }
-
     public Address getProgramCounter()
     {
         return programManager.getProgramCounter();
+    }
+
+    void executeNext()
+    {
+        var op = Operation.next(programManager);
+        log.info("Executing op {}", op);
+        execute(op);
+        log.info("Completed op {}", op);
     }
 
     void execute(Operation operation)
@@ -93,40 +110,72 @@ public class CPU
             case Operation.ADC(Expression e) -> updateRegister(accumulator,
                                                                r -> addWithCarry(r, evaluate(e)));
             case Operation.AND(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().and(evaluate(e))));
-            case Operation.ASL _ -> updateRegister(accumulator, this::shiftLeft);
+            case Operation.ASL _ -> {
+                dummyRead();
+                updateRegister(accumulator, this::shiftLeft);
+            }
             case Operation.BCC(Value v) -> {
                 if (!flags.carry()) {
-                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
+                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
+                    clock.nextCycle();
+                    programManager.setProgramCounter(target);
                 }
             }
             case Operation.BCS(Value v) -> {
                 if (flags.carry()) {
-                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
+                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
+                    clock.nextCycle();
+                    programManager.setProgramCounter(target);
                 }
             }
             case Operation.BEQ(Value v) -> {
                 if (flags.zero()) {
-                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
+                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
+                    clock.nextCycle();
+                    programManager.setProgramCounter(target);
                 }
             }
-            case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
-            case Operation.INC _ -> updateRegister(accumulator, Register::increment);
+            case Operation.DEC _ -> {
+                dummyRead();
+                updateRegister(accumulator, Register::decrement);
+            }
+            case Operation.INC _ -> {
+                dummyRead();
+                updateRegister(accumulator, Register::increment);
+            }
             case Operation.JMP(Address a) -> programManager.setProgramCounter(a);
             case Operation.JSR(Address a) -> {
+                clock.nextCycle(); // extra clock cycle for "internal buffering"?
                 stack.pushAll(getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(a);
             }
             case Operation.LDA(Expression e) -> updateRegister(accumulator, r -> accumulator.store(evaluate(e)));
-            case Operation.NOP _ -> {}
+            case Operation.NOP _ -> dummyRead();
             case Operation.ORA(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().or(evaluate(e))));
-            case Operation.PHA _ -> pushToStack(accumulator);
-            case Operation.PLA _ -> updateRegister(accumulator, this::pullFromStack);
+            case Operation.PHA _ -> {
+                dummyRead();
+                pushToStack(accumulator);
+            }
+            case Operation.PLA _ -> {
+                dummyRead();
+                clock.nextCycle(); // unexplained
+                updateRegister(accumulator, this::pullFromStack);
+            }
             case Operation.RTS _ -> {
+                dummyRead();
                 var address = Address.of(stack.pop(), stack.pop());
+                clock.nextCycle(); // unexplained
+                clock.nextCycle(); // unexplained
                 programManager.setProgramCounter(address.increment());
             }
             case Operation.STA sta -> writer.write(sta.address(), accumulator.value());
         }
+    }
+
+    private void dummyRead()
+    {
+        log.info("Performing dummy read");
+        reader.read(programManager.getProgramCounter());
     }
 
     private Value evaluate(Expression expression)
@@ -186,5 +235,37 @@ public class CPU
         }
 
         return target;
+    }
+
+    @RequiredArgsConstructor
+    private static class ClockedReader implements Reader
+    {
+        private final Reader reader;
+        private final Clock clock;
+
+        public Value read(Address address)
+        {
+            clock.nextCycle();
+
+            Value value = reader.read(address);
+            log.info("Read {} from {}", value, address);
+
+            return value;
+        }
+    }
+
+    @RequiredArgsConstructor
+    private static class ClockedWriter implements Writer
+    {
+        private final Writer writer;
+        private final Clock clock;
+
+        public void write(Address address, Value value)
+        {
+            clock.nextCycle();
+
+            writer.write(address, value);
+            log.info("Wrote {} to {}", value, address);
+        }
     }
 }

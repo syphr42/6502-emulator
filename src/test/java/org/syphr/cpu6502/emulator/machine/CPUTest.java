@@ -9,10 +9,11 @@ import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.util.List;
+
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class CPUTest
@@ -35,9 +36,33 @@ class CPUTest
     void beforeEach()
     {
         accumulator = new Register();
-        stack = new Stack(256);
+        stack = new Stack(256, clock);
 
         cpu = new CPU(accumulator, stack, clock, reader, writer);
+    }
+
+    private void setNextOp(Operation op)
+    {
+        Address pc = cpu.getProgramCounter();
+        List<Value> values = Operation.toValues(op);
+        for (int i = 0; i < values.size(); i++) {
+            when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
+        }
+    }
+
+    // optional method to help debugging clock cycle issues
+    private void printClockCycles()
+    {
+        doAnswer(_ -> {
+            // TODO locate the location in the stack trace that called Clock::nextCycle
+            StackTraceElement currentExecution = new Exception().getStackTrace()[8];
+            System.out.printf("Clock::nextCycle %s.%s(%s:%d)%n",
+                              currentExecution.getClassName(),
+                              currentExecution.getMethodName(),
+                              currentExecution.getFileName(),
+                              currentExecution.getLineNumber());
+            return null;
+        }).when(clock).nextCycle();
     }
 
     @Test
@@ -50,12 +75,13 @@ class CPUTest
         Value value = Value.of(0x10);
         when(reader.read(target)).thenReturn(value);
 
-        var op = Operation.adc(target);
+        setNextOp(Operation.adc(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         assertThat(accumulator.value()).isEqualTo(Value.of(0x11));
     }
 
@@ -79,20 +105,21 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.adc(Value.ofHex(input));
-        cpu.setFlags(Flags.builder().carry(carry != 0).build());
+        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+
+        setNextOp(Operation.adc(Value.ofHex(input)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .overflow(isOverflow)
-                                                                  .zero(isZero)
-                                                                  .carry(isCarry)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative,
+                                                              Flags::overflow,
+                                                              Flags::zero,
+                                                              Flags::carry)
+                                                  .containsExactly(isNegative, isOverflow, isZero, isCarry));
     }
 
     @Test
@@ -105,12 +132,13 @@ class CPUTest
         Value value = Value.of(0b0101);
         when(reader.read(target)).thenReturn(value);
 
-        var op = Operation.and(target);
+        setNextOp(Operation.and(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         assertThat(accumulator.value()).isEqualTo(Value.of(0b0100));
     }
 
@@ -124,17 +152,17 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.and(Value.ofHex(input));
+
+        setNextOp(Operation.and(Value.ofHex(input)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
     }
 
     @ParameterizedTest
@@ -148,81 +176,100 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofBits(acc));
-        var op = Operation.asl();
+
+        setNextOp(Operation.asl());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofBits(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .carry(isCarry)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative,
+                                                              Flags::zero,
+                                                              Flags::carry)
+                                                  .containsExactly(isNegative, isZero, isCarry));
     }
 
     @ParameterizedTest
-    @CsvSource({"0001, 10, 1, 0001",
-                "0001, 10, 0, 0011",
-                "00FE, 02, 0, 0100",
-                "0000, FF, 0, 00FF",
-                "FFFF, 01, 0, 0000"})
-    void execute_BCC_ProgramCounterRelative(String start, String displacement, int carry, String expected)
+    @CsvSource({"0001, 10, 1, 0003, 2",
+                "0001, 10, 0, 0013, 3",
+                "00FD, 02, 0, 0101, 4",
+                "0000, FD, 0, 00FF, 3",
+                "FFFD, 01, 0, 0000, 4"})
+    void execute_BCC_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int carry,
+                                            String expectedPC,
+                                            int expectedCycles)
     {
         // given
         cpu.execute(Operation.jmp(Address.ofHex(start)));
-        cpu.setFlags(Flags.builder().carry(carry != 0).build());
+        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        reset(clock);
 
-        var op = Operation.bcc(Value.ofHex(displacement));
+        setNextOp(Operation.bcc(Value.ofHex(displacement)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expected));
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
     }
 
     @ParameterizedTest
-    @CsvSource({"0001, 10, 0, 0001",
-                "0001, 10, 1, 0011",
-                "00FE, 02, 1, 0100",
-                "0000, FF, 1, 00FF",
-                "FFFF, 01, 1, 0000"})
-    void execute_BCS_ProgramCounterRelative(String start, String displacement, int carry, String expected)
+    @CsvSource({"0001, 10, 0, 0003, 2",
+                "0001, 10, 1, 0013, 3",
+                "00FD, 02, 1, 0101, 4",
+                "0000, FD, 1, 00FF, 3",
+                "FFFD, 01, 1, 0000, 4"})
+    void execute_BCS_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int carry,
+                                            String expectedPC,
+                                            int expectedCycles)
     {
         // given
         cpu.execute(Operation.jmp(Address.ofHex(start)));
-        cpu.setFlags(Flags.builder().carry(carry != 0).build());
+        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        reset(clock);
 
-        var op = Operation.bcs(Value.ofHex(displacement));
+        setNextOp(Operation.bcs(Value.ofHex(displacement)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expected));
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
     }
 
     @ParameterizedTest
-    @CsvSource({"0001, 10, 0, 0001",
-                "0001, 10, 1, 0011",
-                "00FE, 02, 1, 0100",
-                "0000, FF, 1, 00FF",
-                "FFFF, 01, 1, 0000"})
-    void execute_BEQ_ProgramCounterRelative(String start, String displacement, int zero, String expected)
+    @CsvSource({"0001, 10, 0, 0003, 2",
+                "0001, 10, 1, 0013, 3",
+                "00FD, 02, 1, 0101, 4",
+                "0000, FD, 1, 00FF, 3",
+                "FFFD, 01, 1, 0000, 4"})
+    void execute_BEQ_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int zero,
+                                            String expectedPC,
+                                            int expectedCycles)
     {
         // given
         cpu.execute(Operation.jmp(Address.ofHex(start)));
-        cpu.setFlags(Flags.builder().zero(zero != 0).build());
+        cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
+        reset(clock);
 
-        var op = Operation.beq(Value.ofHex(displacement));
+        setNextOp(Operation.beq(Value.ofHex(displacement)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expected));
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
     }
 
     @ParameterizedTest
@@ -233,17 +280,17 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.dec();
+
+        setNextOp(Operation.dec());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
     }
 
     @ParameterizedTest
@@ -254,17 +301,17 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.inc();
+
+        setNextOp(Operation.inc());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
     }
 
     @Test
@@ -272,12 +319,13 @@ class CPUTest
     {
         // given
         Address address = Address.of(0x1234);
-        var op = Operation.jmp(address);
+        setNextOp(Operation.jmp(address));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(3)).nextCycle();
         assertThat(cpu.getProgramCounter()).isEqualTo(address);
     }
 
@@ -287,16 +335,18 @@ class CPUTest
         // given
         var start = Address.of(0x1234);
         cpu.execute(Operation.jmp(start));
+        reset(clock);
 
         var target = Address.of(0x3000);
-        var op = Operation.jsr(target);
+        setNextOp(Operation.jsr(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(6)).nextCycle();
         assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
-                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.decrement()));
+                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.plus(Value.of(2))));
     }
 
     @Test
@@ -309,12 +359,13 @@ class CPUTest
         Value value = Value.of(0x10);
         when(reader.read(target)).thenReturn(value);
 
-        var op = Operation.lda(target);
+        setNextOp(Operation.lda(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         assertThat(accumulator.value()).isEqualTo(value);
     }
 
@@ -326,17 +377,30 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ZERO);
-        var op = Operation.lda(Value.ofHex(input));
+
+        setNextOp(Operation.lda(Value.ofHex(input)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
+    }
+
+    @Test
+    void execute_NOP_Immediate()
+    {
+        // given
+        setNextOp(Operation.nop());
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
     }
 
     @Test
@@ -349,12 +413,13 @@ class CPUTest
         Value value = Value.of(0b0101);
         when(reader.read(target)).thenReturn(value);
 
-        var op = Operation.ora(target);
+        setNextOp(Operation.ora(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         assertThat(accumulator.value()).isEqualTo(Value.of(0b1101));
     }
 
@@ -364,21 +429,21 @@ class CPUTest
                 "FF, FF, FF, true, false",
                 "FF, 00, FF, true, false",
                 "04, 07, 07, false, false"})
-    void execute_ORA(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    void execute_ORA_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.ora(Value.ofHex(input));
+
+        setNextOp(Operation.ora(Value.ofHex(input)));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
     }
 
     @ParameterizedTest
@@ -387,12 +452,14 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        var op = Operation.pha();
+
+        setNextOp(Operation.pha());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(3)).nextCycle();
         assertThat(stack.pop()).isEqualTo(Value.ofHex(acc));
     }
 
@@ -404,17 +471,18 @@ class CPUTest
     {
         // given
         stack.push(Value.ofHex(initStack));
-        var op = Operation.pla();
+        reset(clock);
+
+        setNextOp(Operation.pla());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
-                  () -> assertThat(cpu.getFlags()).isEqualTo(Flags.builder()
-                                                                  .negative(isNegative)
-                                                                  .zero(isZero)
-                                                                  .build()));
+                  () -> assertThat(cpu.getFlags()).extracting(Flags::negative, Flags::zero)
+                                                  .containsExactly(isNegative, isZero));
     }
 
     @Test
@@ -423,13 +491,15 @@ class CPUTest
         // given
         stack.push(Value.of(0x12));
         stack.push(Value.of(0x33));
+        reset(clock);
 
-        var op = Operation.rts();
+        setNextOp(Operation.rts());
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(6)).nextCycle();
         assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.of(0x1234)),
                   () -> assertThat(stack.isEmpty()).isTrue());
     }
@@ -440,13 +510,15 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         var target = Address.of(0x1234);
-        var op = Operation.sta(target);
+        setNextOp(Operation.sta(target));
 
         // when
-        cpu.execute(op);
+        cpu.executeNext();
 
         // then
+        verify(clock, times(4)).nextCycle();
         verify(writer).write(target, Value.ofHex(acc));
     }
 }
