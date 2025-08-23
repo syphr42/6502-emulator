@@ -62,18 +62,20 @@ class AddressTest
         assertThat(result.data()).isEqualTo((short) 542);
     }
 
-    @Test
-    void of_LowHigh()
+    @ParameterizedTest
+    @CsvSource({"12, 34, 1234",
+                "00, FD, 00FD"})
+    void of_LowHigh(String highByte, String lowByte, String expected)
     {
         // given
-        var high = Value.of(0x12);
-        var low = Value.of(0x34);
+        var high = Value.ofHex(highByte);
+        var low = Value.ofHex(lowByte);
 
         // when
         var result = Address.of(low, high);
 
         // then
-        assertThat(result).isEqualTo(Address.of(0x1234));
+        assertThat(result).isEqualTo(Address.ofHex(expected));
     }
 
     @ParameterizedTest

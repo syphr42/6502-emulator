@@ -26,7 +26,7 @@ public record Address(short data) implements Expression
 
     public static Address of(Value low, Value high)
     {
-        return Address.of((short) ((high.data() << 8) | low.data()));
+        return Address.of((short) ((high.data() << 8) | (low.data() & 0xFF)));
     }
 
     public Address increment()
