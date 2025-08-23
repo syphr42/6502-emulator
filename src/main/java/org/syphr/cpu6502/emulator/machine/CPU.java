@@ -99,6 +99,11 @@ public class CPU
                     programManager.jump(getProgramCounter().plus(v));
                 }
             }
+            case Operation.BCS(Value v) -> {
+                if (flags.carry()) {
+                    programManager.jump(getProgramCounter().plus(v));
+                }
+            }
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
             case Operation.JMP(Address a) -> programManager.jump(a);
