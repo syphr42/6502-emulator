@@ -34,6 +34,7 @@ public sealed interface Operation
             case (byte) 0xAD -> lda(Address.of(program.next(), program.next()));
             case (byte) 0xB0 -> bcs(program.next());
             case (byte) 0xEA -> nop();
+            case (byte) 0xF0 -> beq(program.next());
             default -> throw new UnsupportedOperationException("Unsupported op code: " + opCode);
         };
     }
@@ -52,6 +53,7 @@ public sealed interface Operation
             case Operation.ASL _ -> List.of(Value.of(0x0A));
             case Operation.BCC(Value v) -> List.of(Value.of(0x90), v);
             case Operation.BCS(Value v) -> List.of(Value.of(0xB0), v);
+            case Operation.BEQ(Value v) -> List.of(Value.of(0xF0), v);
             case Operation.DEC _ -> List.of(Value.of(0x3A));
             case Operation.INC _ -> List.of(Value.of(0x1A));
             case Operation.JMP(Address a) -> Stream.concat(Stream.of(Value.of(0x4C)), a.bytes().stream()).toList();
@@ -87,6 +89,9 @@ public sealed interface Operation
 
     record BCS(Value displacement) implements Operation {}
     static BCS bcs(Value displacement) { return new BCS(displacement); }
+
+    record BEQ(Value displacement) implements Operation {}
+    static BEQ beq(Value displacement) { return new BEQ(displacement); }
 
     record DEC() implements Operation {}
     static DEC dec() { return new DEC(); }

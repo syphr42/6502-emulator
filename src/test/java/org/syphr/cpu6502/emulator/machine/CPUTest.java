@@ -205,6 +205,27 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"0001, 10, 0, 0001",
+                "0001, 10, 1, 0011",
+                "00FE, 02, 1, 0100",
+                "0000, FF, 1, 00FF",
+                "FFFF, 01, 1, 0000"})
+    void execute_BEQ_ProgramCounterRelative(String start, String displacement, int zero, String expected)
+    {
+        // given
+        cpu.execute(Operation.jmp(Address.ofHex(start)));
+        cpu.setFlags(Flags.builder().zero(zero != 0).build());
+
+        var op = Operation.beq(Value.ofHex(displacement));
+
+        // when
+        cpu.execute(op);
+
+        // then
+        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expected));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})
