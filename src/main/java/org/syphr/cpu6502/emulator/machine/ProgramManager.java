@@ -10,13 +10,11 @@ import java.util.Iterator;
 @RequiredArgsConstructor
 class ProgramManager implements Iterator<Value>
 {
-    private static final Address RESET_ADDRESS = Address.of(0xFFFC);
-
     private final Clock clock;
     private final Reader reader;
 
     @Getter
-    private Address programCounter = RESET_ADDRESS;
+    private Address programCounter = Address.RESET;
 
     @Override
     public Value next()
@@ -35,15 +33,15 @@ class ProgramManager implements Iterator<Value>
         return true;
     }
 
-    public void jump(Address address)
+    public void setProgramCounter(Address address)
     {
         clock.nextCycle();
-        log.info("Jump to {}", address);
+        log.info("Program counter set to {}", address);
         programCounter = address;
     }
 
     public void reset()
     {
-        programCounter = RESET_ADDRESS;
+        programCounter = Address.RESET;
     }
 }

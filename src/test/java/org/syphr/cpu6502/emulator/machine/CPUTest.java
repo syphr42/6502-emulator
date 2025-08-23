@@ -296,7 +296,7 @@ class CPUTest
 
         // then
         assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
-                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start));
+                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.decrement()));
     }
 
     @Test
@@ -421,11 +421,8 @@ class CPUTest
     void execute_RTS_Stack()
     {
         // given
-        var start = Address.of(0x1234);
-        cpu.execute(Operation.jmp(start));
-
-        var target = Address.of(0x3000);
-        cpu.execute(Operation.jsr(target));
+        stack.push(Value.of(0x12));
+        stack.push(Value.of(0x33));
 
         var op = Operation.rts();
 
@@ -433,7 +430,7 @@ class CPUTest
         cpu.execute(op);
 
         // then
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(start),
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.of(0x1234)),
                   () -> assertThat(stack.isEmpty()).isTrue());
     }
 

@@ -10,9 +10,9 @@ import org.syphr.cpu6502.emulator.machine.MemoryMap;
 import org.syphr.cpu6502.emulator.machine.Operation;
 import org.syphr.cpu6502.emulator.machine.Value;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.TreeMap;
 
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
@@ -35,23 +35,29 @@ public class CLI
 
     private MemoryMap createMemoryMap()
     {
-        var programStart = Address.of(0x0000);
+        var programStart = Address.of(0x00FB);
         List<Operation> operations = List.of(lda(Value.ZERO),
+                                             beq(Value.of(2)),
                                              inc(),
                                              inc(),
                                              nop(),
-                                             jmp(programStart));
+                                             jsr(Address.of(0x010A)),
+                                             jmp(programStart),
+                                             nop(),
+                                             nop(),
+                                             inc(),
+                                             rts());
 
-        Map<Address, Value> memory = new HashMap<>(toMap(programStart, operations));
-        memory.put(Address.of(0xFFFC), programStart.low());
-        memory.put(Address.of(0xFFFD), programStart.high());
+        Map<Address, Value> memory = toMap(programStart, operations);
+        memory.put(Address.RESET, programStart.low());
+        memory.put(Address.RESET.increment(), programStart.high());
 
         return new MemoryMap(memory);
     }
 
     private Map<Address, Value> toMap(Address start, List<Operation> operations)
     {
-        Map<Address, Value> map = new HashMap<>();
+        Map<Address, Value> map = new TreeMap<>();
 
         var address = start;
         for (Operation op : operations) {

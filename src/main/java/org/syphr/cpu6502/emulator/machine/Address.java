@@ -2,8 +2,10 @@ package org.syphr.cpu6502.emulator.machine;
 
 import java.util.List;
 
-public record Address(short data) implements Expression
+public record Address(short data) implements Expression, Comparable<Address>
 {
+    public static final Address RESET = Address.of(0xFFFC);
+
     public static Address of(short s)
     {
         return new Address(s);
@@ -34,6 +36,11 @@ public record Address(short data) implements Expression
         return Address.of(data + 1);
     }
 
+    public Address decrement()
+    {
+        return Address.of(data - 1);
+    }
+
     public Address plus(Value v)
     {
         return Address.of(data + Byte.toUnsignedInt(v.data()));
@@ -52,6 +59,12 @@ public record Address(short data) implements Expression
     public List<Value> bytes()
     {
         return List.of(low(), high());
+    }
+
+    @Override
+    public int compareTo(Address o)
+    {
+        return Short.compareUnsigned(data, o.data);
     }
 
     @Override

@@ -64,7 +64,7 @@ public class CPU
 
         try {
             var programAddress = Address.of(programManager.next(), programManager.next());
-            programManager.jump(programAddress);
+            programManager.setProgramCounter(programAddress);
 
             while (!Thread.interrupted()) {
                 execute(Operation.next(programManager));
@@ -96,25 +96,25 @@ public class CPU
             case Operation.ASL _ -> updateRegister(accumulator, this::shiftLeft);
             case Operation.BCC(Value v) -> {
                 if (!flags.carry()) {
-                    programManager.jump(getProgramCounter().plus(v));
+                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
                 }
             }
             case Operation.BCS(Value v) -> {
                 if (flags.carry()) {
-                    programManager.jump(getProgramCounter().plus(v));
+                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
                 }
             }
             case Operation.BEQ(Value v) -> {
                 if (flags.zero()) {
-                    programManager.jump(getProgramCounter().plus(v));
+                    programManager.setProgramCounter(waitToCrossPageBoundary(getProgramCounter().plus(v)));
                 }
             }
             case Operation.DEC _ -> updateRegister(accumulator, Register::decrement);
             case Operation.INC _ -> updateRegister(accumulator, Register::increment);
-            case Operation.JMP(Address a) -> programManager.jump(a);
+            case Operation.JMP(Address a) -> programManager.setProgramCounter(a);
             case Operation.JSR(Address a) -> {
-                stack.pushAll(getProgramCounter().bytes().reversed());
-                programManager.jump(a);
+                stack.pushAll(getProgramCounter().decrement().bytes().reversed());
+                programManager.setProgramCounter(a);
             }
             case Operation.LDA(Expression e) -> updateRegister(accumulator, r -> accumulator.store(evaluate(e)));
             case Operation.NOP _ -> {}
@@ -123,7 +123,7 @@ public class CPU
             case Operation.PLA _ -> updateRegister(accumulator, this::pullFromStack);
             case Operation.RTS _ -> {
                 var address = Address.of(stack.pop(), stack.pop());
-                programManager.jump(address);
+                programManager.setProgramCounter(address.increment());
             }
             case Operation.STA sta -> writer.write(sta.address(), accumulator.value());
         }
@@ -175,5 +175,16 @@ public class CPU
 
         register.store(Value.of(r << 1));
         flags = Flags.builder().carry((r & 0x80) != 0).build();
+    }
+
+    private Address waitToCrossPageBoundary(Address target)
+    {
+        // wait one cycle if a page boundary will be crossed
+        if (!getProgramCounter().high().equals(target.high())) {
+            clock.nextCycle();
+            log.info("Crossed page boundary");
+        }
+
+        return target;
     }
 }

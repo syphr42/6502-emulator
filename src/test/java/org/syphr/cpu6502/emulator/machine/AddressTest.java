@@ -64,7 +64,8 @@ class AddressTest
 
     @ParameterizedTest
     @CsvSource({"12, 34, 1234",
-                "00, FD, 00FD"})
+                "00, FD, 00FD",
+                "FF, 00, FF00"})
     void of_LowHigh(String highByte, String lowByte, String expected)
     {
         // given
@@ -88,6 +89,21 @@ class AddressTest
 
         // when
         Address result = start.increment();
+
+        // then
+        assertThat(result).isEqualTo(Address.ofHex(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0001, 0000",
+                "0000, FFFF"})
+    void decrement(String input, String expected)
+    {
+        // given
+        var start = Address.ofHex(input);
+
+        // when
+        Address result = start.decrement();
 
         // then
         assertThat(result).isEqualTo(Address.ofHex(expected));

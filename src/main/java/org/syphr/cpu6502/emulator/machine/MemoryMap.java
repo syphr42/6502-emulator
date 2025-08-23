@@ -2,8 +2,8 @@ package org.syphr.cpu6502.emulator.machine;
 
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.HashMap;
 import java.util.Map;
+import java.util.TreeMap;
 
 @Slf4j
 public class MemoryMap implements AddressHandler
@@ -12,7 +12,7 @@ public class MemoryMap implements AddressHandler
 
     public MemoryMap(Map<Address, Value> map)
     {
-        this.map = new HashMap<>(map);
+        this.map = new TreeMap<>(map);
     }
 
     @Override
