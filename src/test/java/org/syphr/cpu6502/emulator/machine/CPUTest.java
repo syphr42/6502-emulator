@@ -382,6 +382,36 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"0001, 10, 1, 0003, 2",
+                "0001, 10, 0, 0013, 3",
+                "00FD, 02, 0, 0101, 4",
+                "0000, FD, 0, 00FF, 3",
+                "FFFD, 01, 0, 0000, 4"})
+    void execute_BNE_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int zero,
+                                            String expectedPC,
+                                            int expectedCycles)
+    {
+        // given
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
+
+        Flags flags = cpu.getFlags().toBuilder().zero(zero != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
+        setNextOp(bne(relative(Value.ofHex(displacement))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})

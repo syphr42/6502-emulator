@@ -135,6 +135,7 @@ public class CPU
             case (byte) 0xA9 -> lda(immediate(programManager.next()));
             case (byte) 0xAD -> lda(absolute(Address.of(programManager.next(), programManager.next())));
             case (byte) 0xB0 -> bcs(relative(programManager.next()));
+            case (byte) 0xD0 -> bne(relative(programManager.next()));
             case (byte) 0xEA -> nop();
             case (byte) 0xF0 -> beq(relative(programManager.next()));
             default -> {
@@ -187,6 +188,7 @@ public class CPU
                 }
             }
             case Operation.BMI(AddressMode mode) -> branchIf(not(flags::negative), mode);
+            case Operation.BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {
