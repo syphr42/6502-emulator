@@ -14,6 +14,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.*;
+import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
+import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
 @ExtendWith(MockitoExtension.class)
 class CPUTest
@@ -44,7 +46,7 @@ class CPUTest
     private void setNextOp(Operation op)
     {
         Address pc = cpu.getProgramCounter();
-        List<Value> values = Operation.toValues(op);
+        List<Value> values = toValues(op);
         for (int i = 0; i < values.size(); i++) {
             when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
         }
@@ -75,7 +77,7 @@ class CPUTest
         Value value = Value.of(0x10);
         when(reader.read(target)).thenReturn(value);
 
-        setNextOp(Operation.adc(target));
+        setNextOp(adc(absolute(target)));
 
         // when
         cpu.executeNext();
@@ -107,7 +109,7 @@ class CPUTest
         accumulator.store(Value.ofHex(acc));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
 
-        setNextOp(Operation.adc(Value.ofHex(input)));
+        setNextOp(adc(immediate(Value.ofHex(input))));
 
         // when
         cpu.executeNext();
@@ -132,7 +134,7 @@ class CPUTest
         Value value = Value.of(0b0101);
         when(reader.read(target)).thenReturn(value);
 
-        setNextOp(Operation.and(target));
+        setNextOp(and(absolute(target)));
 
         // when
         cpu.executeNext();
@@ -153,7 +155,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
-        setNextOp(Operation.and(Value.ofHex(input)));
+        setNextOp(and(immediate(Value.ofHex(input))));
 
         // when
         cpu.executeNext();
@@ -177,7 +179,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofBits(acc));
 
-        setNextOp(Operation.asl());
+        setNextOp(asl(accumulator()));
 
         // when
         cpu.executeNext();
@@ -204,11 +206,11 @@ class CPUTest
                                             int expectedCycles)
     {
         // given
-        cpu.execute(Operation.jmp(Address.ofHex(start)));
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
         reset(clock);
 
-        setNextOp(Operation.bcc(Value.ofHex(displacement)));
+        setNextOp(bcc(relative(Value.ofHex(displacement))));
 
         // when
         cpu.executeNext();
@@ -231,11 +233,11 @@ class CPUTest
                                             int expectedCycles)
     {
         // given
-        cpu.execute(Operation.jmp(Address.ofHex(start)));
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
         reset(clock);
 
-        setNextOp(Operation.bcs(Value.ofHex(displacement)));
+        setNextOp(bcs(relative(Value.ofHex(displacement))));
 
         // when
         cpu.executeNext();
@@ -258,11 +260,11 @@ class CPUTest
                                             int expectedCycles)
     {
         // given
-        cpu.execute(Operation.jmp(Address.ofHex(start)));
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
         cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
         reset(clock);
 
-        setNextOp(Operation.beq(Value.ofHex(displacement)));
+        setNextOp(beq(relative(Value.ofHex(displacement))));
 
         // when
         cpu.executeNext();
@@ -281,7 +283,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
-        setNextOp(Operation.dec());
+        setNextOp(dec(accumulator()));
 
         // when
         cpu.executeNext();
@@ -302,7 +304,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
-        setNextOp(Operation.inc());
+        setNextOp(inc(accumulator()));
 
         // when
         cpu.executeNext();
@@ -319,7 +321,7 @@ class CPUTest
     {
         // given
         Address address = Address.of(0x1234);
-        setNextOp(Operation.jmp(address));
+        setNextOp(jmp(absolute(address)));
 
         // when
         cpu.executeNext();
@@ -334,11 +336,11 @@ class CPUTest
     {
         // given
         var start = Address.of(0x1234);
-        cpu.execute(Operation.jmp(start));
+        cpu.execute(jmp(absolute(start)));
         reset(clock);
 
         var target = Address.of(0x3000);
-        setNextOp(Operation.jsr(target));
+        setNextOp(jsr(absolute(target)));
 
         // when
         cpu.executeNext();
@@ -359,7 +361,7 @@ class CPUTest
         Value value = Value.of(0x10);
         when(reader.read(target)).thenReturn(value);
 
-        setNextOp(Operation.lda(target));
+        setNextOp(lda(absolute(target)));
 
         // when
         cpu.executeNext();
@@ -378,7 +380,7 @@ class CPUTest
         // given
         accumulator.store(Value.ZERO);
 
-        setNextOp(Operation.lda(Value.ofHex(input)));
+        setNextOp(lda(immediate(Value.ofHex(input))));
 
         // when
         cpu.executeNext();
@@ -394,7 +396,7 @@ class CPUTest
     void execute_NOP_Immediate()
     {
         // given
-        setNextOp(Operation.nop());
+        setNextOp(nop());
 
         // when
         cpu.executeNext();
@@ -413,7 +415,7 @@ class CPUTest
         Value value = Value.of(0b0101);
         when(reader.read(target)).thenReturn(value);
 
-        setNextOp(Operation.ora(target));
+        setNextOp(ora(absolute(target)));
 
         // when
         cpu.executeNext();
@@ -434,7 +436,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
-        setNextOp(Operation.ora(Value.ofHex(input)));
+        setNextOp(ora(immediate(Value.ofHex(input))));
 
         // when
         cpu.executeNext();
@@ -453,7 +455,7 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
-        setNextOp(Operation.pha());
+        setNextOp(pha());
 
         // when
         cpu.executeNext();
@@ -473,7 +475,7 @@ class CPUTest
         stack.push(Value.ofHex(initStack));
         reset(clock);
 
-        setNextOp(Operation.pla());
+        setNextOp(pla());
 
         // when
         cpu.executeNext();
@@ -493,7 +495,7 @@ class CPUTest
         stack.push(Value.of(0x33));
         reset(clock);
 
-        setNextOp(Operation.rts());
+        setNextOp(rts());
 
         // when
         cpu.executeNext();
@@ -512,7 +514,7 @@ class CPUTest
         accumulator.store(Value.ofHex(acc));
 
         var target = Address.of(0x1234);
-        setNextOp(Operation.sta(target));
+        setNextOp(sta(absolute(target)));
 
         // when
         cpu.executeNext();

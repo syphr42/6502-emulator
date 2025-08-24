@@ -1,6 +1,6 @@
 package org.syphr.cpu6502.emulator.machine;
 
-public record Value(byte data) implements Expression
+public record Value(byte data)
 {
     public static Value ZERO = Value.of(0);
 

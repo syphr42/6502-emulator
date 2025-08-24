@@ -7,7 +7,11 @@ import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+
+import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
+import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
 @Slf4j
 @ToString(onlyExplicitlyIncluded = true)
@@ -98,60 +102,101 @@ public class CPU
 
     void executeNext()
     {
-        var op = Operation.next(programManager);
+        log.info("Reading next operation");
+        Operation op = nextOp();
         log.info("Executing op {}", op);
         execute(op);
         log.info("Completed op {}", op);
     }
 
+    private Operation nextOp()
+    {
+        Value opCode = programManager.next();
+        return switch (opCode.data()) {
+            case 0x09 -> ora(immediate(programManager.next()));
+            case 0x0A -> asl(accumulator());
+            case 0x0D -> ora(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x1A -> inc(accumulator());
+            case 0x20 -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x29 -> and(immediate(programManager.next()));
+            case 0x2D -> and(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x3A -> dec(accumulator());
+            case 0x48 -> pha();
+            case 0x4C -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x60 -> rts();
+            case 0x68 -> pla();
+            case 0x69 -> adc(immediate(programManager.next()));
+            case 0x6D -> adc(absolute(Address.of(programManager.next(), programManager.next())));
+            case (byte) 0x8D -> sta(absolute(Address.of(programManager.next(), programManager.next())));
+            case (byte) 0x90 -> bcc(relative(programManager.next()));
+            case (byte) 0xA9 -> lda(immediate(programManager.next()));
+            case (byte) 0xAD -> lda(absolute(Address.of(programManager.next(), programManager.next())));
+            case (byte) 0xB0 -> bcs(relative(programManager.next()));
+            case (byte) 0xEA -> nop();
+            case (byte) 0xF0 -> beq(relative(programManager.next()));
+            default -> {
+                log.warn("Unsupported op code: {} (acting as NOP)", opCode);
+                yield nop();
+            }
+        };
+    }
+
     void execute(Operation operation)
     {
         switch (operation) {
-            case Operation.ADC(Expression e) -> updateRegister(accumulator,
-                                                               r -> addWithCarry(r, evaluate(e)));
-            case Operation.AND(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().and(evaluate(e))));
-            case Operation.ASL _ -> {
-                dummyRead();
-                updateRegister(accumulator, this::shiftLeft);
+            case Operation.ADC(AddressMode mode) -> {
+                Value value = toValue(mode);
+                updateRegister(accumulator, r -> addWithCarry(r, value));
             }
-            case Operation.BCC(Value v) -> {
-                if (!flags.carry()) {
-                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
-                    clock.nextCycle();
-                    programManager.setProgramCounter(target);
+            case Operation.AND(AddressMode mode) -> {
+                Value value = toValue(mode);
+                updateRegister(accumulator, r -> r.store(r.value().and(value)));
+            }
+            case Operation.ASL(AddressMode mode) -> {
+                switch (mode) {
+                    case Absolute(Address address) -> {
+                        Value value = reader.read(address);
+                        writer.write(address, value); // throw-away write burns a cycle
+                        writer.write(address, shiftLeft(value));
+                    }
+                    case Accumulator _ -> {
+                        dummyRead();
+                        updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.BCS(Value v) -> {
-                if (flags.carry()) {
-                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
-                    clock.nextCycle();
-                    programManager.setProgramCounter(target);
+            case Operation.BCC(AddressMode mode) -> branchIf(not(flags::carry), mode);
+            case Operation.BCS(AddressMode mode) -> branchIf(flags::carry, mode);
+            case Operation.BEQ(AddressMode mode) -> branchIf(flags::zero, mode);
+            case Operation.DEC(AddressMode mode) -> {
+                switch (mode) {
+                    case Accumulator _ -> {
+                        dummyRead();
+                        updateRegister(accumulator, Register::decrement);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.BEQ(Value v) -> {
-                if (flags.zero()) {
-                    Address target = waitToCrossPageBoundary(getProgramCounter().plus(v));
-                    clock.nextCycle();
-                    programManager.setProgramCounter(target);
+            case Operation.INC(AddressMode mode) -> {
+                switch (mode) {
+                    case Accumulator _ -> {
+                        dummyRead();
+                        updateRegister(accumulator, Register::increment);
+                    }
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.DEC _ -> {
-                dummyRead();
-                updateRegister(accumulator, Register::decrement);
-            }
-            case Operation.INC _ -> {
-                dummyRead();
-                updateRegister(accumulator, Register::increment);
-            }
-            case Operation.JMP(Address a) -> programManager.setProgramCounter(a);
-            case Operation.JSR(Address a) -> {
+            case Operation.JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
+            case Operation.JSR(AddressMode mode) -> {
                 clock.nextCycle(); // extra clock cycle for "internal buffering"?
                 stack.pushAll(getProgramCounter().decrement().bytes().reversed());
-                programManager.setProgramCounter(a);
+                programManager.setProgramCounter(toAddress(mode));
             }
-            case Operation.LDA(Expression e) -> updateRegister(accumulator, r -> accumulator.store(evaluate(e)));
+            case Operation.LDA(AddressMode mode) -> updateRegister(accumulator, r -> accumulator.store(toValue(mode)));
             case Operation.NOP _ -> dummyRead();
-            case Operation.ORA(Expression e) -> updateRegister(accumulator, r -> r.store(r.value().or(evaluate(e))));
+            case Operation.ORA(AddressMode mode) ->
+                    updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case Operation.PHA _ -> {
                 dummyRead();
                 pushToStack(accumulator);
@@ -168,22 +213,39 @@ public class CPU
                 clock.nextCycle(); // unexplained
                 programManager.setProgramCounter(address.increment());
             }
-            case Operation.STA sta -> writer.write(sta.address(), accumulator.value());
+            case Operation.STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
         }
+    }
+
+    private Address toAddress(AddressMode mode)
+    {
+        return switch (mode) {
+            case Absolute(Address address) -> address;
+            case AbsoluteIndirect(Address address) ->
+                    Address.of(reader.read(address), reader.read(address.increment()));
+            case Relative(Value displacement) -> getProgramCounter().plus(displacement);
+            case ZeroPage(Value offset) -> Address.ZERO.plus(offset);
+            case ZeroPageIndirect(Value offset) -> {
+                Address address = Address.ZERO.plus(offset);
+                yield Address.of(reader.read(address), reader.read(address.increment()));
+            }
+            default -> throw new UnsupportedOperationException("Mode " + mode + " does not support address conversion");
+        };
+    }
+
+    private Value toValue(AddressMode mode)
+    {
+        return switch (mode) {
+            case Accumulator() -> accumulator.value();
+            case Immediate(Value value) -> value;
+            default -> reader.read(toAddress(mode));
+        };
     }
 
     private void dummyRead()
     {
         log.info("Performing dummy read");
         reader.read(programManager.getProgramCounter());
-    }
-
-    private Value evaluate(Expression expression)
-    {
-        return switch (expression) {
-            case Address address -> reader.read(address);
-            case Value val -> val;
-        };
     }
 
     private void updateRegister(Register register, Consumer<Register> action)
@@ -218,12 +280,21 @@ public class CPU
         flags = Flags.builder().overflow(overflow).carry(carry).build();
     }
 
-    private void shiftLeft(Register register)
+    private Value shiftLeft(Value value)
     {
-        byte r = register.value().data();
-
-        register.store(Value.of(r << 1));
+        byte r = value.data();
         flags = Flags.builder().carry((r & 0x80) != 0).build();
+
+        return Value.of(r << 1);
+    }
+
+    private void branchIf(BooleanSupplier flag, AddressMode mode)
+    {
+        if (flag.getAsBoolean()) {
+            Address target = waitToCrossPageBoundary(toAddress(mode));
+            clock.nextCycle();
+            programManager.setProgramCounter(target);
+        }
     }
 
     private Address waitToCrossPageBoundary(Address target)
@@ -235,6 +306,11 @@ public class CPU
         }
 
         return target;
+    }
+
+    private BooleanSupplier not(BooleanSupplier supplier)
+    {
+        return () -> !supplier.getAsBoolean();
     }
 
     @RequiredArgsConstructor

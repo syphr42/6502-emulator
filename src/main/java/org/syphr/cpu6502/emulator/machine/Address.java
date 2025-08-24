@@ -2,8 +2,9 @@ package org.syphr.cpu6502.emulator.machine;
 
 import java.util.List;
 
-public record Address(short data) implements Expression, Comparable<Address>
+public record Address(short data) implements Comparable<Address>
 {
+    public static final Address ZERO = Address.of(0);
     public static final Address RESET = Address.of(0xFFFC);
 
     public static Address of(short s)

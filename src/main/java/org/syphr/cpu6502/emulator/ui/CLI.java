@@ -14,6 +14,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
+import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
 @ShellComponent
@@ -36,16 +37,16 @@ public class CLI
     private MemoryMap createMemoryMap()
     {
         var programStart = Address.of(0x00FB);
-        List<Operation> operations = List.of(lda(Value.ZERO),
-                                             beq(Value.of(2)),
-                                             inc(),
-                                             inc(),
+        List<Operation> operations = List.of(lda(immediate(Value.ZERO)),
+                                             beq(relative(Value.of(2))),
+                                             inc(accumulator()),
+                                             inc(accumulator()),
                                              nop(),
-                                             jsr(Address.of(0x010A)),
-                                             jmp(programStart),
+                                             jsr(absolute(Address.of(0x010A))),
+                                             jmp(absolute(programStart)),
                                              nop(),
                                              nop(),
-                                             inc(),
+                                             inc(accumulator()),
                                              rts());
 
         Map<Address, Value> memory = toMap(programStart, operations);

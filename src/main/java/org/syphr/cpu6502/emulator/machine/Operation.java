@@ -1,118 +1,117 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import java.util.Iterator;
 import java.util.List;
 import java.util.stream.Stream;
 
+import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
+
 public sealed interface Operation
 {
-    static Operation next(Iterator<Value> program)
-    {
-        if (!program.hasNext()) {
-            throw new IllegalStateException("Program has no operations left!");
-        }
-
-        Value opCode = program.next();
-        return switch (opCode.data()) {
-            case 0x09 -> ora(program.next());
-            case 0x0A -> asl();
-            case 0x0D -> ora(Address.of(program.next(), program.next()));
-            case 0x1A -> inc();
-            case 0x20 -> jsr(Address.of(program.next(), program.next()));
-            case 0x29 -> and(program.next());
-            case 0x2D -> and(Address.of(program.next(), program.next()));
-            case 0x3A -> dec();
-            case 0x48 -> pha();
-            case 0x4C -> jmp(Address.of(program.next(), program.next()));
-            case 0x60 -> rts();
-            case 0x68 -> pla();
-            case 0x69 -> adc(program.next());
-            case 0x6D -> adc(Address.of(program.next(), program.next()));
-            case (byte) 0x8D -> sta(Address.of(program.next(), program.next()));
-            case (byte) 0x90 -> bcc(program.next());
-            case (byte) 0xA9 -> lda(program.next());
-            case (byte) 0xAD -> lda(Address.of(program.next(), program.next()));
-            case (byte) 0xB0 -> bcs(program.next());
-            case (byte) 0xEA -> nop();
-            case (byte) 0xF0 -> beq(program.next());
-            default -> throw new UnsupportedOperationException("Unsupported op code: " + opCode);
-        };
-    }
-
     static List<Value> toValues(Operation operation)
     {
         return switch (operation) {
-            case Operation.ADC(Expression e) -> switch (e) {
-                case Address a -> Stream.concat(Stream.of(Value.of(0x6D)), a.bytes().stream()).toList();
-                case Value v -> List.of(Value.of(0x69), v);
+            case Operation.ADC(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x6D)), a.bytes().stream()).toList();
+                case Immediate(Value v) -> List.of(Value.of(0x69), v);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
-            case Operation.AND(Expression e) -> switch (e) {
-                case Address a -> Stream.concat(Stream.of(Value.of(0x2D)), a.bytes().stream()).toList();
-                case Value v -> List.of(Value.of(0x29), v);
+            case Operation.AND(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x2D)), a.bytes().stream()).toList();
+                case Immediate(Value v) -> List.of(Value.of(0x29), v);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
-            case Operation.ASL _ -> List.of(Value.of(0x0A));
-            case Operation.BCC(Value v) -> List.of(Value.of(0x90), v);
-            case Operation.BCS(Value v) -> List.of(Value.of(0xB0), v);
-            case Operation.BEQ(Value v) -> List.of(Value.of(0xF0), v);
-            case Operation.DEC _ -> List.of(Value.of(0x3A));
-            case Operation.INC _ -> List.of(Value.of(0x1A));
-            case Operation.JMP(Address a) -> Stream.concat(Stream.of(Value.of(0x4C)), a.bytes().stream()).toList();
-            case Operation.JSR(Address a) -> Stream.concat(Stream.of(Value.of(0x20)), a.bytes().stream()).toList();
-            case Operation.LDA(Expression e) -> switch (e) {
-                case Address a -> Stream.concat(Stream.of(Value.of(0xAD)), a.bytes().stream()).toList();
-                case Value v -> List.of(Value.of(0xA9), v);
+            case Operation.ASL(AddressMode mode) -> switch (mode) {
+                case Accumulator _ -> List.of(Value.of(0x0A));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.BCC(AddressMode mode) -> switch (mode) {
+                case Relative(Value offset) -> List.of(Value.of(0x90), offset);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.BCS(AddressMode mode) -> switch (mode) {
+                case Relative(Value offset) -> List.of(Value.of(0xB0), offset);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.BEQ(AddressMode mode) -> switch (mode) {
+                case Relative(Value offset) -> List.of(Value.of(0xF0), offset);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.DEC(AddressMode mode) -> switch (mode) {
+                case Accumulator _ -> List.of(Value.of(0x3A));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.INC(AddressMode mode) -> switch (mode) {
+                case Accumulator _ -> List.of(Value.of(0x1A));
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.JMP(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x4C)), a.bytes().stream()).toList();
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.JSR(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x20)), a.bytes().stream()).toList();
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
+            case Operation.LDA(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0xAD)), a.bytes().stream()).toList();
+                case Immediate(Value v) -> List.of(Value.of(0xA9), v);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
             case Operation.NOP _ -> List.of(Value.of(0xEA));
-            case Operation.ORA(Expression e) -> switch (e) {
-                case Address a -> Stream.concat(Stream.of(Value.of(0x0D)), a.bytes().stream()).toList();
-                case Value v -> List.of(Value.of(0x09), v);
+            case Operation.ORA(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x0D)), a.bytes().stream()).toList();
+                case Immediate(Value v) -> List.of(Value.of(0x09), v);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
             case Operation.PHA _ -> List.of(Value.of(0x48));
             case Operation.PLA _ -> List.of(Value.of(0x68));
             case Operation.RTS _ -> List.of(Value.of(0x60));
-            case Operation.STA(Address a) -> Stream.concat(Stream.of(Value.of(0x8D)), a.bytes().stream()).toList();
+            case Operation.STA(AddressMode mode) -> switch (mode) {
+                case Absolute(Address a) -> Stream.concat(Stream.of(Value.of(0x8D)), a.bytes().stream()).toList();
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
         };
     }
 
     // @formatter:off
-    record ADC(Expression expression) implements Operation {}
-    static ADC adc(Expression expression) { return new ADC(expression); }
+    record ADC(AddressMode mode) implements Operation {}
+    static ADC adc(AddressMode mode) { return new ADC(mode); }
 
-    record AND(Expression expression) implements Operation {}
-    static AND and(Expression expression) { return new AND(expression); }
+    record AND(AddressMode mode) implements Operation {}
+    static AND and(AddressMode mode) { return new AND(mode); }
 
-    record ASL() implements Operation {}
-    static ASL asl() { return new ASL(); }
+    record ASL(AddressMode mode) implements Operation {}
+    static ASL asl(AddressMode mode) { return new ASL(mode); }
 
-    record BCC(Value displacement) implements Operation {}
-    static BCC bcc(Value displacement) { return new BCC(displacement); }
+    record BCC(AddressMode mode) implements Operation {}
+    static BCC bcc(AddressMode mode) { return new BCC(mode); }
 
-    record BCS(Value displacement) implements Operation {}
-    static BCS bcs(Value displacement) { return new BCS(displacement); }
+    record BCS(AddressMode mode) implements Operation {}
+    static BCS bcs(AddressMode mode) { return new BCS(mode); }
 
-    record BEQ(Value displacement) implements Operation {}
-    static BEQ beq(Value displacement) { return new BEQ(displacement); }
+    record BEQ(AddressMode mode) implements Operation {}
+    static BEQ beq(AddressMode mode) { return new BEQ(mode); }
 
-    record DEC() implements Operation {}
-    static DEC dec() { return new DEC(); }
+    record DEC(AddressMode mode) implements Operation {}
+    static DEC dec(AddressMode mode) { return new DEC(mode); }
 
-    record INC() implements Operation {}
-    static INC inc() { return new INC(); }
+    record INC(AddressMode mode) implements Operation {}
+    static INC inc(AddressMode mode) { return new INC(mode); }
 
-    record JMP(Address address) implements Operation {}
-    static JMP jmp(Address address) { return new JMP(address); }
+    record JMP(AddressMode mode) implements Operation {}
+    static JMP jmp(AddressMode mode) { return new JMP(mode); }
 
-    record JSR(Address address) implements Operation {}
-    static JSR jsr(Address address) { return new JSR(address); }
+    record JSR(AddressMode mode) implements Operation {}
+    static JSR jsr(AddressMode mode) { return new JSR(mode); }
 
-    record LDA(Expression expression) implements Operation {}
-    static LDA lda(Expression expression) { return new LDA(expression); }
+    record LDA(AddressMode mode) implements Operation {}
+    static LDA lda(AddressMode mode) { return new LDA(mode); }
 
     record NOP() implements Operation {}
     static NOP nop() { return new NOP(); }
 
-    record ORA(Expression expression) implements Operation {}
-    static ORA ora(Expression expression) { return new ORA(expression); }
+    record ORA(AddressMode mode) implements Operation {}
+    static ORA ora(AddressMode mode) { return new ORA(mode); }
 
     record PHA() implements Operation {}
     static PHA pha() { return new PHA(); }
@@ -123,7 +122,7 @@ public sealed interface Operation
     record RTS() implements Operation {}
     static RTS rts() { return new RTS(); }
 
-    record STA(Address address) implements Operation {}
-    static STA sta(Address address) { return new STA(address); }
+    record STA(AddressMode mode) implements Operation {}
+    static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on
 }
