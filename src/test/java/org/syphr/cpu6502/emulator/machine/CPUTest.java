@@ -193,6 +193,38 @@ class CPUTest
                 "10101010, 01010100, false, false, true",
                 "01010101, 10101010, true, false, false",
                 "11000000, 10000000, true, false, true"})
+    void execute_ASL_Absolute(String memory, String expected, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        Value accValue = accumulator.value();
+        Flags flags = cpu.getFlags();
+
+        var address = Address.of(0x1234);
+        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+
+        setNextOp(asl(absolute(address)));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(6)).nextCycle();
+        verify(writer).write(address, Value.ofBits(expected));
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000, false, true, false",
+                "00000001, 00000010, false, false, false",
+                "10000000, 00000000, false, true, true",
+                "10101010, 01010100, false, false, true",
+                "01010101, 10101010, true, false, false",
+                "11000000, 10000000, true, false, true"})
     void execute_ASL_Accumulator(String acc, String expected, boolean isNegative, boolean isZero, boolean isCarry)
     {
         // given

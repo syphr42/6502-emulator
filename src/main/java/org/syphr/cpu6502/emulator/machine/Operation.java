@@ -43,11 +43,13 @@ public sealed interface Operation
 
     record ASL(AddressMode mode) implements Operation
     {
+        public static final byte ABSOLUTE = 0x0E;
         public static final byte ACCUMULATOR = 0x0A;
 
         public Value code()
         {
             return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
                 case Accumulator _ -> ACCUMULATOR;
                 default -> throw unsupported(this);
             });

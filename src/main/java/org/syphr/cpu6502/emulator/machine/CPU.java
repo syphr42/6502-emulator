@@ -117,6 +117,7 @@ public class CPU
             case ADC.IMMEDIATE -> adc(immediate(programManager.next()));
             case AND.ABSOLUTE -> and(absolute(Address.of(programManager.next(), programManager.next())));
             case AND.IMMEDIATE -> and(immediate(programManager.next()));
+            case ASL.ABSOLUTE -> asl(absolute(Address.of(programManager.next(), programManager.next())));
             case ASL.ACCUMULATOR -> asl(accumulator());
             case BCC.RELATIVE -> bcc(relative(programManager.next()));
             case BCS.RELATIVE -> bcs(relative(programManager.next()));
@@ -164,8 +165,10 @@ public class CPU
                 switch (mode) {
                     case Absolute(Address address) -> {
                         reader.read(address); // throw-away read burns a cycle
-                        Value value = reader.read(address);
-                        writer.write(address, shiftLeft(value));
+                        Value input = reader.read(address);
+                        Value output = shiftLeft(input);
+                        writer.write(address, output);
+                        flags = flags.toBuilder().negative(output.data() < 0).zero(output.data() == 0).build();
                     }
                     case Accumulator _ -> {
                         dummyRead();
