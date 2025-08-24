@@ -258,6 +258,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().carry(carry != 0).build();
         cpu.setFlags(flags);
 
@@ -269,7 +271,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -284,6 +287,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().carry(carry != 0).build();
         cpu.setFlags(flags);
 
@@ -295,7 +300,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -310,6 +316,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().zero(zero != 0).build();
         cpu.setFlags(flags);
 
@@ -321,7 +329,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -349,7 +358,12 @@ class CPUTest
 
         // then
         verify(clock, times(4)).nextCycle();
-        assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().negative(bit7).overflow(bit6).zero(isZero).build());
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(bit7)
+                                                                  .overflow(bit6)
+                                                                  .zero(isZero)
+                                                                  .build()));
     }
 
     @ParameterizedTest
@@ -368,7 +382,8 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().zero(isZero).build());
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().zero(isZero).build()));
     }
 
     @ParameterizedTest
@@ -382,6 +397,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().negative(negative != 0).build();
         cpu.setFlags(flags);
 
@@ -393,7 +410,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -408,6 +426,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().zero(zero != 0).build();
         cpu.setFlags(flags);
 
@@ -419,7 +439,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -434,6 +455,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().negative(negative != 0).build();
         cpu.setFlags(flags);
 
@@ -445,7 +468,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -455,6 +479,8 @@ class CPUTest
     {
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
+
+        Value accValue = accumulator.value();
 
         Flags flags = cpu.getFlags();
 
@@ -466,7 +492,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -481,6 +508,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().overflow(overflow != 0).build();
         cpu.setFlags(flags);
 
@@ -492,7 +521,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -507,6 +537,8 @@ class CPUTest
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags().toBuilder().overflow(overflow != 0).build();
         cpu.setFlags(flags);
 
@@ -518,7 +550,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -576,6 +609,8 @@ class CPUTest
     void execute_JMP_Absolute()
     {
         // given
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags();
 
         Address address = Address.of(0x1234);
@@ -586,7 +621,8 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(address),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(address),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
@@ -596,6 +632,8 @@ class CPUTest
         // given
         var start = Address.of(0x1234);
         cpu.execute(jmp(absolute(start)));
+
+        Value accValue = accumulator.value();
 
         Flags flags = cpu.getFlags();
 
@@ -608,7 +646,8 @@ class CPUTest
 
         // then
         verify(clock, times(6)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
                   () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.plus(Value.of(2))),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
@@ -665,6 +704,8 @@ class CPUTest
     void execute_NOP_Immediate()
     {
         // given
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags();
 
         setNextOp(nop());
@@ -674,7 +715,8 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertThat(cpu.getFlags()).isEqualTo(flags);
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @Test
@@ -743,22 +785,23 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertAll(() -> assertThat(stack.pop()).isEqualTo(Value.ofHex(acc)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(stack.pop()).isEqualTo(Value.ofHex(acc)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, false, true",
-                "01, 01, false, false",
-                "FF, FF, true, false"})
-    void execute_PLA_Stack(String initStack, String expected, boolean isNegative, boolean isZero)
+    @CsvSource({"00, false, true",
+                "01, false, false",
+                "FF, true, false"})
+    void execute_PLA_Stack(String input, boolean isNegative, boolean isZero)
     {
         // given
-        stack.push(Value.ofHex(initStack));
-        reset(clock);
+        stack.push(Value.ofHex(input));
 
         Flags flags = cpu.getFlags();
 
+        reset(clock);
         setNextOp(pla());
 
         // when
@@ -766,7 +809,8 @@ class CPUTest
 
         // then
         verify(clock, times(4)).nextCycle();
-        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(expected)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(input)),
+                  () -> assertThat(stack.isEmpty()).isTrue(),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)
@@ -780,6 +824,8 @@ class CPUTest
         stack.push(Value.of(0x12));
         stack.push(Value.of(0x33));
 
+        Value accValue = accumulator.value();
+
         Flags flags = cpu.getFlags();
 
         reset(clock);
@@ -790,7 +836,8 @@ class CPUTest
 
         // then
         verify(clock, times(6)).nextCycle();
-        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.of(0x1234)),
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.of(0x1234)),
                   () -> assertThat(stack.isEmpty()).isTrue(),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
@@ -813,6 +860,7 @@ class CPUTest
         // then
         verify(clock, times(4)).nextCycle();
         verify(writer).write(target, Value.ofHex(acc));
-        assertThat(cpu.getFlags()).isEqualTo(flags);
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 }
