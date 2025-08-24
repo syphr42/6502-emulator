@@ -352,11 +352,11 @@ class CPUTest
     }
 
     @ParameterizedTest
-    @CsvSource({"0001, 10, 1, 0003, 2",
-                "0001, 10, 0, 0013, 3",
-                "00FD, 02, 0, 0101, 4",
-                "0000, FD, 0, 00FF, 3",
-                "FFFD, 01, 0, 0000, 4"})
+    @CsvSource({"0001, 10, 0, 0003, 2",
+                "0001, 10, 1, 0013, 3",
+                "00FD, 02, 1, 0101, 4",
+                "0000, FD, 1, 00FF, 3",
+                "FFFD, 01, 1, 0000, 4"})
     void execute_BMI_ProgramCounterRelative(String start,
                                             String displacement,
                                             int negative,
@@ -401,6 +401,36 @@ class CPUTest
 
         reset(clock);
         setNextOp(bne(relative(Value.ofHex(displacement))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0001, 10, 1, 0003, 2",
+                "0001, 10, 0, 0013, 3",
+                "00FD, 02, 0, 0101, 4",
+                "0000, FD, 0, 00FF, 3",
+                "FFFD, 01, 0, 0000, 4"})
+    void execute_BPL_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int negative,
+                                            String expectedPC,
+                                            int expectedCycles)
+    {
+        // given
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
+
+        Flags flags = cpu.getFlags().toBuilder().negative(negative != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
+        setNextOp(bpl(relative(Value.ofHex(displacement))));
 
         // when
         cpu.executeNext();

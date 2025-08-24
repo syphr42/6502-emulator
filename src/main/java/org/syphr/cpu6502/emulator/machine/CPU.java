@@ -116,6 +116,7 @@ public class CPU
             case 0x09 -> ora(immediate(programManager.next()));
             case 0x0A -> asl(accumulator());
             case 0x0D -> ora(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x10 -> bpl(relative(programManager.next()));
             case 0x1A -> inc(accumulator());
             case 0x20 -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
             case 0x2C -> bit(absolute(Address.of(programManager.next(), programManager.next())));
@@ -187,8 +188,9 @@ public class CPU
                     flags = flags.toBuilder().zero(true).build();
                 }
             }
-            case Operation.BMI(AddressMode mode) -> branchIf(not(flags::negative), mode);
+            case Operation.BMI(AddressMode mode) -> branchIf(flags::negative, mode);
             case Operation.BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
+            case Operation.BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {

@@ -49,6 +49,10 @@ public sealed interface Operation
                 case Relative(Value offset) -> List.of(Value.of(0xD0), offset);
                 default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
+            case Operation.BPL(AddressMode mode) -> switch (mode) {
+                case Relative(Value offset) -> List.of(Value.of(0x10), offset);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
             case Operation.DEC(AddressMode mode) -> switch (mode) {
                 case Accumulator _ -> List.of(Value.of(0x3A));
                 default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
@@ -113,6 +117,9 @@ public sealed interface Operation
 
     record BNE(AddressMode mode) implements Operation {}
     static BNE bne(AddressMode mode) { return new BNE(mode); }
+
+    record BPL(AddressMode mode) implements Operation {}
+    static BPL bpl(AddressMode mode) { return new BPL(mode); }
 
     record DEC(AddressMode mode) implements Operation {}
     static DEC dec(AddressMode mode) { return new DEC(mode); }
