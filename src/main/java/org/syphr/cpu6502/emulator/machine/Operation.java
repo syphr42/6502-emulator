@@ -11,7 +11,6 @@ public sealed interface Operation
 
     AddressMode mode();
 
-    // @formatter:off
     record ADC(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x6D;
@@ -26,7 +25,6 @@ public sealed interface Operation
             });
         }
     }
-    static ADC adc(AddressMode mode) { return new ADC(mode); }
 
     record AND(AddressMode mode) implements Operation
     {
@@ -42,7 +40,6 @@ public sealed interface Operation
             });
         }
     }
-    static AND and(AddressMode mode) { return new AND(mode); }
 
     record ASL(AddressMode mode) implements Operation
     {
@@ -56,7 +53,6 @@ public sealed interface Operation
             });
         }
     }
-    static ASL asl(AddressMode mode) { return new ASL(mode); }
 
     record BCC(AddressMode mode) implements Operation
     {
@@ -70,7 +66,6 @@ public sealed interface Operation
             });
         }
     }
-    static BCC bcc(AddressMode mode) { return new BCC(mode); }
 
     record BCS(AddressMode mode) implements Operation
     {
@@ -84,7 +79,6 @@ public sealed interface Operation
             });
         }
     }
-    static BCS bcs(AddressMode mode) { return new BCS(mode); }
 
     record BEQ(AddressMode mode) implements Operation
     {
@@ -98,7 +92,6 @@ public sealed interface Operation
             });
         }
     }
-    static BEQ beq(AddressMode mode) { return new BEQ(mode); }
 
     record BIT(AddressMode mode) implements Operation
     {
@@ -114,7 +107,6 @@ public sealed interface Operation
             });
         }
     }
-    static BIT bit(AddressMode mode) { return new BIT(mode); }
 
     record BMI(AddressMode mode) implements Operation
     {
@@ -128,7 +120,6 @@ public sealed interface Operation
             });
         }
     }
-    static BMI bmi(AddressMode mode) { return new BMI(mode); }
 
     record BNE(AddressMode mode) implements Operation
     {
@@ -142,7 +133,6 @@ public sealed interface Operation
             });
         }
     }
-    static BNE bne(AddressMode mode) { return new BNE(mode); }
 
     record BPL(AddressMode mode) implements Operation
     {
@@ -156,7 +146,6 @@ public sealed interface Operation
             });
         }
     }
-    static BPL bpl(AddressMode mode) { return new BPL(mode); }
 
     record BRA(AddressMode mode) implements Operation
     {
@@ -170,7 +159,6 @@ public sealed interface Operation
             });
         }
     }
-    static BRA bra(AddressMode mode) { return new BRA(mode); }
 
     record DEC(AddressMode mode) implements Operation
     {
@@ -184,7 +172,6 @@ public sealed interface Operation
             });
         }
     }
-    static DEC dec(AddressMode mode) { return new DEC(mode); }
 
     record INC(AddressMode mode) implements Operation
     {
@@ -198,7 +185,6 @@ public sealed interface Operation
             });
         }
     }
-    static INC inc(AddressMode mode) { return new INC(mode); }
 
     record JMP(AddressMode mode) implements Operation
     {
@@ -212,7 +198,6 @@ public sealed interface Operation
             });
         }
     }
-    static JMP jmp(AddressMode mode) { return new JMP(mode); }
 
     record JSR(AddressMode mode) implements Operation
     {
@@ -226,7 +211,6 @@ public sealed interface Operation
             });
         }
     }
-    static JSR jsr(AddressMode mode) { return new JSR(mode); }
 
     record LDA(AddressMode mode) implements Operation
     {
@@ -242,7 +226,6 @@ public sealed interface Operation
             });
         }
     }
-    static LDA lda(AddressMode mode) { return new LDA(mode); }
 
     record NOP() implements Operation
     {
@@ -258,7 +241,6 @@ public sealed interface Operation
             return Value.of(IMPLIED);
         }
     }
-    static NOP nop() { return new NOP(); }
 
     record ORA(AddressMode mode) implements Operation
     {
@@ -274,7 +256,6 @@ public sealed interface Operation
             });
         }
     }
-    static ORA ora(AddressMode mode) { return new ORA(mode); }
 
     record PHA() implements Operation
     {
@@ -290,7 +271,6 @@ public sealed interface Operation
             return Value.of(STACK);
         }
     }
-    static PHA pha() { return new PHA(); }
 
     record PLA() implements Operation
     {
@@ -306,7 +286,6 @@ public sealed interface Operation
             return Value.of(STACK);
         }
     }
-    static PLA pla() { return new PLA(); }
 
     record RTS() implements Operation
     {
@@ -322,7 +301,6 @@ public sealed interface Operation
             return Value.of(STACK);
         }
     }
-    static RTS rts() { return new RTS(); }
 
     record STA(AddressMode mode) implements Operation
     {
@@ -336,6 +314,29 @@ public sealed interface Operation
             });
         }
     }
+
+    // @formatter:off
+    static ADC adc(AddressMode mode) { return new ADC(mode); }
+    static AND and(AddressMode mode) { return new AND(mode); }
+    static ASL asl(AddressMode mode) { return new ASL(mode); }
+    static BCC bcc(AddressMode mode) { return new BCC(mode); }
+    static BCS bcs(AddressMode mode) { return new BCS(mode); }
+    static BEQ beq(AddressMode mode) { return new BEQ(mode); }
+    static BIT bit(AddressMode mode) { return new BIT(mode); }
+    static BMI bmi(AddressMode mode) { return new BMI(mode); }
+    static BNE bne(AddressMode mode) { return new BNE(mode); }
+    static BPL bpl(AddressMode mode) { return new BPL(mode); }
+    static BRA bra(AddressMode mode) { return new BRA(mode); }
+    static DEC dec(AddressMode mode) { return new DEC(mode); }
+    static INC inc(AddressMode mode) { return new INC(mode); }
+    static JMP jmp(AddressMode mode) { return new JMP(mode); }
+    static LDA lda(AddressMode mode) { return new LDA(mode); }
+    static JSR jsr(AddressMode mode) { return new JSR(mode); }
+    static NOP nop() { return new NOP(); }
+    static ORA ora(AddressMode mode) { return new ORA(mode); }
+    static PHA pha() { return new PHA(); }
+    static PLA pla() { return new PLA(); }
+    static RTS rts() { return new RTS(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on
 
