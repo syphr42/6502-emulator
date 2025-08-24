@@ -160,6 +160,32 @@ public sealed interface Operation
         }
     }
 
+    record BVC(AddressMode mode) implements Operation
+    {
+        public static final byte RELATIVE = (byte) 0x50;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Relative _ -> RELATIVE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
+    record BVS(AddressMode mode) implements Operation
+    {
+        public static final byte RELATIVE = (byte) 0x70;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Relative _ -> RELATIVE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record DEC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x3A;
@@ -327,6 +353,8 @@ public sealed interface Operation
     static BNE bne(AddressMode mode) { return new BNE(mode); }
     static BPL bpl(AddressMode mode) { return new BPL(mode); }
     static BRA bra(AddressMode mode) { return new BRA(mode); }
+    static BVC bvc(AddressMode mode) { return new BVC(mode); }
+    static BVS bvs(AddressMode mode) { return new BVS(mode); }
     static DEC dec(AddressMode mode) { return new DEC(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }

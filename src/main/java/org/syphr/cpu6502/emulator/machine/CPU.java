@@ -127,6 +127,8 @@ public class CPU
             case BNE.RELATIVE -> bne(relative(programManager.next()));
             case BPL.RELATIVE -> bpl(relative(programManager.next()));
             case BRA.RELATIVE -> bra(relative(programManager.next()));
+            case BVC.RELATIVE -> bvc(relative(programManager.next()));
+            case BVS.RELATIVE -> bvs(relative(programManager.next()));
             case DEC.ACCUMULATOR -> dec(accumulator());
             case INC.ACCUMULATOR -> inc(accumulator());
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
@@ -193,6 +195,8 @@ public class CPU
             case Operation.BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
             case Operation.BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
             case Operation.BRA(AddressMode mode) -> branchIf(() -> true, mode);
+            case Operation.BVC(AddressMode mode) -> branchIf(not(flags::overflow), mode);
+            case Operation.BVS(AddressMode mode) -> branchIf(flags::overflow, mode);
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {
