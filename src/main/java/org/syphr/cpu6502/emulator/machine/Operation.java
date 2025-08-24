@@ -41,6 +41,10 @@ public sealed interface Operation
                 case Immediate(Value v) -> List.of(Value.of(0x89), v);
                 default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
             };
+            case Operation.BMI(AddressMode mode) -> switch (mode) {
+                case Relative(Value offset) -> List.of(Value.of(0x30), offset);
+                default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+            };
             case Operation.DEC(AddressMode mode) -> switch (mode) {
                 case Accumulator _ -> List.of(Value.of(0x3A));
                 default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
@@ -99,6 +103,9 @@ public sealed interface Operation
 
     record BIT(AddressMode mode) implements Operation {}
     static BIT bit(AddressMode mode) { return new BIT(mode); }
+
+    record BMI(AddressMode mode) implements Operation {}
+    static BMI bmi(AddressMode mode) { return new BMI(mode); }
 
     record DEC(AddressMode mode) implements Operation {}
     static DEC dec(AddressMode mode) { return new DEC(mode); }

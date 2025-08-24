@@ -121,6 +121,7 @@ public class CPU
             case 0x2C -> bit(absolute(Address.of(programManager.next(), programManager.next())));
             case 0x29 -> and(immediate(programManager.next()));
             case 0x2D -> and(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x30 -> bmi(relative(programManager.next()));
             case 0x3A -> dec(accumulator());
             case 0x48 -> pha();
             case 0x4C -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
@@ -185,6 +186,7 @@ public class CPU
                     flags = flags.toBuilder().zero(true).build();
                 }
             }
+            case Operation.BMI(AddressMode mode) -> branchIf(not(flags::negative), mode);
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {

@@ -141,6 +141,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.of(0b1100));
+
         Flags flags = cpu.getFlags();
 
         Address target = Address.of(0x1234);
@@ -168,6 +169,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(and(immediate(Value.ofHex(input))));
@@ -195,6 +197,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofBits(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(asl(accumulator()));
@@ -226,9 +229,11 @@ class CPUTest
     {
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
-        reset(clock);
 
+        Flags flags = cpu.getFlags().toBuilder().carry(carry != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
         setNextOp(bcc(relative(Value.ofHex(displacement))));
 
         // when
@@ -236,7 +241,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
@@ -253,9 +259,11 @@ class CPUTest
     {
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
-        reset(clock);
 
+        Flags flags = cpu.getFlags().toBuilder().carry(carry != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
         setNextOp(bcs(relative(Value.ofHex(displacement))));
 
         // when
@@ -263,7 +271,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
@@ -280,9 +289,11 @@ class CPUTest
     {
         // given
         cpu.execute(jmp(absolute(Address.ofHex(start))));
-        cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
-        reset(clock);
 
+        Flags flags = cpu.getFlags().toBuilder().zero(zero != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
         setNextOp(beq(relative(Value.ofHex(displacement))));
 
         // when
@@ -290,7 +301,8 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC));
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
@@ -303,6 +315,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         Address target = Address.of(0x1234);
@@ -325,6 +338,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(bit(immediate(Value.ofHex(input))));
@@ -338,6 +352,36 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"0001, 10, 1, 0003, 2",
+                "0001, 10, 0, 0013, 3",
+                "00FD, 02, 0, 0101, 4",
+                "0000, FD, 0, 00FF, 3",
+                "FFFD, 01, 0, 0000, 4"})
+    void execute_BMI_ProgramCounterRelative(String start,
+                                            String displacement,
+                                            int negative,
+                                            String expectedPC,
+                                            int expectedCycles)
+    {
+        // given
+        cpu.execute(jmp(absolute(Address.ofHex(start))));
+
+        Flags flags = cpu.getFlags().toBuilder().negative(negative != 0).build();
+        cpu.setFlags(flags);
+
+        reset(clock);
+        setNextOp(bmi(relative(Value.ofHex(displacement))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(expectedCycles)).nextCycle();
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.ofHex(expectedPC)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})
@@ -345,6 +389,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(dec(accumulator()));
@@ -369,6 +414,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(inc(accumulator()));
@@ -389,6 +435,8 @@ class CPUTest
     void execute_JMP_Absolute()
     {
         // given
+        Flags flags = cpu.getFlags();
+
         Address address = Address.of(0x1234);
         setNextOp(jmp(absolute(address)));
 
@@ -397,7 +445,8 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertThat(cpu.getProgramCounter()).isEqualTo(address);
+        assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(address),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @Test
@@ -406,8 +455,10 @@ class CPUTest
         // given
         var start = Address.of(0x1234);
         cpu.execute(jmp(absolute(start)));
-        reset(clock);
 
+        Flags flags = cpu.getFlags();
+
+        reset(clock);
         var target = Address.of(0x3000);
         setNextOp(jsr(absolute(target)));
 
@@ -417,7 +468,8 @@ class CPUTest
         // then
         verify(clock, times(6)).nextCycle();
         assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(target),
-                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.plus(Value.of(2))));
+                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.plus(Value.of(2))),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @Test
@@ -425,6 +477,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ZERO);
+
         Flags flags = cpu.getFlags();
 
         Address target = Address.of(0x1234);
@@ -450,6 +503,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ZERO);
+
         Flags flags = cpu.getFlags();
 
         setNextOp(lda(immediate(Value.ofHex(input))));
@@ -470,6 +524,8 @@ class CPUTest
     void execute_NOP_Immediate()
     {
         // given
+        Flags flags = cpu.getFlags();
+
         setNextOp(nop());
 
         // when
@@ -477,6 +533,7 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
+        assertThat(cpu.getFlags()).isEqualTo(flags);
     }
 
     @Test
@@ -484,6 +541,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.of(0b1100));
+
         Flags flags = cpu.getFlags();
 
         Address target = Address.of(0x1234);
@@ -511,6 +569,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
         Flags flags = cpu.getFlags();
 
         setNextOp(ora(immediate(Value.ofHex(input))));
@@ -534,6 +593,8 @@ class CPUTest
         // given
         accumulator.store(Value.ofHex(acc));
 
+        Flags flags = cpu.getFlags();
+
         setNextOp(pha());
 
         // when
@@ -541,7 +602,8 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertThat(stack.pop()).isEqualTo(Value.ofHex(acc));
+        assertAll(() -> assertThat(stack.pop()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
@@ -576,8 +638,10 @@ class CPUTest
         // given
         stack.push(Value.of(0x12));
         stack.push(Value.of(0x33));
-        reset(clock);
 
+        Flags flags = cpu.getFlags();
+
+        reset(clock);
         setNextOp(rts());
 
         // when
@@ -586,7 +650,8 @@ class CPUTest
         // then
         verify(clock, times(6)).nextCycle();
         assertAll(() -> assertThat(cpu.getProgramCounter()).isEqualTo(Address.of(0x1234)),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+                  () -> assertThat(stack.isEmpty()).isTrue(),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags));
     }
 
     @ParameterizedTest
@@ -595,6 +660,8 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
+
+        Flags flags = cpu.getFlags();
 
         var target = Address.of(0x1234);
         setNextOp(sta(absolute(target)));
@@ -605,5 +672,6 @@ class CPUTest
         // then
         verify(clock, times(4)).nextCycle();
         verify(writer).write(target, Value.ofHex(acc));
+        assertThat(cpu.getFlags()).isEqualTo(flags);
     }
 }
