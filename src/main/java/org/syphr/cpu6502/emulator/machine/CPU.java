@@ -130,6 +130,7 @@ public class CPU
             case 0x68 -> pla();
             case 0x69 -> adc(immediate(programManager.next()));
             case 0x6D -> adc(absolute(Address.of(programManager.next(), programManager.next())));
+            case (byte) 0x80 -> bra(relative(programManager.next()));
             case (byte) 0x89 -> bit(immediate(programManager.next()));
             case (byte) 0x8D -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             case (byte) 0x90 -> bcc(relative(programManager.next()));
@@ -191,6 +192,7 @@ public class CPU
             case Operation.BMI(AddressMode mode) -> branchIf(flags::negative, mode);
             case Operation.BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
             case Operation.BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
+            case Operation.BRA(AddressMode mode) -> branchIf(() -> true, mode);
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {
