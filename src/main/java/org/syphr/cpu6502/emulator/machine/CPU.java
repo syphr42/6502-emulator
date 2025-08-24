@@ -118,6 +118,7 @@ public class CPU
             case 0x0D -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case 0x1A -> inc(accumulator());
             case 0x20 -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
+            case 0x2C -> bit(absolute(Address.of(programManager.next(), programManager.next())));
             case 0x29 -> and(immediate(programManager.next()));
             case 0x2D -> and(absolute(Address.of(programManager.next(), programManager.next())));
             case 0x3A -> dec(accumulator());
@@ -127,6 +128,7 @@ public class CPU
             case 0x68 -> pla();
             case 0x69 -> adc(immediate(programManager.next()));
             case 0x6D -> adc(absolute(Address.of(programManager.next(), programManager.next())));
+            case (byte) 0x89 -> bit(immediate(programManager.next()));
             case (byte) 0x8D -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             case (byte) 0x90 -> bcc(relative(programManager.next()));
             case (byte) 0xA9 -> lda(immediate(programManager.next()));
@@ -155,8 +157,8 @@ public class CPU
             case Operation.ASL(AddressMode mode) -> {
                 switch (mode) {
                     case Absolute(Address address) -> {
+                        reader.read(address); // throw-away read burns a cycle
                         Value value = reader.read(address);
-                        writer.write(address, value); // throw-away write burns a cycle
                         writer.write(address, shiftLeft(value));
                     }
                     case Accumulator _ -> {
@@ -169,6 +171,20 @@ public class CPU
             case Operation.BCC(AddressMode mode) -> branchIf(not(flags::carry), mode);
             case Operation.BCS(AddressMode mode) -> branchIf(flags::carry, mode);
             case Operation.BEQ(AddressMode mode) -> branchIf(flags::zero, mode);
+            case Operation.BIT(AddressMode mode) -> {
+                Value value = toValue(mode);
+                if (!(mode instanceof Immediate)) {
+                    flags = flags.toBuilder()
+                                 .negative((value.data() & 0x80) != 0)
+                                 .overflow((value.data() & 0x40) != 0)
+                                 .build();
+                }
+
+                Value and = accumulator.value().and(value);
+                if (Value.ZERO.equals(and)) {
+                    flags = flags.toBuilder().zero(true).build();
+                }
+            }
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> {
@@ -277,13 +293,13 @@ public class CPU
         boolean carry = unsignedResult > 255;
 
         register.store(Value.of(unsignedResult));
-        flags = Flags.builder().overflow(overflow).carry(carry).build();
+        flags = flags.toBuilder().overflow(overflow).carry(carry).build();
     }
 
     private Value shiftLeft(Value value)
     {
         byte r = value.data();
-        flags = Flags.builder().carry((r & 0x80) != 0).build();
+        flags = flags.toBuilder().carry((r & 0x80) != 0).build();
 
         return Value.of(r << 1);
     }
