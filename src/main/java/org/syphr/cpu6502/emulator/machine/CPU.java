@@ -218,7 +218,7 @@ public class CPU
             }
             case Operation.JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case Operation.JSR(AddressMode mode) -> {
-                clock.nextCycle(); // extra clock cycle for "internal buffering"?
+                clock.nextCycle(); // burn a cycle for internal operation
                 stack.pushAll(getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
@@ -228,13 +228,13 @@ public class CPU
                     updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case Operation.PHA _ -> pushToStack(accumulator);
             case Operation.PLA _ -> {
-                clock.nextCycle(); // unexplained
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(accumulator, this::pullFromStack);
             }
             case Operation.RTS _ -> {
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
                 var address = Address.of(stack.pop(), stack.pop());
-                clock.nextCycle(); // unexplained
-                clock.nextCycle(); // unexplained
+                clock.nextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
             case Operation.STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
