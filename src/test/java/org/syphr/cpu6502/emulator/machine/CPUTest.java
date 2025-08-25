@@ -21,6 +21,8 @@ import static org.syphr.cpu6502.emulator.machine.Operation.*;
 class CPUTest
 {
     Register accumulator;
+    Register x;
+    Register y;
     Stack stack;
 
     @Mock
@@ -38,9 +40,11 @@ class CPUTest
     void beforeEach()
     {
         accumulator = new Register();
+        x = new Register();
+        y = new Register();
         stack = new Stack(256, clock);
 
-        cpu = new CPU(accumulator, stack, clock, reader, writer);
+        cpu = new CPU(accumulator, x, y, stack, clock, reader, writer);
     }
 
     private void setNextOp(Operation op)
@@ -696,6 +700,126 @@ class CPUTest
         // then
         verify(clock, times(2)).nextCycle();
         assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CPX_Absolute(String xVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        Flags flags = cpu.getFlags();
+
+        Address target = Address.of(0x1234);
+        Value value = Value.ofHex(input);
+        when(reader.read(target)).thenReturn(value);
+
+        setNextOp(cpx(absolute(target)));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertAll(() -> assertThat(x.value()).isEqualTo(Value.ofHex(xVal)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CPX_Immediate(String xVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        Flags flags = cpu.getFlags();
+
+        setNextOp(cpx(immediate(Value.ofHex(input))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(x.value()).isEqualTo(Value.ofHex(xVal)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CPY_Absolute(String yVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        Flags flags = cpu.getFlags();
+
+        Address target = Address.of(0x1234);
+        Value value = Value.ofHex(input);
+        when(reader.read(target)).thenReturn(value);
+
+        setNextOp(cpy(absolute(target)));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertAll(() -> assertThat(y.value()).isEqualTo(Value.ofHex(yVal)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CPY_Immediate(String yVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        Flags flags = cpu.getFlags();
+
+        setNextOp(cpy(immediate(Value.ofHex(input))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(y.value()).isEqualTo(Value.ofHex(yVal)),
                   () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
                                                                   .negative(isNegative)
                                                                   .zero(isZero)

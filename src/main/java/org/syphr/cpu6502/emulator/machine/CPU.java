@@ -21,6 +21,10 @@ public class CPU
 
     @ToString.Include
     private final Register accumulator;
+    @ToString.Include
+    private final Register x;
+    @ToString.Include
+    private final Register y;
 
     @ToString.Include
     private final Stack stack;
@@ -53,12 +57,14 @@ public class CPU
 
     private CPU(int stackSize, Clock clock, Reader reader, Writer writer)
     {
-        this(new Register(), new Stack(stackSize, clock), clock, reader, writer);
+        this(new Register(), new Register(), new Register(), new Stack(stackSize, clock), clock, reader, writer);
     }
 
-    CPU(Register accumulator, Stack stack, Clock clock, Reader reader, Writer writer)
+    CPU(Register accumulator, Register x, Register y, Stack stack, Clock clock, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
+        this.x = x;
+        this.y = y;
         this.stack = stack;
         this.reader = new ClockedReader(reader, clock);
         this.writer = new ClockedWriter(writer, clock);
@@ -137,6 +143,10 @@ public class CPU
             case CLV.IMPLIED -> { dummyRead(); yield clv(); }
             case CMP.ABSOLUTE -> cmp(absolute(Address.of(programManager.next(), programManager.next())));
             case CMP.IMMEDIATE -> cmp(immediate(programManager.next()));
+            case CPX.ABSOLUTE -> cpx(absolute(Address.of(programManager.next(), programManager.next())));
+            case CPX.IMMEDIATE -> cpx(immediate(programManager.next()));
+            case CPY.ABSOLUTE -> cpy(absolute(Address.of(programManager.next(), programManager.next())));
+            case CPY.IMMEDIATE -> cpy(immediate(programManager.next()));
             case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
             case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
@@ -206,15 +216,9 @@ public class CPU
             case CLD _ -> flags = flags.toBuilder().decimal(false).build();
             case CLI _ -> flags = flags.toBuilder().irqDisable(false).build();
             case CLV _ -> flags = flags.toBuilder().overflow(false).build();
-            case CMP(AddressMode mode) -> {
-                Value value = toValue(mode);
-                int compare = Byte.compareUnsigned(accumulator.value().data(), value.data());
-                flags = flags.toBuilder()
-                             .negative((compare & 0x80) != 0)
-                             .zero(compare == 0)
-                             .carry(compare >= 0)
-                             .build();
-            }
+            case CMP(AddressMode mode) -> compare(accumulator, toValue(mode));
+            case CPX(AddressMode mode) -> compare(x, toValue(mode));
+            case CPY(AddressMode mode) -> compare(y, toValue(mode));
             case DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::decrement);
@@ -340,6 +344,16 @@ public class CPU
         }
 
         return target;
+    }
+
+    private void compare(Register register, Value value)
+    {
+        int compare = Byte.compareUnsigned(register.value().data(), value.data());
+        flags = flags.toBuilder()
+                     .negative((compare & 0x80) != 0)
+                     .zero(compare == 0)
+                     .carry(compare >= 0)
+                     .build();
     }
 
     private BooleanSupplier not(BooleanSupplier supplier)

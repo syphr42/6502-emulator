@@ -263,6 +263,36 @@ public sealed interface Operation
         }
     }
 
+    record CPX(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xEC;
+        public static final byte IMMEDIATE = (byte) 0xE0;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
+    record CPY(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xCC;
+        public static final byte IMMEDIATE = (byte) 0xC0;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record DEC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x3A;
@@ -437,6 +467,8 @@ public sealed interface Operation
     static CLI cli() { return new CLI(); }
     static CLV clv() { return new CLV(); }
     static CMP cmp(AddressMode mode) { return new CMP(mode); }
+    static CPX cpx(AddressMode mode) { return new CPX(mode); }
+    static CPY cpy(AddressMode mode) { return new CPY(mode); }
     static DEC dec(AddressMode mode) { return new DEC(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
