@@ -194,7 +194,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new Implied();
+            return implied();
         }
 
         public Value code()
@@ -209,7 +209,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new Implied();
+            return implied();
         }
 
         public Value code()
@@ -224,7 +224,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new Implied();
+            return implied();
         }
 
         public Value code()
@@ -239,7 +239,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new Implied();
+            return implied();
         }
 
         public Value code()
@@ -366,7 +366,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new Implied();
+            return implied();
         }
 
         public Value code()
@@ -396,7 +396,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new AddressMode.Stack();
+            return stack();
         }
 
         public Value code()
@@ -411,7 +411,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new AddressMode.Stack();
+            return stack();
         }
 
         public Value code()
@@ -426,7 +426,7 @@ public sealed interface Operation
 
         public AddressMode mode()
         {
-            return new AddressMode.Stack();
+            return stack();
         }
 
         public Value code()
