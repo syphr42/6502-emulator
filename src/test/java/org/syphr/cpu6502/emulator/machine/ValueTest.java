@@ -114,4 +114,66 @@ class ValueTest
         // then
         assertThat(result).isEqualTo(Value.class.getSimpleName() + "[0x12]");
     }
+
+    @ParameterizedTest
+    @CsvSource({"00, FF",
+                "01, 00"})
+    void decrement(String init, String expected)
+    {
+        // given
+        var value = Value.ofHex(init);
+
+        // when
+        Value result = value.decrement();
+
+        // then
+        assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 01",
+                "FF, 00"})
+    void increment(String init, String expected)
+    {
+        // given
+        var value = Value.ofHex(init);
+
+        // when
+        Value result = value.increment();
+
+        // then
+        assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, false",
+                "01, false",
+                "FF, true"})
+    void isNegative(String init, boolean expected)
+    {
+        // given
+        var value = Value.ofHex(init);
+
+        // when
+        boolean result = value.isNegative();
+
+        // then
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, true",
+                "01, false",
+                "FF, false"})
+    void isZero(String init, boolean expected)
+    {
+        // given
+        var value = Value.ofHex(init);
+
+        // when
+        boolean result = value.isZero();
+
+        // then
+        assertThat(result).isEqualTo(expected);
+    }
 }

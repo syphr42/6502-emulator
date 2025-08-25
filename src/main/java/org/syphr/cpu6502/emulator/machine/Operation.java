@@ -248,6 +248,21 @@ public sealed interface Operation
         }
     }
 
+    record CMP(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xCD;
+        public static final byte IMMEDIATE = (byte) 0xC9;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record DEC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x3A;
@@ -421,6 +436,7 @@ public sealed interface Operation
     static CLD cld() { return new CLD(); }
     static CLI cli() { return new CLI(); }
     static CLV clv() { return new CLV(); }
+    static CMP cmp(AddressMode mode) { return new CMP(mode); }
     static DEC dec(AddressMode mode) { return new DEC(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }

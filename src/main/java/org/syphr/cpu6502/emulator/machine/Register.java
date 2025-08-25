@@ -26,12 +26,12 @@ public class Register
 
     public boolean isNegative()
     {
-        return value.data() < 0;
+        return value.isNegative();
     }
 
     public boolean isZero()
     {
-        return value.data() == 0;
+        return value.isZero();
     }
 
     public void store(Value value)

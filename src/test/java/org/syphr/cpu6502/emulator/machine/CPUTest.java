@@ -644,6 +644,66 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CMP_Absolute(String acc, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+
+        Flags flags = cpu.getFlags();
+
+        Address target = Address.of(0x1234);
+        Value value = Value.ofHex(input);
+        when(reader.read(target)).thenReturn(value);
+
+        setNextOp(cmp(absolute(target)));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true, true",
+                "00, FF, false, false, false",
+                "FF, FF, false, true, true",
+                "FF, 00, true, false, true",
+                "04, 02, false, false, true"})
+    void execute_CMP_Immediate(String acc, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+
+        Flags flags = cpu.getFlags();
+
+        setNextOp(cmp(immediate(Value.ofHex(input))));
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(Value.ofHex(acc)),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder()
+                                                                  .negative(isNegative)
+                                                                  .zero(isZero)
+                                                                  .carry(isCarry)
+                                                                  .build()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})

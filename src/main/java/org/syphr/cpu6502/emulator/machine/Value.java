@@ -44,6 +44,16 @@ public record Value(byte data)
         return Value.of(data - 1);
     }
 
+    public boolean isNegative()
+    {
+        return data < 0;
+    }
+
+    public boolean isZero()
+    {
+        return data == 0;
+    }
+
     @Override
     public String toString()
     {

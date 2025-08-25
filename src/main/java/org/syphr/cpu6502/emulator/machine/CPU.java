@@ -135,6 +135,8 @@ public class CPU
             case CLD.IMPLIED -> { dummyRead(); yield cld(); }
             case CLI.IMPLIED -> { dummyRead(); yield cli(); }
             case CLV.IMPLIED -> { dummyRead(); yield clv(); }
+            case CMP.ABSOLUTE -> cmp(absolute(Address.of(programManager.next(), programManager.next())));
+            case CMP.IMMEDIATE -> cmp(immediate(programManager.next()));
             case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
             case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
@@ -156,31 +158,31 @@ public class CPU
     void execute(Operation operation)
     {
         switch (operation) {
-            case Operation.ADC(AddressMode mode) -> {
+            case ADC(AddressMode mode) -> {
                 Value value = toValue(mode);
                 updateRegister(accumulator, r -> addWithCarry(r, value));
             }
-            case Operation.AND(AddressMode mode) -> {
+            case AND(AddressMode mode) -> {
                 Value value = toValue(mode);
                 updateRegister(accumulator, r -> r.store(r.value().and(value)));
             }
-            case Operation.ASL(AddressMode mode) -> {
+            case ASL(AddressMode mode) -> {
                 switch (mode) {
                     case Absolute(Address address) -> {
                         reader.read(address); // throw-away read burns a cycle
                         Value input = reader.read(address);
                         Value output = shiftLeft(input);
                         writer.write(address, output);
-                        flags = flags.toBuilder().negative(output.data() < 0).zero(output.data() == 0).build();
+                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
                     }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.BCC(AddressMode mode) -> branchIf(not(flags::carry), mode);
-            case Operation.BCS(AddressMode mode) -> branchIf(flags::carry, mode);
-            case Operation.BEQ(AddressMode mode) -> branchIf(flags::zero, mode);
-            case Operation.BIT(AddressMode mode) -> {
+            case BCC(AddressMode mode) -> branchIf(not(flags::carry), mode);
+            case BCS(AddressMode mode) -> branchIf(flags::carry, mode);
+            case BEQ(AddressMode mode) -> branchIf(flags::zero, mode);
+            case BIT(AddressMode mode) -> {
                 Value value = toValue(mode);
                 if (!(mode instanceof Immediate)) {
                     flags = flags.toBuilder()
@@ -194,50 +196,58 @@ public class CPU
                     flags = flags.toBuilder().zero(true).build();
                 }
             }
-            case Operation.BMI(AddressMode mode) -> branchIf(flags::negative, mode);
-            case Operation.BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
-            case Operation.BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
-            case Operation.BRA(AddressMode mode) -> branchIf(() -> true, mode);
-            case Operation.BVC(AddressMode mode) -> branchIf(not(flags::overflow), mode);
-            case Operation.BVS(AddressMode mode) -> branchIf(flags::overflow, mode);
-            case Operation.CLC _ -> flags = flags.toBuilder().carry(false).build();
-            case Operation.CLD _ -> flags = flags.toBuilder().decimal(false).build();
-            case Operation.CLI _ -> flags = flags.toBuilder().irqDisable(false).build();
-            case Operation.CLV _ -> flags = flags.toBuilder().overflow(false).build();
-            case Operation.DEC(AddressMode mode) -> {
+            case BMI(AddressMode mode) -> branchIf(flags::negative, mode);
+            case BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
+            case BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
+            case BRA(AddressMode mode) -> branchIf(() -> true, mode);
+            case BVC(AddressMode mode) -> branchIf(not(flags::overflow), mode);
+            case BVS(AddressMode mode) -> branchIf(flags::overflow, mode);
+            case CLC _ -> flags = flags.toBuilder().carry(false).build();
+            case CLD _ -> flags = flags.toBuilder().decimal(false).build();
+            case CLI _ -> flags = flags.toBuilder().irqDisable(false).build();
+            case CLV _ -> flags = flags.toBuilder().overflow(false).build();
+            case CMP(AddressMode mode) -> {
+                Value value = toValue(mode);
+                int compare = Byte.compareUnsigned(accumulator.value().data(), value.data());
+                flags = flags.toBuilder()
+                             .negative((compare & 0x80) != 0)
+                             .zero(compare == 0)
+                             .carry(compare >= 0)
+                             .build();
+            }
+            case DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::decrement);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.INC(AddressMode mode) -> {
+            case INC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::increment);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case Operation.JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
-            case Operation.JSR(AddressMode mode) -> {
+            case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
+            case JSR(AddressMode mode) -> {
                 clock.nextCycle(); // burn a cycle for internal operation
                 stack.pushAll(getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
-            case Operation.LDA(AddressMode mode) -> updateRegister(accumulator, r -> accumulator.store(toValue(mode)));
-            case Operation.NOP _ -> {}
-            case Operation.ORA(AddressMode mode) ->
-                    updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
-            case Operation.PHA _ -> pushToStack(accumulator);
-            case Operation.PLA _ -> {
+            case LDA(AddressMode mode) -> updateRegister(accumulator, r -> accumulator.store(toValue(mode)));
+            case NOP _ -> {}
+            case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
+            case PHA _ -> pushToStack(accumulator);
+            case PLA _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(accumulator, this::pullFromStack);
             }
-            case Operation.RTS _ -> {
+            case RTS _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 var address = Address.of(stack.pop(), stack.pop());
                 clock.nextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
-            case Operation.STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
+            case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
         }
     }
 
