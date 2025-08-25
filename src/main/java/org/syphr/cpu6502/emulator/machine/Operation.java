@@ -188,6 +188,66 @@ public sealed interface Operation
         }
     }
 
+    record CLC() implements Operation
+    {
+        public static final byte IMPLIED = 0x18;
+
+        public AddressMode mode()
+        {
+            return new Implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record CLD() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xD8;
+
+        public AddressMode mode()
+        {
+            return new Implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record CLI() implements Operation
+    {
+        public static final byte IMPLIED = 0x58;
+
+        public AddressMode mode()
+        {
+            return new Implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record CLV() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xB8;
+
+        public AddressMode mode()
+        {
+            return new Implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     record DEC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x3A;
@@ -357,6 +417,10 @@ public sealed interface Operation
     static BRA bra(AddressMode mode) { return new BRA(mode); }
     static BVC bvc(AddressMode mode) { return new BVC(mode); }
     static BVS bvs(AddressMode mode) { return new BVS(mode); }
+    static CLC clc() { return new CLC(); }
+    static CLD cld() { return new CLD(); }
+    static CLI cli() { return new CLI(); }
+    static CLV clv() { return new CLV(); }
     static DEC dec(AddressMode mode) { return new DEC(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }

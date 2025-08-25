@@ -556,6 +556,94 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_CLC_Implied(boolean carry)
+    {
+        // given
+        Value accValue = accumulator.value();
+
+        Flags flags = cpu.getFlags().toBuilder().carry(carry).build();
+        cpu.setFlags(flags);
+
+        setNextOp(clc());
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(stack.isEmpty()).isTrue(),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().carry(false).build()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_CLD_Implied(boolean decimal)
+    {
+        // given
+        Value accValue = accumulator.value();
+
+        Flags flags = cpu.getFlags().toBuilder().decimal(decimal).build();
+        cpu.setFlags(flags);
+
+        setNextOp(cld());
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(stack.isEmpty()).isTrue(),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().decimal(false).build()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_CLI_Implied(boolean irqDisable)
+    {
+        // given
+        Value accValue = accumulator.value();
+
+        Flags flags = cpu.getFlags().toBuilder().irqDisable(irqDisable).build();
+        cpu.setFlags(flags);
+
+        setNextOp(cli());
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(stack.isEmpty()).isTrue(),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().irqDisable(false).build()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_CLV_Implied(boolean overflow)
+    {
+        // given
+        Value accValue = accumulator.value();
+
+        Flags flags = cpu.getFlags().toBuilder().overflow(overflow).build();
+        cpu.setFlags(flags);
+
+        setNextOp(clv());
+
+        // when
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertAll(() -> assertThat(accumulator.value()).isEqualTo(accValue),
+                  () -> assertThat(stack.isEmpty()).isTrue(),
+                  () -> assertThat(cpu.getFlags()).isEqualTo(flags.toBuilder().overflow(false).build()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, FF, true, false",
                 "01, 00, false, true",
                 "FF, FE, true, false"})

@@ -113,12 +113,13 @@ public class CPU
     {
         Value opCode = programManager.next();
         return switch (opCode.data()) {
+            // @formatter:off
             case ADC.ABSOLUTE -> adc(absolute(Address.of(programManager.next(), programManager.next())));
             case ADC.IMMEDIATE -> adc(immediate(programManager.next()));
             case AND.ABSOLUTE -> and(absolute(Address.of(programManager.next(), programManager.next())));
             case AND.IMMEDIATE -> and(immediate(programManager.next()));
             case ASL.ABSOLUTE -> asl(absolute(Address.of(programManager.next(), programManager.next())));
-            case ASL.ACCUMULATOR -> asl(accumulator());
+            case ASL.ACCUMULATOR -> { dummyRead(); yield asl(accumulator()); }
             case BCC.RELATIVE -> bcc(relative(programManager.next()));
             case BCS.RELATIVE -> bcs(relative(programManager.next()));
             case BEQ.RELATIVE -> beq(relative(programManager.next()));
@@ -130,23 +131,25 @@ public class CPU
             case BRA.RELATIVE -> bra(relative(programManager.next()));
             case BVC.RELATIVE -> bvc(relative(programManager.next()));
             case BVS.RELATIVE -> bvs(relative(programManager.next()));
-            case DEC.ACCUMULATOR -> dec(accumulator());
-            case INC.ACCUMULATOR -> inc(accumulator());
+            case CLC.IMPLIED -> { dummyRead(); yield clc(); }
+            case CLD.IMPLIED -> { dummyRead(); yield cld(); }
+            case CLI.IMPLIED -> { dummyRead(); yield cli(); }
+            case CLV.IMPLIED -> { dummyRead(); yield clv(); }
+            case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
+            case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.ABSOLUTE -> lda(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.IMMEDIATE -> lda(immediate(programManager.next()));
-            case NOP.IMPLIED -> nop();
+            case NOP.IMPLIED -> { dummyRead(); yield nop(); }
             case ORA.ABSOLUTE -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
-            case PHA.STACK -> pha();
-            case PLA.STACK -> pla();
-            case RTS.STACK -> rts();
+            case PHA.STACK -> { dummyRead(); yield pha(); }
+            case PLA.STACK -> { dummyRead(); yield pla(); }
+            case RTS.STACK -> { dummyRead(); yield rts(); }
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
-            default -> {
-                log.warn("Unsupported op code: {} (acting as NOP)", opCode);
-                yield nop();
-            }
+            default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
+            // @formatter:on
         };
     }
 
@@ -170,10 +173,7 @@ public class CPU
                         writer.write(address, output);
                         flags = flags.toBuilder().negative(output.data() < 0).zero(output.data() == 0).build();
                     }
-                    case Accumulator _ -> {
-                        dummyRead();
-                        updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
-                    }
+                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
@@ -200,21 +200,19 @@ public class CPU
             case Operation.BRA(AddressMode mode) -> branchIf(() -> true, mode);
             case Operation.BVC(AddressMode mode) -> branchIf(not(flags::overflow), mode);
             case Operation.BVS(AddressMode mode) -> branchIf(flags::overflow, mode);
+            case Operation.CLC _ -> flags = flags.toBuilder().carry(false).build();
+            case Operation.CLD _ -> flags = flags.toBuilder().decimal(false).build();
+            case Operation.CLI _ -> flags = flags.toBuilder().irqDisable(false).build();
+            case Operation.CLV _ -> flags = flags.toBuilder().overflow(false).build();
             case Operation.DEC(AddressMode mode) -> {
                 switch (mode) {
-                    case Accumulator _ -> {
-                        dummyRead();
-                        updateRegister(accumulator, Register::decrement);
-                    }
+                    case Accumulator _ -> updateRegister(accumulator, Register::decrement);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
             case Operation.INC(AddressMode mode) -> {
                 switch (mode) {
-                    case Accumulator _ -> {
-                        dummyRead();
-                        updateRegister(accumulator, Register::increment);
-                    }
+                    case Accumulator _ -> updateRegister(accumulator, Register::increment);
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
@@ -225,20 +223,15 @@ public class CPU
                 programManager.setProgramCounter(toAddress(mode));
             }
             case Operation.LDA(AddressMode mode) -> updateRegister(accumulator, r -> accumulator.store(toValue(mode)));
-            case Operation.NOP _ -> dummyRead();
+            case Operation.NOP _ -> {}
             case Operation.ORA(AddressMode mode) ->
                     updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
-            case Operation.PHA _ -> {
-                dummyRead();
-                pushToStack(accumulator);
-            }
+            case Operation.PHA _ -> pushToStack(accumulator);
             case Operation.PLA _ -> {
-                dummyRead();
                 clock.nextCycle(); // unexplained
                 updateRegister(accumulator, this::pullFromStack);
             }
             case Operation.RTS _ -> {
-                dummyRead();
                 var address = Address.of(stack.pop(), stack.pop());
                 clock.nextCycle(); // unexplained
                 clock.nextCycle(); // unexplained
