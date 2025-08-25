@@ -486,12 +486,22 @@ public sealed interface Operation
     {
         return switch (operation.mode()) {
             case Absolute(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
+            case AbsoluteIndexedIndirectX(Address a) ->
+                    Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
+            case AbsoluteIndexedX(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
+            case AbsoluteIndexedY(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
+            case AbsoluteIndirect(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
             case Accumulator _ -> List.of(operation.code());
             case Immediate(Value value) -> List.of(operation.code(), value);
             case Implied _ -> List.of(operation.code());
             case Relative(Value offset) -> List.of(operation.code(), offset);
             case AddressMode.Stack _ -> List.of(operation.code());
-            default -> throw unsupported(operation);
+            case ZeroPage(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndexedIndirectX(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndexedX(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndexedY(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndirect(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndirectIndexedY(Value offset) -> List.of(operation.code(), offset);
         };
     }
 
