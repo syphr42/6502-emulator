@@ -106,6 +106,11 @@ public class CPU
         return programManager.getProgramCounter();
     }
 
+    public CPUState getState()
+    {
+        return new CPUState(accumulator.value(), x.value(), y.value(), flags, getProgramCounter());
+    }
+
     void executeNext()
     {
         log.info("Reading next operation");
