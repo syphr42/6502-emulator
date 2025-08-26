@@ -793,6 +793,50 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00, FF, true, false", "01, 00, false, true", "FF, FE, true, false"})
+    void execute_DEX_Implied(String xVal, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        setNextOp(dex());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    Value.ofHex(expected),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, FF, true, false", "01, 00, false, true", "FF, FE, true, false"})
+    void execute_DEY_Implied(String yVal, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        setNextOp(dey());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    Value.ofHex(expected),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)));
+    }
+
+    @ParameterizedTest
     @CsvSource({"FF, 00, false, true", "00, 01, false, false", "FE, FF, true, false"})
     void execute_INC_Accumulator(String acc, String expected, boolean isNegative, boolean isZero)
     {

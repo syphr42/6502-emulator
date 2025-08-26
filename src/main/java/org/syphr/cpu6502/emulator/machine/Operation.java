@@ -306,6 +306,36 @@ public sealed interface Operation
         }
     }
 
+    record DEX() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xCA;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record DEY() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0x88;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     record INC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x1A;
@@ -470,6 +500,8 @@ public sealed interface Operation
     static CPX cpx(AddressMode mode) { return new CPX(mode); }
     static CPY cpy(AddressMode mode) { return new CPY(mode); }
     static DEC dec(AddressMode mode) { return new DEC(mode); }
+    static DEX dex() { return new DEX(); }
+    static DEY dey() { return new DEY(); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }

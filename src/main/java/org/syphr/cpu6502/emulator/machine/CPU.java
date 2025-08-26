@@ -153,6 +153,8 @@ public class CPU
             case CPY.ABSOLUTE -> cpy(absolute(Address.of(programManager.next(), programManager.next())));
             case CPY.IMMEDIATE -> cpy(immediate(programManager.next()));
             case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
+            case DEX.IMPLIED -> { dummyRead(); yield dex(); }
+            case DEY.IMPLIED -> { dummyRead(); yield dey(); }
             case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
@@ -230,6 +232,8 @@ public class CPU
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
+            case DEX _ -> updateRegister(x, Register::decrement);
+            case DEY _ -> updateRegister(y, Register::decrement);
             case INC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::increment);
