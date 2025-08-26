@@ -54,6 +54,11 @@ public record Value(byte data)
         return data == 0;
     }
 
+    public Value plus(Value other)
+    {
+        return Value.of(data + Byte.toUnsignedInt(other.data()));
+    }
+
     @Override
     public String toString()
     {

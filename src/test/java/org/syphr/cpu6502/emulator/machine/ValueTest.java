@@ -176,4 +176,22 @@ class ValueTest
         // then
         assertThat(result).isEqualTo(expected);
     }
+
+    @ParameterizedTest
+    @CsvSource({"00, 01, 01",
+                "00, FF, FF",
+                "F0, 0F, FF",
+                "FF, 01, 00",
+                "F0, 10, 00"})
+    void plus(String input, String displacement, String expected)
+    {
+        // given
+        var start = Value.ofHex(input);
+
+        // when
+        Value result = start.plus(Value.ofHex(displacement));
+
+        // then
+        assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
 }

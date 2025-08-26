@@ -259,13 +259,29 @@ public class CPU
     {
         return switch (mode) {
             case Absolute(Address address) -> address;
+            case AbsoluteIndexedIndirectX(Address address) -> {
+                var pointer = address.plus(x.value());
+                yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
+            }
+            case AbsoluteIndexedX(Address address) -> address.plus(x.value());
+            case AbsoluteIndexedY(Address address) -> address.plus(y.value());
             case AbsoluteIndirect(Address address) ->
                     Address.of(reader.read(address), reader.read(address.increment()));
             case Relative(Value displacement) -> getProgramCounter().plus(displacement);
             case ZeroPage(Value offset) -> Address.ZERO.plus(offset);
+            case ZeroPageIndexedIndirectX(Value offset) -> {
+                var pointer = Address.ZERO.plus(offset.plus(x.value()));
+                yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
+            }
+            case ZeroPageIndexedX(Value offset) -> Address.ZERO.plus(offset.plus(x.value()));
+            case ZeroPageIndexedY(Value offset) -> Address.ZERO.plus(offset.plus(y.value()));
             case ZeroPageIndirect(Value offset) -> {
-                Address address = Address.ZERO.plus(offset);
-                yield Address.of(reader.read(address), reader.read(address.increment()));
+                var pointer = Address.ZERO.plus(offset);
+                yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
+            }
+            case ZeroPageIndirectIndexedY(Value offset) -> {
+                var pointer = Address.ZERO.plus(offset);
+                yield Address.of(reader.read(pointer), reader.read(pointer.increment())).plus(y.value());
             }
             default -> throw new UnsupportedOperationException("Mode " + mode + " does not support address conversion");
         };
