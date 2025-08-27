@@ -450,6 +450,19 @@ public sealed interface Operation
         }
     }
 
+    record ROR(AddressMode mode) implements Operation
+    {
+        public static final byte ACCUMULATOR = 0x6A;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Accumulator _ -> ACCUMULATOR;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record RTS() implements Operation
     {
         public static final byte STACK = 0x60;
@@ -510,6 +523,7 @@ public sealed interface Operation
     static ORA ora(AddressMode mode) { return new ORA(mode); }
     static PHA pha() { return new PHA(); }
     static PLA pla() { return new PLA(); }
+    static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTS rts() { return new RTS(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on

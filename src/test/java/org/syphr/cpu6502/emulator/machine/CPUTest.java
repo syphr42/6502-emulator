@@ -1051,6 +1051,38 @@ class CPUTest
                   () -> assertThat(stack.isEmpty()).isTrue());
     }
 
+    @ParameterizedTest
+    @CsvSource({"00, 0, 00, false, true, false",
+                "01, 0, 00, false, true, true",
+                "00, 1, 80, true, false, false",
+                "01, 1, 80, true, false, true",
+                "FF, 0, 7F, false, false, true"})
+    void execute_ROR_Accumulator(String acc,
+                                 int carry,
+                                 String expected,
+                                 boolean isNegative,
+                                 boolean isZero,
+                                 boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+
+        setNextOp(ror(accumulator()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(1)));
+    }
+
     @Test
     void execute_RTS_Stack()
     {

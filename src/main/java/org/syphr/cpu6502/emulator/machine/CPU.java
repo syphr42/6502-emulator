@@ -165,6 +165,7 @@ public class CPU
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
             case PHA.STACK -> { dummyRead(); yield pha(); }
             case PLA.STACK -> { dummyRead(); yield pla(); }
+            case ROR.ACCUMULATOR -> { dummyRead(); yield ror(accumulator()); }
             case RTS.STACK -> { dummyRead(); yield rts(); }
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
@@ -253,6 +254,12 @@ public class CPU
             case PLA _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(accumulator, this::pullFromStack);
+            }
+            case ROR(AddressMode mode) -> {
+                switch (mode) {
+                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                }
             }
             case RTS _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
@@ -349,6 +356,15 @@ public class CPU
         flags = flags.toBuilder().carry((r & 0x80) != 0).build();
 
         return Value.of(r << 1);
+    }
+
+    private Value rotateRight(Value value)
+    {
+        byte r = value.data();
+        byte c = (byte) (flags.carryBit() << 7);
+        flags = flags.toBuilder().carry((r & 0x01) != 0).build();
+
+        return Value.of(c | (Byte.toUnsignedInt(r) >> 1));
     }
 
     private void branchIf(BooleanSupplier flag, AddressMode mode)
