@@ -1,15 +1,17 @@
 package org.syphr.cpu6502.emulator.ui;
 
 import lombok.RequiredArgsConstructor;
-import org.springframework.shell.standard.ShellComponent;
-import org.springframework.shell.standard.ShellMethod;
+import org.jspecify.annotations.Nullable;
+import org.springframework.shell.command.annotation.Command;
+import org.springframework.shell.command.annotation.Option;
 import org.syphr.cpu6502.emulator.machine.Address;
 import org.syphr.cpu6502.emulator.machine.CPU;
 import org.syphr.cpu6502.emulator.machine.ClockSpeed;
-import org.syphr.cpu6502.emulator.machine.MemoryMap;
 import org.syphr.cpu6502.emulator.machine.Operation;
 import org.syphr.cpu6502.emulator.machine.Value;
 
+import java.io.IOException;
+import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -17,14 +19,17 @@ import java.util.TreeMap;
 import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
-@ShellComponent
+@Command
 @RequiredArgsConstructor
 public class CLI
 {
-    @ShellMethod(key = "execute")
-    public void execute()
+    @Command(command = "execute")
+    public void execute(@Option(defaultValue = "2hz") String clock,
+                        @Option @Nullable Path rom,
+                        @Option @Nullable Address romStart) throws IOException
     {
-        var cpu = new CPU(ClockSpeed.ONE_HZ.times(2), createMemoryMap());
+        var clockSpeed = ClockSpeed.of(clock);
+        var cpu = new CPU(clockSpeed, createMemoryMap(romStart, rom));
 
         System.out.println("CPU initial state: " + cpu);
         try {
@@ -34,7 +39,20 @@ public class CLI
         }
     }
 
-    private MemoryMap createMemoryMap()
+    private MemoryMap createMemoryMap(@Nullable Address romStart, @Nullable Path rom) throws IOException
+    {
+        if (rom == null && romStart == null) {
+            return hardCodedMemoryMap();
+        }
+
+        if (rom == null || romStart == null) {
+            throw new IllegalArgumentException("rom and romStart must be supplied together");
+        }
+
+        return MemoryMap.of(romStart, rom);
+    }
+
+    private MemoryMap hardCodedMemoryMap()
     {
         var programStart = Address.of(0x00FB);
         List<Operation> operations = List.of(lda(immediate(Value.ZERO)),
