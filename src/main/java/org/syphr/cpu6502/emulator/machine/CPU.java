@@ -169,6 +169,7 @@ public class CPU
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
             case PHA.STACK -> { dummyRead(); yield pha(); }
             case PLA.STACK -> { dummyRead(); yield pla(); }
+            case ROR.ABSOLUTE -> ror(absolute(Address.of(programManager.next(), programManager.next())));
             case ROR.ACCUMULATOR -> { dummyRead(); yield ror(accumulator()); }
             case RTS.STACK -> { dummyRead(); yield rts(); }
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
@@ -264,6 +265,13 @@ public class CPU
             }
             case ROR(AddressMode mode) -> {
                 switch (mode) {
+                    case Absolute(Address address) -> {
+                        reader.read(address); // throw-away read burns a cycle
+                        Value input = reader.read(address);
+                        Value output = rotateRight(input);
+                        writer.write(address, output);
+                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
+                    }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }

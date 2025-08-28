@@ -497,11 +497,13 @@ public sealed interface Operation
 
     record ROR(AddressMode mode) implements Operation
     {
+        public static final byte ABSOLUTE = 0x6E;
         public static final byte ACCUMULATOR = 0x6A;
 
         public Value code()
         {
             return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
                 case Accumulator _ -> ACCUMULATOR;
                 default -> throw unsupported(this);
             });

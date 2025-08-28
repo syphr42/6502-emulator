@@ -1152,20 +1152,55 @@ class CPUTest
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 0, 00, false, true, false",
-                "01, 0, 00, false, true, true",
-                "00, 1, 80, true, false, false",
-                "01, 1, 80, true, false, true",
-                "FF, 0, 7F, false, false, true"})
-    void execute_ROR_Accumulator(String acc,
-                                 int carry,
-                                 String expected,
-                                 boolean isNegative,
-                                 boolean isZero,
-                                 boolean isCarry)
+    @CsvSource({"0, 00000000, 00000000, 0, false, true",
+                "0, 00000001, 00000000, 1, false, true",
+                "1, 00000000, 10000000, 0, true, false",
+                "1, 00000001, 10000000, 1, true, false",
+                "0, 11111111, 01111111, 1, false, false"})
+    void execute_ROR_Absolute(int carry,
+                              String memory,
+                              String expected,
+                              int expectedCarry,
+                              boolean isNegative,
+                              boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+
+        var address = Address.of(0x1234);
+        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+
+        setNextOp(ror(absolute(address)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(6)).nextCycle();
+        verify(writer).write(address, Value.ofBits(expected));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
+                    state.programCounter().plus(Value.of(3)));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 00000000, 00000000, 0, false, true",
+                "0, 00000001, 00000000, 1, false, true",
+                "1, 00000000, 10000000, 0, true, false",
+                "1, 00000001, 10000000, 1, true, false",
+                "0, 11111111, 01111111, 1, false, false"})
+    void execute_ROR_Accumulator(int carry,
+                                 String acc,
+                                 String expected,
+                                 int expectedCarry,
+                                 boolean isNegative,
+                                 boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofBits(acc));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
 
         setNextOp(ror(accumulator()));
@@ -1176,10 +1211,10 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
+        assertState(Value.ofBits(expected),
                     state.x(),
                     state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
                     state.programCounter().plus(Value.of(1)));
     }
 
