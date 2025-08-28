@@ -34,6 +34,11 @@ public record Value(byte data)
         return Value.of(data | other.data);
     }
 
+    public Value xor(Value other)
+    {
+        return Value.of(data ^ other.data);
+    }
+
     public Value increment()
     {
         return Value.of(data + 1);

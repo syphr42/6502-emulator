@@ -336,6 +336,21 @@ public sealed interface Operation
         }
     }
 
+    record EOR(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = 0x4D;
+        public static final byte IMMEDIATE = 0x49;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record INC(AddressMode mode) implements Operation
     {
         public static final byte ACCUMULATOR = 0x1A;
@@ -515,6 +530,7 @@ public sealed interface Operation
     static DEC dec(AddressMode mode) { return new DEC(mode); }
     static DEX dex() { return new DEX(); }
     static DEY dey() { return new DEY(); }
+    static EOR eor(AddressMode mode) { return new EOR(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }

@@ -837,6 +837,62 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00, 00, 00, false, true",
+                "00, FF, FF, true, false",
+                "FF, FF, 00, false, true",
+                "FF, 00, FF, true, false",
+                "04, 07, 03, false, false"})
+    void execute_EOR_Absolute(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+
+        Address target = Address.of(0x1234);
+        Value value = Value.ofHex(input);
+        when(reader.read(target)).thenReturn(value);
+
+        setNextOp(eor(absolute(target)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(3)));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, 00, false, true",
+                "00, FF, FF, true, false",
+                "FF, FF, 00, false, true",
+                "FF, 00, FF, true, false",
+                "04, 07, 03, false, false"})
+    void execute_EOR_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+
+        setNextOp(eor(immediate(Value.ofHex(input))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(2)));
+    }
+
+    @ParameterizedTest
     @CsvSource({"FF, 00, false, true", "00, 01, false, false", "FE, FF, true, false"})
     void execute_INC_Accumulator(String acc, String expected, boolean isNegative, boolean isZero)
     {

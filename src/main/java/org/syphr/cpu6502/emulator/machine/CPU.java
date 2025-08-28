@@ -155,6 +155,8 @@ public class CPU
             case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
             case DEX.IMPLIED -> { dummyRead(); yield dex(); }
             case DEY.IMPLIED -> { dummyRead(); yield dey(); }
+            case EOR.ABSOLUTE -> eor(absolute(Address.of(programManager.next(), programManager.next())));
+            case EOR.IMMEDIATE -> eor(immediate(programManager.next()));
             case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
@@ -235,6 +237,7 @@ public class CPU
             }
             case DEX _ -> updateRegister(x, Register::decrement);
             case DEY _ -> updateRegister(y, Register::decrement);
+            case EOR(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().xor(toValue(mode))));
             case INC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::increment);

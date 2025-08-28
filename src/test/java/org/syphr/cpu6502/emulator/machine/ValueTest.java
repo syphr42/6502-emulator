@@ -102,6 +102,24 @@ class ValueTest
         assertThat(result).isEqualTo(Value.ofHex(expected));
     }
 
+    @ParameterizedTest
+    @CsvSource({"00, 00, 00",
+                "00, FF, FF",
+                "FF, FF, 00",
+                "FF, 00, FF",
+                "04, 07, 03"})
+    void xor(String initVal, String input, String expected)
+    {
+        // given
+        var value = Value.ofHex(initVal);
+
+        // when
+        Value result = value.xor(Value.ofHex(input));
+
+        // then
+        assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
+
     @Test
     void toStringTest()
     {
