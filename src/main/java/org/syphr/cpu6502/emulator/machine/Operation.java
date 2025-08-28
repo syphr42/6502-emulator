@@ -364,6 +364,36 @@ public sealed interface Operation
         }
     }
 
+    record INX() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xE8;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record INY() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xC8;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     record JMP(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x4C;
@@ -532,6 +562,8 @@ public sealed interface Operation
     static DEY dey() { return new DEY(); }
     static EOR eor(AddressMode mode) { return new EOR(mode); }
     static INC inc(AddressMode mode) { return new INC(mode); }
+    static INX inx() { return new INX(); }
+    static INY iny() { return new INY(); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }
     static JSR jsr(AddressMode mode) { return new JSR(mode); }

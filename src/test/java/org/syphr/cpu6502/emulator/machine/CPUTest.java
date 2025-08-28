@@ -914,6 +914,50 @@ class CPUTest
                     state.programCounter().plus(Value.of(1)));
     }
 
+    @ParameterizedTest
+    @CsvSource({"FF, 00, false, true", "00, 01, false, false", "FE, FF, true, false"})
+    void execute_INX_Implied(String xVal, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        setNextOp(inx());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    Value.ofHex(expected),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"FF, 00, false, true", "00, 01, false, false", "FE, FF, true, false"})
+    void execute_INY_Implied(String yVal, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        setNextOp(iny());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    Value.ofHex(expected),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)));
+    }
+
     @Test
     void execute_JMP_Absolute()
     {

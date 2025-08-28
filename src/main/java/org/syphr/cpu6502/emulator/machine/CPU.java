@@ -158,6 +158,8 @@ public class CPU
             case EOR.ABSOLUTE -> eor(absolute(Address.of(programManager.next(), programManager.next())));
             case EOR.IMMEDIATE -> eor(immediate(programManager.next()));
             case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
+            case INX.IMPLIED -> { dummyRead(); yield inx(); }
+            case INY.IMPLIED -> { dummyRead(); yield iny(); }
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.ABSOLUTE -> lda(absolute(Address.of(programManager.next(), programManager.next())));
@@ -244,6 +246,8 @@ public class CPU
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
+            case INX _ -> updateRegister(x, Register::increment);
+            case INY _ -> updateRegister(y, Register::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case JSR(AddressMode mode) -> {
                 clock.nextCycle(); // burn a cycle for internal operation
