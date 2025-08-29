@@ -1,31 +1,55 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
+import java.util.ArrayDeque;
 import java.util.Deque;
 import java.util.List;
-import java.util.concurrent.LinkedBlockingDeque;
 
 @Slf4j
 @ToString(onlyExplicitlyIncluded = true)
 class Stack
 {
-    @ToString.Include
-    private final Deque<Value> data;
-    private final Clock clock;
+    private static final Address PAGE_ONE = Address.of(0x0100);
+    private static final int SIZE = 0xFF;
 
-    public Stack(int size, Clock clock)
+    private final Reader reader;
+    private final Writer writer;
+
+    @ToString.Include
+    private final Deque<Value> data = new ArrayDeque<>(SIZE);
+
+    @Setter
+    @ToString.Include
+    private Value pointer = Value.of(0xFF);
+
+    public Stack(Reader reader, Writer writer)
     {
-        data = new LinkedBlockingDeque<>(size);
-        this.clock = clock;
+        this.reader = reader;
+        this.writer = writer;
+    }
+
+    public Address getPointer()
+    {
+        return PAGE_ONE.plus(pointer);
     }
 
     public void push(Value value)
     {
-        clock.nextCycle();
+        if (isFull()) {
+            log.warn("Stack is full; data being pushed will overwrite oldest");
+            data.removeLast();
+        }
         data.push(value);
-        log.info("Value pushed to stack: {}", value);
+
+        Address address = getPointer();
+
+        writer.write(address, value);
+        log.info("{} pushed to stack at {}", value, address);
+
+        pointer = pointer.decrement();
     }
 
     public void pushAll(List<Value> values)
@@ -35,14 +59,33 @@ class Stack
 
     public Value pop()
     {
-        clock.nextCycle();
-        Value value = data.pop();
-        log.info("Value popped from stack: {}", value);
+        if (isEmpty()) {
+            log.warn("Value requested from the stack, but no data has been pushed");
+        } else {
+            data.pop();
+        }
+
+        pointer = pointer.increment();
+
+        Address address = getPointer();
+        Value value = reader.read(address);
+        log.info("{} popped from stack at {}", value, address);
+
         return value;
     }
 
     public boolean isEmpty()
     {
         return data.isEmpty();
+    }
+
+    public boolean isFull()
+    {
+        return data.size() == SIZE;
+    }
+
+    public List<Value> getData()
+    {
+        return List.copyOf(data);
     }
 }

@@ -12,7 +12,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.*;
 import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
@@ -23,7 +22,6 @@ class CPUTest
     Register accumulator;
     Register x;
     Register y;
-    Stack stack;
 
     @Mock
     Clock clock;
@@ -42,9 +40,8 @@ class CPUTest
         accumulator = new Register();
         x = new Register();
         y = new Register();
-        stack = new Stack(256, clock);
 
-        cpu = new CPU(accumulator, x, y, stack, clock, reader, writer);
+        cpu = new CPU(accumulator, x, y, clock, reader, writer);
     }
 
     private void setNextOp(Operation op)
@@ -94,7 +91,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(false).overflow(false).zero(false).carry(false).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -134,10 +133,10 @@ class CPUTest
                          .toBuilder()
                          .negative(isNegative)
                          .overflow(isOverflow)
-                         .zero(isZero)
-                         .carry(isCarry)
-                         .build(),
-                    state.programCounter().plus(Value.of(2)));
+                         .zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
@@ -162,7 +161,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -188,7 +189,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -217,7 +220,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -244,7 +249,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -268,7 +275,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -292,7 +305,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -316,7 +335,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -346,7 +371,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(bit7).overflow(bit6).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -368,7 +395,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -392,7 +421,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -416,7 +451,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -440,7 +481,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -459,7 +506,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -483,7 +536,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -507,7 +566,13 @@ class CPUTest
 
         // then
         verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.ofHex(expectedPC));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.ofHex(expectedPC),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -525,12 +590,13 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags().toBuilder().carry(false).build(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().carry(false).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -548,12 +614,13 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags().toBuilder().decimal(false).build(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().decimal(false).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -571,12 +638,13 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags().toBuilder().irqDisable(false).build(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().irqDisable(false).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -594,12 +662,13 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags().toBuilder().overflow(false).build(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().overflow(false).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -629,7 +698,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -655,7 +726,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -685,7 +758,9 @@ class CPUTest
                     Value.ofHex(xVal),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -711,7 +786,9 @@ class CPUTest
                     Value.ofHex(xVal),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -741,7 +818,9 @@ class CPUTest
                     state.x(),
                     Value.ofHex(yVal),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -767,7 +846,9 @@ class CPUTest
                     state.x(),
                     Value.ofHex(yVal),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -789,7 +870,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -811,7 +894,9 @@ class CPUTest
                     Value.ofHex(expected),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -833,7 +918,9 @@ class CPUTest
                     state.x(),
                     Value.ofHex(expected),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -863,7 +950,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -889,7 +978,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -911,7 +1002,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -933,7 +1026,9 @@ class CPUTest
                     Value.ofHex(expected),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -955,7 +1050,9 @@ class CPUTest
                     state.x(),
                     Value.ofHex(expected),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
@@ -971,7 +1068,13 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), address);
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    address,
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
@@ -991,8 +1094,15 @@ class CPUTest
 
         // then
         verify(clock, times(6)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(), state.x(), state.y(), state.flags(), target),
-                  () -> assertThat(Address.of(stack.pop(), stack.pop())).isEqualTo(start.plus(Value.of(2))));
+        verify(writer).write(Address.of(0x01FF), Value.of(0x12));
+        verify(writer).write(Address.of(0x01FE), Value.of(0x36));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    target,
+                    Address.of(0x01FD),
+                    List.of(Value.of(0x36), Value.of(0x12)));
     }
 
     @Test
@@ -1015,7 +1125,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -1035,7 +1147,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
@@ -1050,7 +1164,13 @@ class CPUTest
 
         // then
         verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), state.programCounter().plus(Value.of(1)));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
@@ -1075,7 +1195,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -1101,7 +1223,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)));
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -1119,12 +1243,13 @@ class CPUTest
 
         // then
         verify(clock, times(3)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.pop()).isEqualTo(Value.ofHex(acc)));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    Address.of(0x01FE),
+                    List.of(accumulator.value()));
     }
 
     @ParameterizedTest
@@ -1132,7 +1257,13 @@ class CPUTest
     void execute_PLA_Stack(String input, boolean isNegative, boolean isZero)
     {
         // given
-        stack.push(Value.ofHex(input));
+        Value value = Value.ofHex(input);
+        accumulator.store(value);
+        cpu.execute(pha());
+        accumulator.store(Value.ZERO);
+
+        when(reader.read(Address.of(0xFFFD))).thenReturn(Value.ZERO); // dummy read for op
+        when(reader.read(Address.of(0x01FF))).thenReturn(value);
 
         reset(clock);
         setNextOp(pla());
@@ -1143,12 +1274,13 @@ class CPUTest
 
         // then
         verify(clock, times(4)).nextCycle();
-        assertAll(() -> assertState(Value.ofHex(input),
-                                    state.x(),
-                                    state.y(),
-                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                                    state.programCounter().plus(Value.of(1))),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(value,
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    Address.of(0x01FF),
+                    List.of());
     }
 
     @ParameterizedTest
@@ -1183,7 +1315,9 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(3)));
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @ParameterizedTest
@@ -1215,15 +1349,24 @@ class CPUTest
                     state.x(),
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(1)));
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
     @Test
     void execute_RTS_Stack()
     {
         // given
-        stack.push(Value.of(0x12));
-        stack.push(Value.of(0x33));
+        accumulator.store(Value.of(0x12));
+        cpu.execute(pha());
+        accumulator.store(Value.of(0x33));
+        cpu.execute(pha());
+        accumulator.store(Value.ZERO);
+
+        when(reader.read(Address.of(0xFFFD))).thenReturn(Value.ZERO); // dummy read for op
+        when(reader.read(Address.of(0x01FE))).thenReturn(Value.of(0x33));
+        when(reader.read(Address.of(0x01FF))).thenReturn(Value.of(0x12));
 
         reset(clock);
         setNextOp(rts());
@@ -1234,8 +1377,13 @@ class CPUTest
 
         // then
         verify(clock, times(6)).nextCycle();
-        assertAll(() -> assertState(state.accumulator(), state.x(), state.y(), state.flags(), Address.of(0x1234)),
-                  () -> assertThat(stack.isEmpty()).isTrue());
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    Address.of(0x1234),
+                    Address.of(0x01FF),
+                    List.of());
     }
 
     @ParameterizedTest
@@ -1255,16 +1403,30 @@ class CPUTest
         // then
         verify(clock, times(4)).nextCycle();
         verify(writer).write(target, Value.ofHex(acc));
-        assertState(state.accumulator(), state.x(), state.y(), state.flags(), state.programCounter().plus(Value.of(3)));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
     }
 
-    private void assertState(Value accumulator, Value x, Value y, Flags flags, Address programCounter)
+    private void assertState(Value accumulator,
+                             Value x,
+                             Value y,
+                             Flags flags,
+                             Address programCounter,
+                             Address stackPointer,
+                             List<Value> stackData)
     {
         assertThat(cpu.getState()).extracting(CPUState::accumulator,
                                               CPUState::x,
                                               CPUState::y,
                                               CPUState::flags,
-                                              CPUState::programCounter)
-                                  .containsExactly(accumulator, x, y, flags, programCounter);
+                                              CPUState::programCounter,
+                                              CPUState::stackPointer,
+                                              CPUState::stackData)
+                                  .containsExactly(accumulator, x, y, flags, programCounter, stackPointer, stackData);
     }
 }

@@ -31,11 +31,11 @@ public class CLI
         var clockSpeed = ClockSpeed.of(clock);
         var cpu = new CPU(clockSpeed, createMemoryMap(romStart, rom));
 
-        System.out.println("CPU initial state: " + cpu);
+        System.out.println("CPU initial state: " + cpu.getState());
         try {
             cpu.start();
         } finally {
-            System.out.println("CPU final state: " + cpu);
+            System.out.println("CPU final state: " + cpu.getState());
         }
     }
 
@@ -54,13 +54,13 @@ public class CLI
 
     private MemoryMap hardCodedMemoryMap()
     {
-        var programStart = Address.of(0x00FB);
+        var programStart = Address.of(0x02FB);
         List<Operation> operations = List.of(lda(immediate(Value.ZERO)),
                                              beq(relative(Value.of(2))),
                                              inc(accumulator()),
                                              inc(accumulator()),
                                              nop(),
-                                             jsr(absolute(Address.of(0x010A))),
+                                             jsr(absolute(Address.of(0x030A))),
                                              jmp(absolute(programStart)),
                                              nop(),
                                              nop(),

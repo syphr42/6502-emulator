@@ -1,5 +1,12 @@
 package org.syphr.cpu6502.emulator.machine;
 
-// TODO capture stack
-public record CPUState(Value accumulator, Value x, Value y, Flags flags, Address programCounter)
+import java.util.List;
+
+public record CPUState(Address programCounter,
+                       Value accumulator,
+                       Value x,
+                       Value y,
+                       Address stackPointer,
+                       List<Value> stackData,
+                       Flags flags)
 {}

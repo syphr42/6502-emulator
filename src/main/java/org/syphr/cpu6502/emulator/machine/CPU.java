@@ -17,8 +17,6 @@ import static org.syphr.cpu6502.emulator.machine.Operation.*;
 @ToString(onlyExplicitlyIncluded = true)
 public class CPU
 {
-    private static final int DEFAULT_STACK_SIZE = 256;
-
     @ToString.Include
     private final Register accumulator;
     @ToString.Include
@@ -47,29 +45,19 @@ public class CPU
 
     public CPU(ClockSpeed clockSpeed, Reader reader, Writer writer)
     {
-        this(DEFAULT_STACK_SIZE, clockSpeed, reader, writer);
+        this(new Register(), new Register(), new Register(), new Clock(clockSpeed), reader, writer);
     }
 
-    public CPU(int stackSize, ClockSpeed clockSpeed, Reader reader, Writer writer)
-    {
-        this(stackSize, new Clock(clockSpeed), reader, writer);
-    }
-
-    private CPU(int stackSize, Clock clock, Reader reader, Writer writer)
-    {
-        this(new Register(), new Register(), new Register(), new Stack(stackSize, clock), clock, reader, writer);
-    }
-
-    CPU(Register accumulator, Register x, Register y, Stack stack, Clock clock, Reader reader, Writer writer)
+    CPU(Register accumulator, Register x, Register y, Clock clock, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
         this.x = x;
         this.y = y;
-        this.stack = stack;
+        this.clock = clock;
         this.reader = new ClockedReader(reader, clock);
         this.writer = new ClockedWriter(writer, clock);
-        this.clock = clock;
 
+        stack = new Stack(this.reader, this.writer);
         programManager = new ProgramManager(this.reader);
     }
 
@@ -92,7 +80,7 @@ public class CPU
 
             while (!Thread.interrupted()) {
                 executeNext();
-                log.info(this.toString());
+                log.info(getState().toString());
             }
         } catch (HaltException e) {
             // stop execution
@@ -108,7 +96,13 @@ public class CPU
 
     public CPUState getState()
     {
-        return new CPUState(accumulator.value(), x.value(), y.value(), flags, getProgramCounter());
+        return new CPUState(getProgramCounter(),
+                            accumulator.value(),
+                            x.value(),
+                            y.value(),
+                            stack.getPointer(),
+                            stack.getData(),
+                            flags);
     }
 
     void executeNext()
