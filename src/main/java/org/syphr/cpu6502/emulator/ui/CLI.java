@@ -13,8 +13,6 @@ import org.syphr.cpu6502.emulator.machine.Value;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
@@ -67,26 +65,6 @@ public class CLI
                                              inc(accumulator()),
                                              rts());
 
-        Map<Address, Value> memory = toMap(programStart, operations);
-        memory.put(Address.RESET, programStart.low());
-        memory.put(Address.RESET.increment(), programStart.high());
-
-        return new MemoryMap(memory);
-    }
-
-    private Map<Address, Value> toMap(Address start, List<Operation> operations)
-    {
-        Map<Address, Value> map = new TreeMap<>();
-
-        var address = start;
-        for (Operation op : operations) {
-            List<Value> values = Operation.toValues(op);
-            for (Value value : values) {
-                map.put(address, value);
-                address = address.increment();
-            }
-        }
-
-        return map;
+        return MemoryMap.of(programStart, operations);
     }
 }
