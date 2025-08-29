@@ -50,6 +50,32 @@ class StackTest
     }
 
     @Test
+    void push_OneSlotOpen_ReportsNotFull()
+    {
+        // given
+        IntStream.rangeClosed(0x00, 0xFE).mapToObj(Value::of).forEach(stack::push);
+
+        // when
+        boolean result = stack.isFull();
+
+        // then
+        assertThat(result).isFalse();
+    }
+
+    @Test
+    void push_Full_ReportsFull()
+    {
+        // given
+        IntStream.rangeClosed(0x00, 0xFF).mapToObj(Value::of).forEach(stack::push);
+
+        // when
+        boolean result = stack.isFull();
+
+        // then
+        assertThat(result).isTrue();
+    }
+
+    @Test
     void push_FullStack_OverwritesFirstValue()
     {
         // given
