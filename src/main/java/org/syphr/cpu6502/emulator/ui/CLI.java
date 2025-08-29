@@ -1,12 +1,16 @@
 package org.syphr.cpu6502.emulator.ui;
 
 import lombok.RequiredArgsConstructor;
+import org.jline.reader.LineReader;
+import org.jline.reader.LineReaderBuilder;
+import org.jline.reader.UserInterruptException;
+import org.jline.terminal.Terminal;
 import org.jspecify.annotations.Nullable;
 import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
 import org.syphr.cpu6502.emulator.machine.Address;
 import org.syphr.cpu6502.emulator.machine.CPU;
-import org.syphr.cpu6502.emulator.machine.ClockSpeed;
+import org.syphr.cpu6502.emulator.machine.ClockSignal;
 import org.syphr.cpu6502.emulator.machine.Operation;
 import org.syphr.cpu6502.emulator.machine.Value;
 
@@ -21,19 +25,32 @@ import static org.syphr.cpu6502.emulator.machine.Operation.*;
 @RequiredArgsConstructor
 public class CLI
 {
+    private final Terminal terminal;
+
     @Command(command = "execute")
     public void execute(@Option(defaultValue = "2hz") String clock,
                         @Option @Nullable Path rom,
-                        @Option @Nullable Address romStart) throws IOException
+                        @Option @Nullable Address romStart,
+                        @Option(defaultValue = "false") boolean stepping) throws IOException
     {
-        var clockSpeed = ClockSpeed.of(clock);
-        var cpu = new CPU(clockSpeed, createMemoryMap(romStart, rom));
+        ClockSignal clockSignal = stepping ? this::readLine : ClockSignal.Frequency.of(clock);
+        var cpu = new CPU(clockSignal, createMemoryMap(romStart, rom));
 
         System.out.println("CPU initial state: " + cpu.getState());
         try {
             cpu.start();
         } finally {
             System.out.println("CPU final state: " + cpu.getState());
+        }
+    }
+
+    private void readLine() throws InterruptedException
+    {
+        LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
+        try {
+            reader.readLine();
+        } catch (UserInterruptException e) {
+            throw new InterruptedException("User cancelled execution");
         }
     }
 

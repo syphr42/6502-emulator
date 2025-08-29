@@ -38,14 +38,14 @@ public class CPU
     @ToString.Include
     private Flags flags = Flags.builder().user(true).breakCommand(true).decimal(false).irqDisable(true).build();
 
-    public CPU(ClockSpeed clockSpeed, AddressHandler addressHandler)
+    public CPU(ClockSignal clockSignal, AddressHandler addressHandler)
     {
-        this(clockSpeed, addressHandler, addressHandler);
+        this(clockSignal, addressHandler, addressHandler);
     }
 
-    public CPU(ClockSpeed clockSpeed, Reader reader, Writer writer)
+    public CPU(ClockSignal clockSignal, Reader reader, Writer writer)
     {
-        this(new Register(), new Register(), new Register(), new Clock(clockSpeed), reader, writer);
+        this(new Register(), new Register(), new Register(), new Clock(clockSignal), reader, writer);
     }
 
     CPU(Register accumulator, Register x, Register y, Clock clock, Reader reader, Writer writer)
@@ -66,15 +66,15 @@ public class CPU
         var clockThread = new Thread(clock, "Clock");
         clockThread.start();
 
-        // mimic startup actions
-        log.info("Performing startup sequence");
-        clock.nextCycle();
-        clock.nextCycle();
-        clock.nextCycle();
-        clock.nextCycle();
-        clock.nextCycle();
-
         try {
+            // mimic startup actions
+            log.info("Performing startup sequence");
+            clock.nextCycle();
+            clock.nextCycle();
+            clock.nextCycle();
+            clock.nextCycle();
+            clock.nextCycle();
+
             var programAddress = Address.of(programManager.next(), programManager.next());
             programManager.setProgramCounter(programAddress);
 

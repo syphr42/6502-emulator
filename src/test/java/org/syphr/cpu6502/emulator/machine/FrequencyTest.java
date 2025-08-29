@@ -6,14 +6,14 @@ import org.junit.jupiter.params.provider.ValueSource;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.catchException;
 
-class ClockSpeedTest
+class FrequencyTest
 {
     @ParameterizedTest
     @ValueSource(strings = {"", " ", "1", "foo", "hz", "2ghz", "-1hz"})
     void of_InvalidFrequency_ThrowsException(String frequency)
     {
         // when
-        Exception result = catchException(() -> ClockSpeed.of(frequency));
+        Exception result = catchException(() -> ClockSignal.Frequency.of(frequency));
 
         // then
         assertThat(result).isInstanceOf(IllegalArgumentException.class);
@@ -24,7 +24,7 @@ class ClockSpeedTest
     void of_ValidFrequency_ReturnsClockSpeed(String frequency)
     {
         // when
-        ClockSpeed result = ClockSpeed.of(frequency);
+        var result = ClockSignal.Frequency.of(frequency);
 
         // then
         assertThat(result).isNotNull();

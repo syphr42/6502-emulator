@@ -14,7 +14,7 @@ class Clock implements Runnable
     private final Lock lock = new ReentrantLock();
     private final Condition cycle = lock.newCondition();
 
-    private final ClockSpeed speed;
+    private final ClockSignal signal;
 
     // shared between threads while locked
     private boolean newCycle;
@@ -35,7 +35,7 @@ class Clock implements Runnable
             }
 
             try {
-                Thread.sleep(speed.cycle());
+                signal.await();
             } catch (InterruptedException e) {
                 return;
             }
