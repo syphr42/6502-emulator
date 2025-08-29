@@ -13,7 +13,7 @@ import java.util.List;
 class Stack
 {
     private static final Address PAGE_ONE = Address.of(0x0100);
-    private static final int SIZE = 0xFF;
+    private static final int SIZE = 256;
 
     private final Reader reader;
     private final Writer writer;
