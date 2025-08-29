@@ -23,7 +23,7 @@ class Stack
 
     @Setter
     @ToString.Include
-    private Value pointer = Value.of(0xFF);
+    private Value pointer = Value.ZERO;
 
     public Stack(Reader reader, Writer writer)
     {

@@ -67,16 +67,7 @@ public class CPU
         clockThread.start();
 
         try {
-            // mimic startup actions
-            log.info("Performing startup sequence");
-            clock.nextCycle();
-            clock.nextCycle();
-            clock.nextCycle();
-            clock.nextCycle();
-            clock.nextCycle();
-
-            var programAddress = Address.of(programManager.next(), programManager.next());
-            programManager.setProgramCounter(programAddress);
+            reset();
 
             while (!Thread.interrupted()) {
                 executeNext();
@@ -94,6 +85,16 @@ public class CPU
         return programManager.getProgramCounter();
     }
 
+    void setProgramCounter(Address address)
+    {
+        programManager.setProgramCounter(address);
+    }
+
+    public Address getStackPointer()
+    {
+        return stack.getPointer();
+    }
+
     public CPUState getState()
     {
         return new CPUState(getProgramCounter(),
@@ -103,6 +104,38 @@ public class CPU
                             stack.getPointer(),
                             stack.getData(),
                             flags);
+    }
+
+    private void reset()
+    {
+        log.info("Resetting CPU");
+
+        // cycle 1: throwaway read
+        reader.read(getProgramCounter());
+
+        // cycle 2: throwaway read
+        reader.read(getProgramCounter());
+
+        // cycle 3: read stack and decrement pointer
+        reader.read(stack.getPointer());
+        stack.setPointer(stack.getPointer().low().decrement());
+
+        // cycle 4: read stack and decrement pointer
+        reader.read(stack.getPointer());
+        stack.setPointer(stack.getPointer().low().decrement());
+
+        // cycle 5: read stack and decrement pointer
+        reader.read(stack.getPointer());
+        stack.setPointer(stack.getPointer().low().decrement());
+
+        // cycle 6: read low byte of reset vector
+        Value low = reader.read(Address.RESET);
+
+        // cycle 7: read high byte of the reset vector
+        Value high = reader.read(Address.RESET.increment());
+
+        // set the program counter ready for the first instruction
+        programManager.setProgramCounter(Address.of(low, high));
     }
 
     void executeNext()

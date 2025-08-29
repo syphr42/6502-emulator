@@ -42,14 +42,21 @@ class CPUTest
         y = new Register();
 
         cpu = new CPU(accumulator, x, y, clock, reader, writer);
+        cpu.setProgramCounter(Address.of(0x8000));
     }
 
     private void setNextOp(Operation op)
     {
         Address pc = cpu.getProgramCounter();
+
         List<Value> values = toValues(op);
         for (int i = 0; i < values.size(); i++) {
             when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
+        }
+
+        // single byte operations always perform a second dummy read
+        if (values.size() == 1) {
+            when(reader.read(pc.increment())).thenReturn(Value.ZERO);
         }
     }
 
@@ -263,10 +270,9 @@ class CPUTest
     void execute_BCC_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
 
-        reset(clock);
         setNextOp(bcc(relative(Value.ofHex(displacement))));
 
         // when
@@ -293,10 +299,9 @@ class CPUTest
     void execute_BCS_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
 
-        reset(clock);
         setNextOp(bcs(relative(Value.ofHex(displacement))));
 
         // when
@@ -323,10 +328,9 @@ class CPUTest
     void execute_BEQ_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
 
-        reset(clock);
         setNextOp(beq(relative(Value.ofHex(displacement))));
 
         // when
@@ -409,10 +413,9 @@ class CPUTest
     void execute_BMI_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().negative(negative != 0).build());
 
-        reset(clock);
         setNextOp(bmi(relative(Value.ofHex(displacement))));
 
         // when
@@ -439,10 +442,9 @@ class CPUTest
     void execute_BNE_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
 
-        reset(clock);
         setNextOp(bne(relative(Value.ofHex(displacement))));
 
         // when
@@ -469,10 +471,9 @@ class CPUTest
     void execute_BPL_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().negative(negative != 0).build());
 
-        reset(clock);
         setNextOp(bpl(relative(Value.ofHex(displacement))));
 
         // when
@@ -495,9 +496,8 @@ class CPUTest
     void execute_BRA_Relative(String start, String displacement, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
 
-        reset(clock);
         setNextOp(bra(relative(Value.ofHex(displacement))));
 
         // when
@@ -524,10 +524,9 @@ class CPUTest
     void execute_BVC_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().overflow(overflow != 0).build());
 
-        reset(clock);
         setNextOp(bvc(relative(Value.ofHex(displacement))));
 
         // when
@@ -554,10 +553,9 @@ class CPUTest
     void execute_BVS_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.execute(jmp(absolute(Address.ofHex(start))));
+        cpu.setProgramCounter(Address.ofHex(start));
         cpu.setFlags(cpu.getFlags().toBuilder().overflow(overflow != 0).build());
 
-        reset(clock);
         setNextOp(bvs(relative(Value.ofHex(displacement))));
 
         // when
@@ -1082,9 +1080,8 @@ class CPUTest
     {
         // given
         var start = Address.of(0x1234);
-        cpu.execute(jmp(absolute(start)));
+        cpu.setProgramCounter(start);
 
-        reset(clock);
         var target = Address.of(0x3000);
         setNextOp(jsr(absolute(target)));
 
@@ -1094,14 +1091,14 @@ class CPUTest
 
         // then
         verify(clock, times(6)).nextCycle();
-        verify(writer).write(Address.of(0x01FF), Value.of(0x12));
-        verify(writer).write(Address.of(0x01FE), Value.of(0x36));
+        verify(writer).write(state.stackPointer(), Value.of(0x12));
+        verify(writer).write(decrementLow(state.stackPointer()), Value.of(0x36));
         assertState(state.accumulator(),
                     state.x(),
                     state.y(),
                     state.flags(),
                     target,
-                    Address.of(0x01FD),
+                    decrementLow(decrementLow(state.stackPointer())),
                     List.of(Value.of(0x36), Value.of(0x12)));
     }
 
@@ -1248,7 +1245,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
-                    Address.of(0x01FE),
+                    decrementLow(state.stackPointer()),
                     List.of(accumulator.value()));
     }
 
@@ -1262,8 +1259,7 @@ class CPUTest
         cpu.execute(pha());
         accumulator.store(Value.ZERO);
 
-        when(reader.read(Address.of(0xFFFD))).thenReturn(Value.ZERO); // dummy read for op
-        when(reader.read(Address.of(0x01FF))).thenReturn(value);
+        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
 
         reset(clock);
         setNextOp(pla());
@@ -1279,7 +1275,7 @@ class CPUTest
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
                     state.programCounter().plus(Value.of(1)),
-                    Address.of(0x01FF),
+                    incrementLow(state.stackPointer()),
                     List.of());
     }
 
@@ -1364,9 +1360,8 @@ class CPUTest
         cpu.execute(pha());
         accumulator.store(Value.ZERO);
 
-        when(reader.read(Address.of(0xFFFD))).thenReturn(Value.ZERO); // dummy read for op
-        when(reader.read(Address.of(0x01FE))).thenReturn(Value.of(0x33));
-        when(reader.read(Address.of(0x01FF))).thenReturn(Value.of(0x12));
+        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(Value.of(0x33));
+        when(reader.read(incrementLow(incrementLow(cpu.getStackPointer())))).thenReturn(Value.of(0x12));
 
         reset(clock);
         setNextOp(rts());
@@ -1382,7 +1377,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     Address.of(0x1234),
-                    Address.of(0x01FF),
+                    incrementLow(incrementLow(state.stackPointer())),
                     List.of());
     }
 
@@ -1410,6 +1405,16 @@ class CPUTest
                     state.programCounter().plus(Value.of(3)),
                     state.stackPointer(),
                     state.stackData());
+    }
+
+    private Address incrementLow(Address address)
+    {
+        return Address.of(address.low().increment(), address.high());
+    }
+
+    private Address decrementLow(Address address)
+    {
+        return Address.of(address.low().decrement(), address.high());
     }
 
     private void assertState(Value accumulator,

@@ -13,7 +13,7 @@ class ProgramManager implements Iterator<Value>
     private final Reader reader;
 
     @Getter
-    private Address programCounter = Address.RESET;
+    private Address programCounter = Address.of(0x00FF);
 
     @Override
     public Value next()

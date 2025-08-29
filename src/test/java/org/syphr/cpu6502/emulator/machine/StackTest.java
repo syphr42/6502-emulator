@@ -25,27 +25,28 @@ class StackTest
     Stack stack;
 
     @Test
-    void getPointer_InitialState_IsTop()
+    void getPointer_InitialState_IsZero()
     {
         // when
         Address result = stack.getPointer();
 
         // then
-        assertThat(result).isEqualTo(Address.of(0x01FF));
+        assertThat(result).isEqualTo(Address.of(0x0100));
     }
 
     @Test
     void push_EmptyStack_WritesValueDecrementsPointer()
     {
         // given
+        var pointerStart = stack.getPointer();
         var value = Value.of(0x12);
 
         // when
         stack.push(value);
 
         // then
-        verify(writer).write(Address.of(0x01FF), value);
-        assertAll(() -> assertThat(stack.getPointer()).isEqualTo(Address.of(0x01FE)),
+        verify(writer).write(pointerStart, value);
+        assertAll(() -> assertThat(stack.getPointer()).isEqualTo(decrement(pointerStart)),
                   () -> assertThat(stack).extracting(Stack::isEmpty, Stack::isFull).containsExactly(false, false));
     }
 
@@ -79,6 +80,8 @@ class StackTest
     void push_FullStack_OverwritesFirstValue()
     {
         // given
+        var pointerStart = stack.getPointer();
+
         IntStream.rangeClosed(0x00, 0xFF).mapToObj(Value::of).forEach(stack::push);
         reset(writer);
 
@@ -88,8 +91,8 @@ class StackTest
         stack.push(value);
 
         // then
-        verify(writer).write(Address.of(0x01FF), value);
-        assertAll(() -> assertThat(stack.getPointer()).isEqualTo(Address.of(0x01FE)),
+        verify(writer).write(pointerStart, value);
+        assertAll(() -> assertThat(stack.getPointer()).isEqualTo(decrement(pointerStart)),
                   () -> assertThat(stack).extracting(Stack::isEmpty, Stack::isFull).containsExactly(false, true));
     }
 
@@ -97,16 +100,18 @@ class StackTest
     void pop_StackEmpty_ReadsAnyway()
     {
         // given
+        var pointerStart = stack.getPointer();
+
         Value value = Value.of(0x12);
-        when(reader.read(Address.of(0x0100))).thenReturn(value);
+        when(reader.read(increment(pointerStart))).thenReturn(value);
 
         // when
         Value result = stack.pop();
 
         // then
-        verify(reader).read(Address.of(0x0100));
+        verify(reader).read(increment(pointerStart));
         assertAll(() -> assertThat(result).isEqualTo(value),
-                  () -> assertThat(stack.getPointer()).isEqualTo(Address.of(0x0100)),
+                  () -> assertThat(stack.getPointer()).isEqualTo(increment(pointerStart)),
                   () -> assertThat(stack).extracting(Stack::isEmpty, Stack::isFull).containsExactly(true, false));
     }
 
@@ -117,15 +122,27 @@ class StackTest
         var value = Value.of(0x12);
         stack.push(value);
 
-        when(reader.read(Address.of(0x01FF))).thenReturn(value);
+        var pointerStart = stack.getPointer();
+
+        when(reader.read(increment(pointerStart))).thenReturn(value);
 
         // when
         Value result = stack.pop();
 
         // then
-        verify(reader).read(Address.of(0x01FF));
+        verify(reader).read(increment(pointerStart));
         assertAll(() -> assertThat(result).isEqualTo(value),
-                  () -> assertThat(stack.getPointer()).isEqualTo(Address.of(0x01FF)),
+                  () -> assertThat(stack.getPointer()).isEqualTo(increment(pointerStart)),
                   () -> assertThat(stack).extracting(Stack::isEmpty, Stack::isFull).containsExactly(true, false));
+    }
+
+    private Address increment(Address pointer)
+    {
+        return Address.of(pointer.low().increment(), pointer.high());
+    }
+
+    private Address decrement(Address pointer)
+    {
+        return Address.of(pointer.low().decrement(), pointer.high());
     }
 }
