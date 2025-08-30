@@ -465,6 +465,21 @@ public sealed interface Operation
         }
     }
 
+    record LSR(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = 0x4E;
+        public static final byte ACCUMULATOR = 0x4A;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Accumulator _ -> ACCUMULATOR;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record NOP() implements Operation
     {
         public static final byte IMPLIED = (byte) 0xEA;
@@ -597,10 +612,11 @@ public sealed interface Operation
     static INX inx() { return new INX(); }
     static INY iny() { return new INY(); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
+    static JSR jsr(AddressMode mode) { return new JSR(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }
     static LDX ldx(AddressMode mode) { return new LDX(mode); }
     static LDY ldy(AddressMode mode) { return new LDY(mode); }
-    static JSR jsr(AddressMode mode) { return new JSR(mode); }
+    static LSR lsr(AddressMode mode) { return new LSR(mode); }
     static NOP nop() { return new NOP(); }
     static ORA ora(AddressMode mode) { return new ORA(mode); }
     static PHA pha() { return new PHA(); }

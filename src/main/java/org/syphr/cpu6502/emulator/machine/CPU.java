@@ -195,6 +195,8 @@ public class CPU
             case LDX.IMMEDIATE -> ldx(immediate(programManager.next()));
             case LDY.ABSOLUTE -> ldy(absolute(Address.of(programManager.next(), programManager.next())));
             case LDY.IMMEDIATE -> ldy(immediate(programManager.next()));
+            case LSR.ABSOLUTE -> lsr(absolute(Address.of(programManager.next(), programManager.next())));
+            case LSR.ACCUMULATOR -> { dummyRead(); yield lsr(accumulator()); }
             case NOP.IMPLIED -> { dummyRead(); yield nop(); }
             case ORA.ABSOLUTE -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
@@ -289,6 +291,19 @@ public class CPU
             case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
             case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
             case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
+            case LSR(AddressMode mode) -> {
+                switch (mode) {
+                    case Absolute(Address address) -> {
+                        reader.read(address); // throw-away read burns a cycle
+                        Value input = reader.read(address);
+                        Value output = shiftRight(input);
+                        writer.write(address, output);
+                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
+                    }
+                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftRight(r.value())));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                }
+            }
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
@@ -404,6 +419,14 @@ public class CPU
         flags = flags.toBuilder().carry((r & 0x80) != 0).build();
 
         return Value.of(r << 1);
+    }
+
+    private Value shiftRight(Value value)
+    {
+        byte r = value.data();
+        flags = flags.toBuilder().carry((r & 0x01) != 0).build();
+
+        return Value.of(Byte.toUnsignedInt(r) >> 1);
     }
 
     private Value rotateRight(Value value)

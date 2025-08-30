@@ -1243,6 +1243,66 @@ class CPUTest
                     state.stackData());
     }
 
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000, true, false",
+                "10000000, 01000000, false, false",
+                "00000001, 00000000, true, true",
+                "01010101, 00101010, false, true",
+                "10101010, 01010101, false, false",
+                "00000011, 00000001, false, true"})
+    void execute_LSR_Absolute(String memory, String expected, boolean isZero, boolean isCarry)
+    {
+        // given
+        var address = Address.of(0x1234);
+        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+
+        setNextOp(lsr(absolute(address)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(6)).nextCycle();
+        verify(writer).write(address, Value.ofBits(expected));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(false).zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000, true, false",
+                "10000000, 01000000, false, false",
+                "00000001, 00000000, true, true",
+                "01010101, 00101010, false, true",
+                "10101010, 01010101, false, false",
+                "00000011, 00000001, false, true"})
+    void execute_LSR_Accumulator(String acc, String expected, boolean isZero, boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofBits(acc));
+
+        setNextOp(lsr(accumulator()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofBits(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(false).zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
     @Test
     void execute_NOP_Immediate()
     {
