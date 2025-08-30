@@ -154,14 +154,14 @@ public class CPU
     private Operation nextOp()
     {
         Value opCode = programManager.next();
-        return switch (opCode.data()) {
+        Operation op = switch (opCode.data()) {
             // @formatter:off
             case ADC.ABSOLUTE -> adc(absolute(Address.of(programManager.next(), programManager.next())));
             case ADC.IMMEDIATE -> adc(immediate(programManager.next()));
             case AND.ABSOLUTE -> and(absolute(Address.of(programManager.next(), programManager.next())));
             case AND.IMMEDIATE -> and(immediate(programManager.next()));
             case ASL.ABSOLUTE -> asl(absolute(Address.of(programManager.next(), programManager.next())));
-            case ASL.ACCUMULATOR -> { dummyRead(); yield asl(accumulator()); }
+            case ASL.ACCUMULATOR -> asl(accumulator());
             case BCC.RELATIVE -> bcc(relative(programManager.next()));
             case BCS.RELATIVE -> bcs(relative(programManager.next()));
             case BEQ.RELATIVE -> beq(relative(programManager.next()));
@@ -173,24 +173,24 @@ public class CPU
             case BRA.RELATIVE -> bra(relative(programManager.next()));
             case BVC.RELATIVE -> bvc(relative(programManager.next()));
             case BVS.RELATIVE -> bvs(relative(programManager.next()));
-            case CLC.IMPLIED -> { dummyRead(); yield clc(); }
-            case CLD.IMPLIED -> { dummyRead(); yield cld(); }
-            case CLI.IMPLIED -> { dummyRead(); yield cli(); }
-            case CLV.IMPLIED -> { dummyRead(); yield clv(); }
+            case CLC.IMPLIED -> clc();
+            case CLD.IMPLIED -> cld();
+            case CLI.IMPLIED -> cli();
+            case CLV.IMPLIED -> clv();
             case CMP.ABSOLUTE -> cmp(absolute(Address.of(programManager.next(), programManager.next())));
             case CMP.IMMEDIATE -> cmp(immediate(programManager.next()));
             case CPX.ABSOLUTE -> cpx(absolute(Address.of(programManager.next(), programManager.next())));
             case CPX.IMMEDIATE -> cpx(immediate(programManager.next()));
             case CPY.ABSOLUTE -> cpy(absolute(Address.of(programManager.next(), programManager.next())));
             case CPY.IMMEDIATE -> cpy(immediate(programManager.next()));
-            case DEC.ACCUMULATOR -> { dummyRead(); yield dec(accumulator()); }
-            case DEX.IMPLIED -> { dummyRead(); yield dex(); }
-            case DEY.IMPLIED -> { dummyRead(); yield dey(); }
+            case DEC.ACCUMULATOR -> dec(accumulator());
+            case DEX.IMPLIED -> dex();
+            case DEY.IMPLIED -> dey();
             case EOR.ABSOLUTE -> eor(absolute(Address.of(programManager.next(), programManager.next())));
             case EOR.IMMEDIATE -> eor(immediate(programManager.next()));
-            case INC.ACCUMULATOR -> { dummyRead(); yield inc(accumulator()); }
-            case INX.IMPLIED -> { dummyRead(); yield inx(); }
-            case INY.IMPLIED -> { dummyRead(); yield iny(); }
+            case INC.ACCUMULATOR -> inc(accumulator());
+            case INX.IMPLIED -> inx();
+            case INY.IMPLIED -> iny();
             case JMP.ABSOLUTE -> jmp(absolute(Address.of(programManager.next(), programManager.next())));
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.ABSOLUTE -> lda(absolute(Address.of(programManager.next(), programManager.next())));
@@ -200,22 +200,33 @@ public class CPU
             case LDY.ABSOLUTE -> ldy(absolute(Address.of(programManager.next(), programManager.next())));
             case LDY.IMMEDIATE -> ldy(immediate(programManager.next()));
             case LSR.ABSOLUTE -> lsr(absolute(Address.of(programManager.next(), programManager.next())));
-            case LSR.ACCUMULATOR -> { dummyRead(); yield lsr(accumulator()); }
-            case NOP.IMPLIED -> { dummyRead(); yield nop(); }
+            case LSR.ACCUMULATOR -> lsr(accumulator());
+            case NOP.IMPLIED -> nop();
             case ORA.ABSOLUTE -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
-            case PHA.STACK -> { dummyRead(); yield pha(); }
-            case PHP.STACK -> { dummyRead(); yield php(); }
-            case PHX.STACK -> { dummyRead(); yield phx(); }
-            case PHY.STACK -> { dummyRead(); yield phy(); }
-            case PLA.STACK -> { dummyRead(); yield pla(); }
+            case PHA.STACK -> pha();
+            case PHP.STACK -> php();
+            case PHX.STACK -> phx();
+            case PHY.STACK -> phy();
+            case PLA.STACK -> pla();
+            case PLP.STACK -> plp();
+            case PLX.STACK -> plx();
+            case PLY.STACK -> ply();
             case ROR.ABSOLUTE -> ror(absolute(Address.of(programManager.next(), programManager.next())));
-            case ROR.ACCUMULATOR -> { dummyRead(); yield ror(accumulator()); }
-            case RTS.STACK -> { dummyRead(); yield rts(); }
+            case ROR.ACCUMULATOR -> ror(accumulator());
+            case RTS.STACK -> rts();
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
         };
+
+        // a throwaway read occurs on all single-byte addressing modes
+        switch (op.mode()) {
+            case Accumulator _, Implied _, AddressMode.Stack _ -> dummyRead();
+            default -> {}
+        }
+
+        return op;
     }
 
     void execute(Operation operation)
@@ -313,6 +324,18 @@ public class CPU
             case PLA _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(accumulator, this::pullFromStack);
+            }
+            case PLP _ -> {
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
+                pullFromStack(status);
+            }
+            case PLX _ -> {
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
+                updateRegister(x, this::pullFromStack);
+            }
+            case PLY _ -> {
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
+                updateRegister(y, this::pullFromStack);
             }
             case ROR(AddressMode mode) -> {
                 switch (mode) {

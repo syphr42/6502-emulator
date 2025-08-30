@@ -1530,6 +1530,112 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"11111111, true, true, true, true, true, true, true, true",
+                "01111111, false, true, true, true, true, true, true, true",
+                "00111111, false, false, true, true, true, true, true, true",
+                "00011111, false, false, false, true, true, true, true, true",
+                "00001111, false, false, false, false, true, true, true, true",
+                "00000111, false, false, false, false, false, true, true, true",
+                "00000011, false, false, false, false, false, false, true, true",
+                "00000001, false, false, false, false, false, false, false, true",
+                "00000000, false, false, false, false, false, false, false, false"})
+    void execute_PLP_Stack(String input,
+                           boolean isNegative,
+                           boolean isOverflow,
+                           boolean isUser,
+                           boolean isBreakCommand,
+                           boolean isDecimal,
+                           boolean isIrqDisable,
+                           boolean isZero,
+                           boolean isCarry)
+    {
+        // given
+        Value value = Value.ofBits(input);
+        status.store(value);
+        cpu.execute(php());
+        status.store(Value.ZERO);
+
+        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+
+        reset(clock);
+        setNextOp(plp());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    new Flags(isNegative, isOverflow, isUser, isBreakCommand, isDecimal, isIrqDisable, isZero, isCarry),
+                    state.programCounter().plus(Value.of(1)),
+                    incrementLow(state.stackPointer()),
+                    List.of());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, false, true", "01, false, false", "FF, true, false"})
+    void execute_PLX_Stack(String input, boolean isNegative, boolean isZero)
+    {
+        // given
+        Value value = Value.ofHex(input);
+        x.store(value);
+        cpu.execute(phx());
+        x.store(Value.ZERO);
+
+        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+
+        reset(clock);
+        setNextOp(plx());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertState(state.accumulator(),
+                    value,
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    incrementLow(state.stackPointer()),
+                    List.of());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, false, true", "01, false, false", "FF, true, false"})
+    void execute_PLY_Stack(String input, boolean isNegative, boolean isZero)
+    {
+        // given
+        Value value = Value.ofHex(input);
+        y.store(value);
+        cpu.execute(pha());
+        y.store(Value.ZERO);
+
+        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+
+        reset(clock);
+        setNextOp(ply());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    value,
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    incrementLow(state.stackPointer()),
+                    List.of());
+    }
+
+    @ParameterizedTest
     @CsvSource({"0, 00000000, 00000000, 0, false, true",
                 "0, 00000001, 00000000, 1, false, true",
                 "1, 00000000, 10000000, 0, true, false",

@@ -585,6 +585,51 @@ public sealed interface Operation
         }
     }
 
+    record PLP() implements Operation
+    {
+        public static final byte STACK = 0x28;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
+    record PLX() implements Operation
+    {
+        public static final byte STACK = (byte) 0xFA;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
+    record PLY() implements Operation
+    {
+        public static final byte STACK = 0x7A;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
     record ROR(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x6E;
@@ -669,6 +714,9 @@ public sealed interface Operation
     static PHX phx() { return new PHX(); }
     static PHY phy() { return new PHY(); }
     static PLA pla() { return new PLA(); }
+    static PLP plp() { return new PLP(); }
+    static PLX plx() { return new PLX(); }
+    static PLY ply() { return new PLY(); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTS rts() { return new RTS(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
