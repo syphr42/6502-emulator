@@ -22,6 +22,7 @@ class CPUTest
     Register accumulator;
     Register x;
     Register y;
+    StatusRegister status;
 
     @Mock
     Clock clock;
@@ -40,8 +41,9 @@ class CPUTest
         accumulator = new Register();
         x = new Register();
         y = new Register();
+        status = new StatusRegister();
 
-        cpu = new CPU(accumulator, x, y, clock, reader, writer);
+        cpu = new CPU(accumulator, x, y, status, clock, reader, writer);
         cpu.setProgramCounter(Address.of(0x8000));
     }
 
@@ -80,7 +82,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.of(0x01));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(false).build());
+        status.setCarry(false);
 
         Address target = Address.of(0x1234);
         Value value = Value.of(0x10);
@@ -123,7 +125,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofHex(acc));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        status.setCarry(carry != 0);
 
         setNextOp(adc(immediate(Value.ofHex(input))));
 
@@ -271,7 +273,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        status.setCarry(carry != 0);
 
         setNextOp(bcc(relative(Value.ofHex(displacement))));
 
@@ -300,7 +302,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        status.setCarry(carry != 0);
 
         setNextOp(bcs(relative(Value.ofHex(displacement))));
 
@@ -329,7 +331,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
+        status.setZero(zero != 0);
 
         setNextOp(beq(relative(Value.ofHex(displacement))));
 
@@ -414,7 +416,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().negative(negative != 0).build());
+        status.setNegative(negative != 0);
 
         setNextOp(bmi(relative(Value.ofHex(displacement))));
 
@@ -443,7 +445,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().zero(zero != 0).build());
+        status.setZero(zero != 0);
 
         setNextOp(bne(relative(Value.ofHex(displacement))));
 
@@ -472,7 +474,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().negative(negative != 0).build());
+        status.setNegative(negative != 0);
 
         setNextOp(bpl(relative(Value.ofHex(displacement))));
 
@@ -525,7 +527,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().overflow(overflow != 0).build());
+        status.setOverflow(overflow != 0);
 
         setNextOp(bvc(relative(Value.ofHex(displacement))));
 
@@ -554,7 +556,7 @@ class CPUTest
     {
         // given
         cpu.setProgramCounter(Address.ofHex(start));
-        cpu.setFlags(cpu.getFlags().toBuilder().overflow(overflow != 0).build());
+        status.setOverflow(overflow != 0);
 
         setNextOp(bvs(relative(Value.ofHex(displacement))));
 
@@ -578,7 +580,7 @@ class CPUTest
     void execute_CLC_Implied(boolean carry)
     {
         // given
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry).build());
+        status.setCarry(carry);
 
         setNextOp(clc());
 
@@ -602,7 +604,7 @@ class CPUTest
     void execute_CLD_Implied(boolean decimal)
     {
         // given
-        cpu.setFlags(cpu.getFlags().toBuilder().decimal(decimal).build());
+        status.setDecimal(decimal);
 
         setNextOp(cld());
 
@@ -626,7 +628,7 @@ class CPUTest
     void execute_CLI_Implied(boolean irqDisable)
     {
         // given
-        cpu.setFlags(cpu.getFlags().toBuilder().irqDisable(irqDisable).build());
+        status.setIrqDisable(irqDisable);
 
         setNextOp(cli());
 
@@ -650,7 +652,7 @@ class CPUTest
     void execute_CLV_Implied(boolean overflow)
     {
         // given
-        cpu.setFlags(cpu.getFlags().toBuilder().overflow(overflow).build());
+        status.setOverflow(overflow);
 
         setNextOp(clv());
 
@@ -1423,14 +1425,14 @@ class CPUTest
                            boolean isCarry)
     {
         // given
-        cpu.setFlags(new Flags(isNegative,
-                               isOverflow,
-                               isUser,
-                               isBreakCommand,
-                               isDecimal,
-                               isIrqDisable,
-                               isZero,
-                               isCarry));
+        status.setNegative(isNegative)
+              .setOverflow(isOverflow)
+              .setUser(isUser)
+              .setBreakCommand(isBreakCommand)
+              .setDecimal(isDecimal)
+              .setIrqDisable(isIrqDisable)
+              .setZero(isZero)
+              .setCarry(isCarry);
 
         setNextOp(php());
 
@@ -1446,7 +1448,7 @@ class CPUTest
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
                     decrementLow(state.stackPointer()),
-                    List.of(Value.of(state.flags().asByte())));
+                    List.of(status.value()));
     }
 
     @ParameterizedTest
@@ -1541,7 +1543,7 @@ class CPUTest
                               boolean isZero)
     {
         // given
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        status.setCarry(carry != 0);
 
         var address = Address.of(0x1234);
         when(reader.read(address)).thenReturn(Value.ofBits(memory));
@@ -1579,7 +1581,7 @@ class CPUTest
     {
         // given
         accumulator.store(Value.ofBits(acc));
-        cpu.setFlags(cpu.getFlags().toBuilder().carry(carry != 0).build());
+        status.setCarry(carry != 0);
 
         setNextOp(ror(accumulator()));
 

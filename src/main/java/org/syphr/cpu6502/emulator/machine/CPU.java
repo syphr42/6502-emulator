@@ -1,9 +1,6 @@
 package org.syphr.cpu6502.emulator.machine;
 
-import lombok.AccessLevel;
-import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
@@ -23,6 +20,8 @@ public class CPU
     private final Register x;
     @ToString.Include
     private final Register y;
+    @ToString.Include
+    private final StatusRegister status;
 
     @ToString.Include
     private final Stack stack;
@@ -33,11 +32,6 @@ public class CPU
     private final Clock clock;
     private final ProgramManager programManager;
 
-    @Getter
-    @Setter(AccessLevel.PACKAGE)
-    @ToString.Include
-    private Flags flags = Flags.builder().user(true).breakCommand(true).decimal(false).irqDisable(true).build();
-
     public CPU(ClockSignal clockSignal, AddressHandler addressHandler)
     {
         this(clockSignal, addressHandler, addressHandler);
@@ -45,14 +39,21 @@ public class CPU
 
     public CPU(ClockSignal clockSignal, Reader reader, Writer writer)
     {
-        this(new Register(), new Register(), new Register(), new Clock(clockSignal), reader, writer);
+        this(new Register(),
+             new Register(),
+             new Register(),
+             new StatusRegister(),
+             new Clock(clockSignal),
+             reader,
+             writer);
     }
 
-    CPU(Register accumulator, Register x, Register y, Clock clock, Reader reader, Writer writer)
+    CPU(Register accumulator, Register x, Register y, StatusRegister status, Clock clock, Reader reader, Writer writer)
     {
         this.accumulator = accumulator;
         this.x = x;
         this.y = y;
+        this.status = status;
         this.clock = clock;
         this.reader = new ClockedReader(reader, clock);
         this.writer = new ClockedWriter(writer, clock);
@@ -103,7 +104,7 @@ public class CPU
                             y.value(),
                             stack.getPointer(),
                             stack.getData(),
-                            flags);
+                            status.flags());
     }
 
     private void reset()
@@ -136,6 +137,9 @@ public class CPU
 
         // set the program counter ready for the first instruction
         programManager.setProgramCounter(Address.of(low, high));
+
+        // set hardware-initialized status flags
+        status.setUser(true).setBreakCommand(true).setDecimal(false).setIrqDisable(true);
     }
 
     void executeNext()
@@ -232,39 +236,32 @@ public class CPU
                         Value input = reader.read(address);
                         Value output = shiftLeft(input);
                         writer.write(address, output);
-                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
+                        status.setNegative(output.isNegative()).setZero(output.isZero());
                     }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
             }
-            case BCC(AddressMode mode) -> branchIf(not(flags::carry), mode);
-            case BCS(AddressMode mode) -> branchIf(flags::carry, mode);
-            case BEQ(AddressMode mode) -> branchIf(flags::zero, mode);
+            case BCC(AddressMode mode) -> branchIf(not(status::carry), mode);
+            case BCS(AddressMode mode) -> branchIf(status::carry, mode);
+            case BEQ(AddressMode mode) -> branchIf(status::zero, mode);
             case BIT(AddressMode mode) -> {
                 Value value = toValue(mode);
                 if (!(mode instanceof Immediate)) {
-                    flags = flags.toBuilder()
-                                 .negative((value.data() & 0x80) != 0)
-                                 .overflow((value.data() & 0x40) != 0)
-                                 .build();
+                    status.setNegative((value.data() & 0x80) != 0).setOverflow((value.data() & 0x40) != 0);
                 }
-
-                Value and = accumulator.value().and(value);
-                if (Value.ZERO.equals(and)) {
-                    flags = flags.toBuilder().zero(true).build();
-                }
+                status.setZero(accumulator.value().and(value).isZero());
             }
-            case BMI(AddressMode mode) -> branchIf(flags::negative, mode);
-            case BNE(AddressMode mode) -> branchIf(not(flags::zero), mode);
-            case BPL(AddressMode mode) -> branchIf(not(flags::negative), mode);
+            case BMI(AddressMode mode) -> branchIf(status::negative, mode);
+            case BNE(AddressMode mode) -> branchIf(not(status::zero), mode);
+            case BPL(AddressMode mode) -> branchIf(not(status::negative), mode);
             case BRA(AddressMode mode) -> branchIf(() -> true, mode);
-            case BVC(AddressMode mode) -> branchIf(not(flags::overflow), mode);
-            case BVS(AddressMode mode) -> branchIf(flags::overflow, mode);
-            case CLC _ -> flags = flags.toBuilder().carry(false).build();
-            case CLD _ -> flags = flags.toBuilder().decimal(false).build();
-            case CLI _ -> flags = flags.toBuilder().irqDisable(false).build();
-            case CLV _ -> flags = flags.toBuilder().overflow(false).build();
+            case BVC(AddressMode mode) -> branchIf(not(status::overflow), mode);
+            case BVS(AddressMode mode) -> branchIf(status::overflow, mode);
+            case CLC _ -> status.setCarry(false);
+            case CLD _ -> status.setDecimal(false);
+            case CLI _ -> status.setIrqDisable(false);
+            case CLV _ -> status.setOverflow(false);
             case CMP(AddressMode mode) -> compare(accumulator, toValue(mode));
             case CPX(AddressMode mode) -> compare(x, toValue(mode));
             case CPY(AddressMode mode) -> compare(y, toValue(mode));
@@ -301,7 +298,7 @@ public class CPU
                         Value input = reader.read(address);
                         Value output = shiftRight(input);
                         writer.write(address, output);
-                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
+                        status.setNegative(output.isNegative()).setZero(output.isZero());
                     }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftRight(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
@@ -310,11 +307,7 @@ public class CPU
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
-            case PHP _ -> {
-                var p = new Register();
-                p.store(Value.of(flags.asByte()));
-                pushToStack(p);
-            }
+            case PHP _ -> pushToStack(status);
             case PHX _ -> pushToStack(x);
             case PHY _ -> pushToStack(y);
             case PLA _ -> {
@@ -328,7 +321,7 @@ public class CPU
                         Value input = reader.read(address);
                         Value output = rotateRight(input);
                         writer.write(address, output);
-                        flags = flags.toBuilder().negative(output.isNegative()).zero(output.isZero()).build();
+                        status.setNegative(output.isNegative()).setZero(output.isZero());
                     }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
@@ -394,7 +387,7 @@ public class CPU
     private void updateRegister(Register register, Consumer<Register> action)
     {
         action.accept(register);
-        flags = flags.toBuilder().negative(register.isNegative()).zero(register.isZero()).build();
+        status.setNegative(register.isNegative()).setZero(register.isZero());
     }
 
     private void pushToStack(Register register)
@@ -411,7 +404,7 @@ public class CPU
     {
         byte r = register.value().data();
         byte v = value.data();
-        byte c = flags.carryBit();
+        byte c = (byte) (status.carry() ? 0x01 : 0x00);
 
         int signedResult = r + v + c;
         boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
@@ -420,13 +413,13 @@ public class CPU
         boolean carry = unsignedResult > 255;
 
         register.store(Value.of(unsignedResult));
-        flags = flags.toBuilder().overflow(overflow).carry(carry).build();
+        status.setOverflow(overflow).setCarry(carry);
     }
 
     private Value shiftLeft(Value value)
     {
         byte r = value.data();
-        flags = flags.toBuilder().carry((r & 0x80) != 0).build();
+        status.setCarry((r & 0x80) != 0);
 
         return Value.of(r << 1);
     }
@@ -434,7 +427,7 @@ public class CPU
     private Value shiftRight(Value value)
     {
         byte r = value.data();
-        flags = flags.toBuilder().carry((r & 0x01) != 0).build();
+        status.setCarry((r & 0x01) != 0);
 
         return Value.of(Byte.toUnsignedInt(r) >> 1);
     }
@@ -442,8 +435,8 @@ public class CPU
     private Value rotateRight(Value value)
     {
         byte r = value.data();
-        byte c = (byte) (flags.carryBit() << 7);
-        flags = flags.toBuilder().carry((r & 0x01) != 0).build();
+        byte c = (byte) (status.carry() ? 0x80 : 0x00);
+        status.setCarry((r & 0x01) != 0);
 
         return Value.of(c | (Byte.toUnsignedInt(r) >> 1));
     }
@@ -471,11 +464,7 @@ public class CPU
     private void compare(Register register, Value value)
     {
         int compare = Byte.compareUnsigned(register.value().data(), value.data());
-        flags = flags.toBuilder()
-                     .negative((compare & 0x80) != 0)
-                     .zero(compare == 0)
-                     .carry(compare >= 0)
-                     .build();
+        status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
     }
 
     private BooleanSupplier not(BooleanSupplier supplier)
