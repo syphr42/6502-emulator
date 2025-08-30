@@ -1631,6 +1631,77 @@ class CPUTest
 
     @ParameterizedTest
     @CsvSource({"0, 00000000, 00000000, 0, false, true",
+                "0, 00000001, 00000000, 1, false, false",
+                "1, 00000000, 10000000, 0, false, true",
+                "1, 00000001, 10000000, 1, false, false",
+                "0, 11111111, 01111111, 1, true, false"})
+    void execute_ROL_Absolute(int expectedCarry,
+                              String expected,
+                              String memory,
+                              int carry,
+                              boolean isNegative,
+                              boolean isZero)
+    {
+        // given
+        status.setCarry(carry != 0);
+
+        var address = Address.of(0x1234);
+        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+
+        setNextOp(rol(absolute(address)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(6)).nextCycle();
+        verify(writer).write(address, Value.ofBits(expected));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 00000000, 00000000, 0, false, true",
+                "0, 00000001, 00000000, 1, false, false",
+                "1, 00000000, 10000000, 0, false, true",
+                "1, 00000001, 10000000, 1, false, false",
+                "0, 11111111, 01111111, 1, true, false"})
+    void execute_ROL_Accumulator(int expectedCarry,
+                                 String expected,
+                                 String acc,
+                                 int carry,
+                                 boolean isNegative,
+                                 boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofBits(acc));
+        status.setCarry(carry != 0);
+
+        setNextOp(rol(accumulator()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofBits(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0, 00000000, 00000000, 0, false, true",
                 "0, 00000001, 00000000, 1, false, true",
                 "1, 00000000, 10000000, 0, true, false",
                 "1, 00000001, 10000000, 1, true, false",

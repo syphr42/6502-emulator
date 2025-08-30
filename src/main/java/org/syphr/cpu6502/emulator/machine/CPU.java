@@ -194,6 +194,8 @@ public class CPU
             case PLP.STACK -> plp();
             case PLX.STACK -> plx();
             case PLY.STACK -> ply();
+            case ROL.ABSOLUTE -> rol(absolute(Address.of(programManager.next(), programManager.next())));
+            case ROL.ACCUMULATOR -> rol(accumulator());
             case ROR.ABSOLUTE -> ror(absolute(Address.of(programManager.next(), programManager.next())));
             case ROR.ACCUMULATOR -> ror(accumulator());
             case RTS.STACK -> rts();
@@ -319,6 +321,19 @@ public class CPU
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(y, this::pullFromStack);
             }
+            case ROL(AddressMode mode) -> {
+                switch (mode) {
+                    case Absolute(Address address) -> {
+                        reader.read(address); // throw-away read burns a cycle
+                        Value input = reader.read(address);
+                        Value output = rotateLeft(input);
+                        writer.write(address, output);
+                        status.setNegative(output.isNegative()).setZero(output.isZero());
+                    }
+                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateLeft(r.value())));
+                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                }
+            }
             case ROR(AddressMode mode) -> {
                 switch (mode) {
                     case Absolute(Address address) -> {
@@ -435,6 +450,15 @@ public class CPU
         status.setCarry((r & 0x01) != 0);
 
         return Value.of(Byte.toUnsignedInt(r) >> 1);
+    }
+
+    private Value rotateLeft(Value value)
+    {
+        byte r = value.data();
+        byte c = (byte) (status.carry() ? 0x01 : 0x00);
+        status.setCarry((r & 0x80) != 0);
+
+        return Value.of(c | (r << 1));
     }
 
     private Value rotateRight(Value value)

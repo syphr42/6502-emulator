@@ -630,6 +630,21 @@ public sealed interface Operation
         }
     }
 
+    record ROL(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = 0x2E;
+        public static final byte ACCUMULATOR = 0x2A;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Accumulator _ -> ACCUMULATOR;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record ROR(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x6E;
@@ -717,6 +732,7 @@ public sealed interface Operation
     static PLP plp() { return new PLP(); }
     static PLX plx() { return new PLX(); }
     static PLY ply() { return new PLY(); }
+    static ROL rol(AddressMode mode) { return new ROL(mode); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTS rts() { return new RTS(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
