@@ -1100,13 +1100,13 @@ class CPUTest
         // then
         verify(clock, times(6)).nextCycle();
         verify(writer).write(state.stackPointer(), Value.of(0x12));
-        verify(writer).write(decrementLow(state.stackPointer()), Value.of(0x36));
+        verify(writer).write(offsetLow(state.stackPointer(), -1), Value.of(0x36));
         assertState(state.accumulator(),
                     state.x(),
                     state.y(),
                     state.flags(),
                     target,
-                    decrementLow(decrementLow(state.stackPointer())),
+                    offsetLow(state.stackPointer(), -2),
                     List.of(Value.of(0x36), Value.of(0x12)));
     }
 
@@ -1407,7 +1407,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
-                    decrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), -1),
                     List.of(accumulator.value()));
     }
 
@@ -1453,7 +1453,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
-                    decrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), -1),
                     List.of(status.value()));
     }
 
@@ -1477,7 +1477,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
-                    decrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), -1),
                     List.of(x.value()));
     }
 
@@ -1501,7 +1501,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     state.programCounter().plus(Value.of(1)),
-                    decrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), -1),
                     List.of(y.value()));
     }
 
@@ -1512,7 +1512,7 @@ class CPUTest
         // given
         Value value = Value.ofHex(input);
 
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(value);
 
         reset(clock);
         setNextOp(pla());
@@ -1528,7 +1528,7 @@ class CPUTest
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
                     state.programCounter().plus(Value.of(1)),
-                    incrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), 1),
                     List.of());
     }
 
@@ -1555,7 +1555,7 @@ class CPUTest
         // given
         Value value = Value.ofBits(input);
 
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(value);
 
         reset(clock);
         setNextOp(plp());
@@ -1571,7 +1571,7 @@ class CPUTest
                     state.y(),
                     new Flags(isNegative, isOverflow, isUser, isBreakCommand, isDecimal, isIrqDisable, isZero, isCarry),
                     state.programCounter().plus(Value.of(1)),
-                    incrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), 1),
                     List.of());
     }
 
@@ -1582,7 +1582,7 @@ class CPUTest
         // given
         Value value = Value.ofHex(input);
 
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(value);
 
         reset(clock);
         setNextOp(plx());
@@ -1598,7 +1598,7 @@ class CPUTest
                     state.y(),
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
                     state.programCounter().plus(Value.of(1)),
-                    incrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), 1),
                     List.of());
     }
 
@@ -1609,7 +1609,7 @@ class CPUTest
         // given
         Value value = Value.ofHex(input);
 
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(value);
 
         reset(clock);
         setNextOp(ply());
@@ -1625,7 +1625,7 @@ class CPUTest
                     value,
                     state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
                     state.programCounter().plus(Value.of(1)),
-                    incrementLow(state.stackPointer()),
+                    offsetLow(state.stackPointer(), 1),
                     List.of());
     }
 
@@ -1792,9 +1792,9 @@ class CPUTest
                            boolean isCarry)
     {
         // given
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(Value.ofBits(status));
-        when(reader.read(incrementLow(incrementLow(stack.getPointer())))).thenReturn(Value.of(0x34));
-        when(reader.read(incrementLow(incrementLow(incrementLow(stack.getPointer()))))).thenReturn(Value.of(0x12));
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(Value.ofBits(status));
+        when(reader.read(offsetLow(stack.getPointer(), 2))).thenReturn(Value.of(0x34));
+        when(reader.read(offsetLow(stack.getPointer(), 3))).thenReturn(Value.of(0x12));
 
         reset(clock);
         setNextOp(rti());
@@ -1810,7 +1810,7 @@ class CPUTest
                     state.y(),
                     new Flags(isNegative, isOverflow, isUser, isBreakCommand, isDecimal, isIrqDisable, isZero, isCarry),
                     Address.of(0x1234),
-                    incrementLow(incrementLow(incrementLow(state.stackPointer()))),
+                    offsetLow(state.stackPointer(), 3),
                     List.of());
     }
 
@@ -1818,8 +1818,8 @@ class CPUTest
     void execute_RTS_Stack()
     {
         // given
-        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(Value.of(0x33));
-        when(reader.read(incrementLow(incrementLow(stack.getPointer())))).thenReturn(Value.of(0x12));
+        when(reader.read(offsetLow(stack.getPointer(), 1))).thenReturn(Value.of(0x33));
+        when(reader.read(offsetLow(stack.getPointer(), 2))).thenReturn(Value.of(0x12));
 
         reset(clock);
         setNextOp(rts());
@@ -1835,7 +1835,7 @@ class CPUTest
                     state.y(),
                     state.flags(),
                     Address.of(0x1234),
-                    incrementLow(incrementLow(state.stackPointer())),
+                    offsetLow(state.stackPointer(), 2),
                     List.of());
     }
 
@@ -1865,14 +1865,9 @@ class CPUTest
                     state.stackData());
     }
 
-    private Address incrementLow(Address address)
+    private Address offsetLow(Address address, int offset)
     {
-        return Address.of(address.low().increment(), address.high());
-    }
-
-    private Address decrementLow(Address address)
-    {
-        return Address.of(address.low().decrement(), address.high());
+        return Address.of(address.low().plus(Value.of(offset)), address.high());
     }
 
     private void assertState(Value accumulator,
