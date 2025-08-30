@@ -789,6 +789,96 @@ public sealed interface Operation
         }
     }
 
+    record TAX() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xAA;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record TAY() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xA8;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record TSX() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xBA;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record TXA() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0x8A;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record TXS() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0x9A;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record TYA() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0x98;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     // @formatter:off
     static ADC adc(AddressMode mode) { return new ADC(mode); }
     static AND and(AddressMode mode) { return new AND(mode); }
@@ -844,6 +934,12 @@ public sealed interface Operation
     static STA sta(AddressMode mode) { return new STA(mode); }
     static STX stx(AddressMode mode) { return new STX(mode); }
     static STY sty(AddressMode mode) { return new STY(mode); }
+    static TAX tax() { return new TAX(); }
+    static TAY tay() { return new TAY(); }
+    static TSX tsx() { return new TSX(); }
+    static TXA txa() { return new TXA(); }
+    static TXS txs() { return new TXS(); }
+    static TYA tya() { return new TYA(); }
     // @formatter:on
 
     static List<Value> toValues(Operation operation)

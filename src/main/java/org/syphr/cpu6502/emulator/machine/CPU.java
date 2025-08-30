@@ -208,6 +208,12 @@ public class CPU
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             case STX.ABSOLUTE -> stx(absolute(Address.of(programManager.next(), programManager.next())));
             case STY.ABSOLUTE -> sty(absolute(Address.of(programManager.next(), programManager.next())));
+            case TAX.IMPLIED -> tax();
+            case TAY.IMPLIED -> tay();
+            case TSX.IMPLIED -> tsx();
+            case TXA.IMPLIED -> txa();
+            case TXS.IMPLIED -> txs();
+            case TYA.IMPLIED -> tya();
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
         };
@@ -377,6 +383,12 @@ public class CPU
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
             case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
+            case TAX _ -> updateRegister(x, r -> r.store(accumulator.value()));
+            case TAY _ -> updateRegister(y, r -> r.store(accumulator.value()));
+            case TSX _ -> updateRegister(x, r -> r.store(stack.getPointer().low()));
+            case TXA _ -> updateRegister(accumulator, r -> r.store(x.value()));
+            case TXS _ -> stack.setPointer(x.value());
+            case TYA _ -> updateRegister(accumulator, r -> r.store(y.value()));
         }
     }
 

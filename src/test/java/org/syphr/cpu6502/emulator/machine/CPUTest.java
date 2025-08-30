@@ -2073,6 +2073,149 @@ class CPUTest
                     state.stackData());
     }
 
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
+    void execute_TAX_Implied(String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofHex(input));
+
+        setNextOp(tax());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    Value.ofHex(expected),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
+    void execute_TAY_Implied(String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        accumulator.store(Value.ofHex(input));
+
+        setNextOp(tay());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    Value.ofHex(expected),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
+    void execute_TSX_Implied(String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        stack.setPointer(Value.ofHex(input));
+
+        setNextOp(tsx());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    Value.ofHex(expected),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
+    void execute_TXA_Implied(String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        x.store(Value.ofHex(input));
+
+        setNextOp(txa());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @Test
+    void execute_TXS_Implied()
+    {
+        // given
+        x.store(Value.of(0x12));
+
+        setNextOp(txs());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    Address.of(Value.of(0x12), state.stackPointer().high()),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
+    void execute_TYA_Implied(String input, String expected, boolean isNegative, boolean isZero)
+    {
+        // given
+        y.store(Value.ofHex(input));
+
+        setNextOp(tya());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
     private Address offsetLow(Address address, int offset)
     {
         return Address.of(address.low().plus(Value.of(offset)), address.high());
