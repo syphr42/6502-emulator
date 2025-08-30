@@ -206,6 +206,8 @@ public class CPU
             case SED.IMPLIED -> sed();
             case SEI.IMPLIED -> sei();
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
+            case STX.ABSOLUTE -> stx(absolute(Address.of(programManager.next(), programManager.next())));
+            case STY.ABSOLUTE -> sty(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
         };
@@ -373,6 +375,8 @@ public class CPU
             case SED _ -> status.setDecimal(true);
             case SEI _ -> status.setIrqDisable(true);
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
+            case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
+            case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
         }
     }
 

@@ -2021,6 +2021,58 @@ class CPUTest
                     state.stackData());
     }
 
+    @ParameterizedTest
+    @ValueSource(strings = {"00", "0F", "FF"})
+    void execute_STX_Absolute(String xVal)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        var target = Address.of(0x1234);
+        setNextOp(stx(absolute(target)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        verify(writer).write(target, Value.ofHex(xVal));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"00", "0F", "FF"})
+    void execute_STY_Absolute(String yVal)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        var target = Address.of(0x1234);
+        setNextOp(sty(absolute(target)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        verify(writer).write(target, Value.ofHex(yVal));
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
     private Address offsetLow(Address address, int offset)
     {
         return Address.of(address.low().plus(Value.of(offset)), address.high());

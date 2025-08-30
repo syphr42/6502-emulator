@@ -763,6 +763,32 @@ public sealed interface Operation
         }
     }
 
+    record STX(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0x8E;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
+    record STY(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0x8C;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     // @formatter:off
     static ADC adc(AddressMode mode) { return new ADC(mode); }
     static AND and(AddressMode mode) { return new AND(mode); }
@@ -816,6 +842,8 @@ public sealed interface Operation
     static SED sed() { return new SED(); }
     static SEI sei() { return new SEI(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
+    static STX stx(AddressMode mode) { return new STX(mode); }
+    static STY sty(AddressMode mode) { return new STY(mode); }
     // @formatter:on
 
     static List<Value> toValues(Operation operation)
