@@ -525,6 +525,51 @@ public sealed interface Operation
         }
     }
 
+    record PHP() implements Operation
+    {
+        public static final byte STACK = 0x08;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
+    record PHX() implements Operation
+    {
+        public static final byte STACK = (byte) 0xDA;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
+    record PHY() implements Operation
+    {
+        public static final byte STACK = 0x5A;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
     record PLA() implements Operation
     {
         public static final byte STACK = 0x68;
@@ -620,6 +665,9 @@ public sealed interface Operation
     static NOP nop() { return new NOP(); }
     static ORA ora(AddressMode mode) { return new ORA(mode); }
     static PHA pha() { return new PHA(); }
+    static PHP php() { return new PHP(); }
+    static PHX phx() { return new PHX(); }
+    static PHY phy() { return new PHY(); }
     static PLA pla() { return new PLA(); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTS rts() { return new RTS(); }

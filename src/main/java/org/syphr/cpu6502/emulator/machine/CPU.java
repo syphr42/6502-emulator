@@ -201,6 +201,9 @@ public class CPU
             case ORA.ABSOLUTE -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
             case PHA.STACK -> { dummyRead(); yield pha(); }
+            case PHP.STACK -> { dummyRead(); yield php(); }
+            case PHX.STACK -> { dummyRead(); yield phx(); }
+            case PHY.STACK -> { dummyRead(); yield phy(); }
             case PLA.STACK -> { dummyRead(); yield pla(); }
             case ROR.ABSOLUTE -> ror(absolute(Address.of(programManager.next(), programManager.next())));
             case ROR.ACCUMULATOR -> { dummyRead(); yield ror(accumulator()); }
@@ -307,6 +310,13 @@ public class CPU
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
+            case PHP _ -> {
+                var p = new Register();
+                p.store(Value.of(flags.asByte()));
+                pushToStack(p);
+            }
+            case PHX _ -> pushToStack(x);
+            case PHY _ -> pushToStack(y);
             case PLA _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer
                 updateRegister(accumulator, this::pullFromStack);

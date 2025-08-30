@@ -1404,6 +1404,100 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"true, true, true, true, true, true, true, true",
+                "false, true, true, true, true, true, true, true",
+                "false, false, true, true, true, true, true, true",
+                "false, false, false, true, true, true, true, true",
+                "false, false, false, false, true, true, true, true",
+                "false, false, false, false, false, true, true, true",
+                "false, false, false, false, false, false, true, true",
+                "false, false, false, false, false, false, false, true",
+                "false, false, false, false, false, false, false, false"})
+    void execute_PHP_Stack(boolean isNegative,
+                           boolean isOverflow,
+                           boolean isUser,
+                           boolean isBreakCommand,
+                           boolean isDecimal,
+                           boolean isIrqDisable,
+                           boolean isZero,
+                           boolean isCarry)
+    {
+        // given
+        cpu.setFlags(new Flags(isNegative,
+                               isOverflow,
+                               isUser,
+                               isBreakCommand,
+                               isDecimal,
+                               isIrqDisable,
+                               isZero,
+                               isCarry));
+
+        setNextOp(php());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(3)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    decrementLow(state.stackPointer()),
+                    List.of(Value.of(state.flags().asByte())));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"00", "0F", "FF"})
+    void execute_PHX_Stack(String xVal)
+    {
+        // given
+        x.store(Value.ofHex(xVal));
+
+        setNextOp(phx());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(3)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    decrementLow(state.stackPointer()),
+                    List.of(x.value()));
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"00", "0F", "FF"})
+    void execute_PHY_Stack(String yVal)
+    {
+        // given
+        y.store(Value.ofHex(yVal));
+
+        setNextOp(phy());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(3)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags(),
+                    state.programCounter().plus(Value.of(1)),
+                    decrementLow(state.stackPointer()),
+                    List.of(y.value()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, false, true", "01, false, false", "FF, true, false"})
     void execute_PLA_Stack(String input, boolean isNegative, boolean isZero)
     {
