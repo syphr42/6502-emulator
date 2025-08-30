@@ -6,6 +6,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -19,11 +20,6 @@ import static org.syphr.cpu6502.emulator.machine.Operation.*;
 @ExtendWith(MockitoExtension.class)
 class CPUTest
 {
-    Register accumulator;
-    Register x;
-    Register y;
-    StatusRegister status;
-
     @Mock
     Clock clock;
 
@@ -33,23 +29,33 @@ class CPUTest
     @Mock
     Writer writer;
 
+    @InjectMocks
     CPU cpu;
+
+    Register accumulator;
+    Register x;
+    Register y;
+    StatusRegister status;
+    Stack stack;
+    ProgramManager programManager;
 
     @BeforeEach
     void beforeEach()
     {
-        accumulator = new Register();
-        x = new Register();
-        y = new Register();
-        status = new StatusRegister();
+        accumulator = cpu.getAccumulator();
+        x = cpu.getX();
+        y = cpu.getY();
+        status = cpu.getStatus();
+        stack = cpu.getStack();
+        programManager = cpu.getProgramManager();
 
-        cpu = new CPU(accumulator, x, y, status, clock, reader, writer);
-        cpu.setProgramCounter(Address.of(0x8000));
+        // set pc clear of the zero page and stack for testing
+        programManager.setProgramCounter(Address.of(0x8000));
     }
 
     private void setNextOp(Operation op)
     {
-        Address pc = cpu.getProgramCounter();
+        Address pc = programManager.getProgramCounter();
 
         List<Value> values = toValues(op);
         for (int i = 0; i < values.size(); i++) {
@@ -272,7 +278,7 @@ class CPUTest
     void execute_BCC_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setCarry(carry != 0);
 
         setNextOp(bcc(relative(Value.ofHex(displacement))));
@@ -301,7 +307,7 @@ class CPUTest
     void execute_BCS_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setCarry(carry != 0);
 
         setNextOp(bcs(relative(Value.ofHex(displacement))));
@@ -330,7 +336,7 @@ class CPUTest
     void execute_BEQ_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setZero(zero != 0);
 
         setNextOp(beq(relative(Value.ofHex(displacement))));
@@ -415,7 +421,7 @@ class CPUTest
     void execute_BMI_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setNegative(negative != 0);
 
         setNextOp(bmi(relative(Value.ofHex(displacement))));
@@ -444,7 +450,7 @@ class CPUTest
     void execute_BNE_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setZero(zero != 0);
 
         setNextOp(bne(relative(Value.ofHex(displacement))));
@@ -473,7 +479,7 @@ class CPUTest
     void execute_BPL_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setNegative(negative != 0);
 
         setNextOp(bpl(relative(Value.ofHex(displacement))));
@@ -498,7 +504,7 @@ class CPUTest
     void execute_BRA_Relative(String start, String displacement, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
 
         setNextOp(bra(relative(Value.ofHex(displacement))));
 
@@ -526,7 +532,7 @@ class CPUTest
     void execute_BVC_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setOverflow(overflow != 0);
 
         setNextOp(bvc(relative(Value.ofHex(displacement))));
@@ -555,7 +561,7 @@ class CPUTest
     void execute_BVS_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
-        cpu.setProgramCounter(Address.ofHex(start));
+        programManager.setProgramCounter(Address.ofHex(start));
         status.setOverflow(overflow != 0);
 
         setNextOp(bvs(relative(Value.ofHex(displacement))));
@@ -1082,7 +1088,7 @@ class CPUTest
     {
         // given
         var start = Address.of(0x1234);
-        cpu.setProgramCounter(start);
+        programManager.setProgramCounter(start);
 
         var target = Address.of(0x3000);
         setNextOp(jsr(absolute(target)));
@@ -1505,11 +1511,8 @@ class CPUTest
     {
         // given
         Value value = Value.ofHex(input);
-        accumulator.store(value);
-        cpu.execute(pha());
-        accumulator.store(Value.ZERO);
 
-        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
 
         reset(clock);
         setNextOp(pla());
@@ -1551,11 +1554,8 @@ class CPUTest
     {
         // given
         Value value = Value.ofBits(input);
-        status.store(value);
-        cpu.execute(php());
-        status.store(Value.ZERO);
 
-        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
 
         reset(clock);
         setNextOp(plp());
@@ -1581,11 +1581,8 @@ class CPUTest
     {
         // given
         Value value = Value.ofHex(input);
-        x.store(value);
-        cpu.execute(phx());
-        x.store(Value.ZERO);
 
-        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
 
         reset(clock);
         setNextOp(plx());
@@ -1611,11 +1608,8 @@ class CPUTest
     {
         // given
         Value value = Value.ofHex(input);
-        y.store(value);
-        cpu.execute(pha());
-        y.store(Value.ZERO);
 
-        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(value);
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(value);
 
         reset(clock);
         setNextOp(ply());
@@ -1710,14 +1704,8 @@ class CPUTest
     void execute_RTS_Stack()
     {
         // given
-        accumulator.store(Value.of(0x12));
-        cpu.execute(pha());
-        accumulator.store(Value.of(0x33));
-        cpu.execute(pha());
-        accumulator.store(Value.ZERO);
-
-        when(reader.read(incrementLow(cpu.getStackPointer()))).thenReturn(Value.of(0x33));
-        when(reader.read(incrementLow(incrementLow(cpu.getStackPointer())))).thenReturn(Value.of(0x12));
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(Value.of(0x33));
+        when(reader.read(incrementLow(incrementLow(stack.getPointer())))).thenReturn(Value.of(0x12));
 
         reset(clock);
         setNextOp(rts());

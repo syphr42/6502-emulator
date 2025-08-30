@@ -1,5 +1,7 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import lombok.AccessLevel;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
@@ -12,6 +14,7 @@ import static org.syphr.cpu6502.emulator.machine.Operation.*;
 
 @Slf4j
 @ToString(onlyExplicitlyIncluded = true)
+@Getter(AccessLevel.PACKAGE)
 public class CPU
 {
     @ToString.Include
@@ -39,21 +42,15 @@ public class CPU
 
     public CPU(ClockSignal clockSignal, Reader reader, Writer writer)
     {
-        this(new Register(),
-             new Register(),
-             new Register(),
-             new StatusRegister(),
-             new Clock(clockSignal),
-             reader,
-             writer);
+        this(new Clock(clockSignal), reader, writer);
     }
 
-    CPU(Register accumulator, Register x, Register y, StatusRegister status, Clock clock, Reader reader, Writer writer)
+    CPU(Clock clock, Reader reader, Writer writer)
     {
-        this.accumulator = accumulator;
-        this.x = x;
-        this.y = y;
-        this.status = status;
+        this.accumulator = new Register();
+        this.x = new Register();
+        this.y = new Register();
+        this.status = new StatusRegister();
         this.clock = clock;
         this.reader = new ClockedReader(reader, clock);
         this.writer = new ClockedWriter(writer, clock);
@@ -81,24 +78,9 @@ public class CPU
         }
     }
 
-    public Address getProgramCounter()
-    {
-        return programManager.getProgramCounter();
-    }
-
-    void setProgramCounter(Address address)
-    {
-        programManager.setProgramCounter(address);
-    }
-
-    public Address getStackPointer()
-    {
-        return stack.getPointer();
-    }
-
     public CPUState getState()
     {
-        return new CPUState(getProgramCounter(),
+        return new CPUState(programManager.getProgramCounter(),
                             accumulator.value(),
                             x.value(),
                             y.value(),
@@ -112,10 +94,10 @@ public class CPU
         log.info("Resetting CPU");
 
         // cycle 1: throwaway read
-        reader.read(getProgramCounter());
+        reader.read(programManager.getProgramCounter());
 
         // cycle 2: throwaway read
-        reader.read(getProgramCounter());
+        reader.read(programManager.getProgramCounter());
 
         // cycle 3: read stack and decrement pointer
         reader.read(stack.getPointer());
@@ -296,7 +278,7 @@ public class CPU
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case JSR(AddressMode mode) -> {
                 clock.nextCycle(); // burn a cycle for internal operation
-                stack.pushAll(getProgramCounter().decrement().bytes().reversed());
+                stack.pushAll(programManager.getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
             case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
@@ -372,7 +354,7 @@ public class CPU
             case AbsoluteIndexedY(Address address) -> address.plus(y.value());
             case AbsoluteIndirect(Address address) ->
                     Address.of(reader.read(address), reader.read(address.increment()));
-            case Relative(Value displacement) -> getProgramCounter().plus(displacement);
+            case Relative(Value displacement) -> programManager.getProgramCounter().plus(displacement);
             case ZeroPage(Value offset) -> Address.ZERO.plus(offset);
             case ZeroPageIndexedIndirectX(Value offset) -> {
                 var pointer = Address.ZERO.plus(offset.plus(x.value()));
@@ -476,7 +458,7 @@ public class CPU
     private Address waitToCrossPageBoundary(Address target)
     {
         // wait one cycle if a page boundary will be crossed
-        if (!getProgramCounter().high().equals(target.high())) {
+        if (!programManager.getProgramCounter().high().equals(target.high())) {
             clock.nextCycle();
             log.info("Crossed page boundary");
         }
