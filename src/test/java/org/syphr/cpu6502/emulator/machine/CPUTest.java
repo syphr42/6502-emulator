@@ -1771,6 +1771,49 @@ class CPUTest
                     state.stackData());
     }
 
+    @ParameterizedTest
+    @CsvSource({"11111111, true, true, true, true, true, true, true, true",
+                "01111111, false, true, true, true, true, true, true, true",
+                "00111111, false, false, true, true, true, true, true, true",
+                "00011111, false, false, false, true, true, true, true, true",
+                "00001111, false, false, false, false, true, true, true, true",
+                "00000111, false, false, false, false, false, true, true, true",
+                "00000011, false, false, false, false, false, false, true, true",
+                "00000001, false, false, false, false, false, false, false, true",
+                "00000000, false, false, false, false, false, false, false, false"})
+    void execute_RTI_Stack(String status,
+                           boolean isNegative,
+                           boolean isOverflow,
+                           boolean isUser,
+                           boolean isBreakCommand,
+                           boolean isDecimal,
+                           boolean isIrqDisable,
+                           boolean isZero,
+                           boolean isCarry)
+    {
+        // given
+        when(reader.read(incrementLow(stack.getPointer()))).thenReturn(Value.ofBits(status));
+        when(reader.read(incrementLow(incrementLow(stack.getPointer())))).thenReturn(Value.of(0x34));
+        when(reader.read(incrementLow(incrementLow(incrementLow(stack.getPointer()))))).thenReturn(Value.of(0x12));
+
+        reset(clock);
+        setNextOp(rti());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(6)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    new Flags(isNegative, isOverflow, isUser, isBreakCommand, isDecimal, isIrqDisable, isZero, isCarry),
+                    Address.of(0x1234),
+                    incrementLow(incrementLow(incrementLow(state.stackPointer()))),
+                    List.of());
+    }
+
     @Test
     void execute_RTS_Stack()
     {

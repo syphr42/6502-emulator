@@ -198,6 +198,7 @@ public class CPU
             case ROL.ACCUMULATOR -> rol(accumulator());
             case ROR.ABSOLUTE -> ror(absolute(Address.of(programManager.next(), programManager.next())));
             case ROR.ACCUMULATOR -> ror(accumulator());
+            case RTI.STACK -> rti();
             case RTS.STACK -> rts();
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
@@ -346,6 +347,12 @@ public class CPU
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
                     default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
                 }
+            }
+            case RTI _ -> {
+                clock.nextCycle(); // burn a cycle to increment the stack pointer
+                pullFromStack(status);
+                var address = Address.of(stack.pop(), stack.pop());
+                programManager.setProgramCounter(address);
             }
             case RTS _ -> {
                 clock.nextCycle(); // burn a cycle to increment the stack pointer

@@ -660,6 +660,21 @@ public sealed interface Operation
         }
     }
 
+    record RTI() implements Operation
+    {
+        public static final byte STACK = 0x40;
+
+        public AddressMode mode()
+        {
+            return stack();
+        }
+
+        public Value code()
+        {
+            return Value.of(STACK);
+        }
+    }
+
     record RTS() implements Operation
     {
         public static final byte STACK = 0x60;
@@ -734,6 +749,7 @@ public sealed interface Operation
     static PLY ply() { return new PLY(); }
     static ROL rol(AddressMode mode) { return new ROL(mode); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
+    static RTI rti() { return new RTI(); }
     static RTS rts() { return new RTS(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on
