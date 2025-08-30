@@ -435,6 +435,36 @@ public sealed interface Operation
         }
     }
 
+    record LDX(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xAE;
+        public static final byte IMMEDIATE = (byte) 0xA2;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
+    record LDY(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xAC;
+        public static final byte IMMEDIATE = (byte) 0xA0;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record NOP() implements Operation
     {
         public static final byte IMPLIED = (byte) 0xEA;
@@ -568,6 +598,8 @@ public sealed interface Operation
     static INY iny() { return new INY(); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }
+    static LDX ldx(AddressMode mode) { return new LDX(mode); }
+    static LDY ldy(AddressMode mode) { return new LDY(mode); }
     static JSR jsr(AddressMode mode) { return new JSR(mode); }
     static NOP nop() { return new NOP(); }
     static ORA ora(AddressMode mode) { return new ORA(mode); }

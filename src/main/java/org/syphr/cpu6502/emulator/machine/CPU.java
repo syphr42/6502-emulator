@@ -191,6 +191,10 @@ public class CPU
             case JSR.ABSOLUTE -> jsr(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.ABSOLUTE -> lda(absolute(Address.of(programManager.next(), programManager.next())));
             case LDA.IMMEDIATE -> lda(immediate(programManager.next()));
+            case LDX.ABSOLUTE -> ldx(absolute(Address.of(programManager.next(), programManager.next())));
+            case LDX.IMMEDIATE -> ldx(immediate(programManager.next()));
+            case LDY.ABSOLUTE -> ldy(absolute(Address.of(programManager.next(), programManager.next())));
+            case LDY.IMMEDIATE -> ldy(immediate(programManager.next()));
             case NOP.IMPLIED -> { dummyRead(); yield nop(); }
             case ORA.ABSOLUTE -> ora(absolute(Address.of(programManager.next(), programManager.next())));
             case ORA.IMMEDIATE -> ora(immediate(programManager.next()));
@@ -282,7 +286,9 @@ public class CPU
                 stack.pushAll(getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
-            case LDA(AddressMode mode) -> updateRegister(accumulator, r -> accumulator.store(toValue(mode)));
+            case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
+            case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
+            case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
