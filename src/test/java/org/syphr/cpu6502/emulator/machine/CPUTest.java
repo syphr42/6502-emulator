@@ -1840,6 +1840,90 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"02, 03, 0, FE, true, false, false, false",
+                "02, 03, 1, FF, true, false, false, false",
+                "08, 01, 1, 07, false, false, false, true",
+                "01, 01, 1, 00, false, false, true, true",
+                "80, 01, 1, 7F, false, true, false, true"})
+    void execute_SBC_Absolute(String acc,
+                              String input,
+                              int carry,
+                              String expected,
+                              boolean isNegative,
+                              boolean isOverflow,
+                              boolean isZero,
+                              boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+        status.setCarry(carry != 0);
+
+        Address target = Address.of(0x1234);
+        Value value = Value.ofHex(input);
+        when(reader.read(target)).thenReturn(value);
+
+        setNextOp(sbc(absolute(target)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(4)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags()
+                         .toBuilder()
+                         .negative(isNegative)
+                         .overflow(isOverflow)
+                         .zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(3)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @CsvSource({"02, 03, 0, FE, true, false, false, false",
+                "02, 03, 1, FF, true, false, false, false",
+                "08, 01, 1, 07, false, false, false, true",
+                "01, 01, 1, 00, false, false, true, true",
+                "80, 01, 1, 7F, false, true, false, true"})
+    void execute_SBC_Immediate(String acc,
+                               String input,
+                               int carry,
+                               String expected,
+                               boolean isNegative,
+                               boolean isOverflow,
+                               boolean isZero,
+                               boolean isCarry)
+    {
+        // given
+        accumulator.store(Value.ofHex(acc));
+        status.setCarry(carry != 0);
+
+        setNextOp(sbc(immediate(Value.ofHex(input))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(Value.ofHex(expected),
+                    state.x(),
+                    state.y(),
+                    state.flags()
+                         .toBuilder()
+                         .negative(isNegative)
+                         .overflow(isOverflow)
+                         .zero(isZero).carry(isCarry).build(),
+                    state.programCounter().plus(Value.of(2)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
     void execute_STA_Absolute(String acc)
     {

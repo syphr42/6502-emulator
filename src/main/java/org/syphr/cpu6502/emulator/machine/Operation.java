@@ -690,6 +690,21 @@ public sealed interface Operation
         }
     }
 
+    record SBC(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0xED;
+        public static final byte IMMEDIATE = (byte) 0xE9;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case Immediate _ -> IMMEDIATE;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record STA(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = (byte) 0x8D;
@@ -751,6 +766,7 @@ public sealed interface Operation
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTI rti() { return new RTI(); }
     static RTS rts() { return new RTS(); }
+    static SBC sbc(AddressMode mode) { return new SBC(mode); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on
 

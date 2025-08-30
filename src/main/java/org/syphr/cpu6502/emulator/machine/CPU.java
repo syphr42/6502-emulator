@@ -200,6 +200,8 @@ public class CPU
             case ROR.ACCUMULATOR -> ror(accumulator());
             case RTI.STACK -> rti();
             case RTS.STACK -> rts();
+            case SBC.ABSOLUTE -> sbc(absolute(Address.of(programManager.next(), programManager.next())));
+            case SBC.IMMEDIATE -> sbc(immediate(programManager.next()));
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
@@ -360,6 +362,10 @@ public class CPU
                 clock.nextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
+            case SBC(AddressMode mode) -> {
+                Value value = toValue(mode);
+                updateRegister(accumulator, r -> subtractWithCarry(r, value));
+            }
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
         }
     }
@@ -438,6 +444,22 @@ public class CPU
 
         int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(v) + c;
         boolean carry = unsignedResult > 255;
+
+        register.store(Value.of(unsignedResult));
+        status.setOverflow(overflow).setCarry(carry);
+    }
+
+    private void subtractWithCarry(Register register, Value value)
+    {
+        byte r = register.value().data();
+        byte v = value.data();
+        byte c = (byte) (status.carry() ? 0x00 : 0x01);
+
+        int signedResult = r - v - c;
+        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
+
+        int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(v) - Byte.toUnsignedInt(c);
+        boolean carry = unsignedResult >= 0;
 
         register.store(Value.of(unsignedResult));
         status.setOverflow(overflow).setCarry(carry);
