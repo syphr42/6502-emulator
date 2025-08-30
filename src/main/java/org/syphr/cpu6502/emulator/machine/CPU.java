@@ -202,6 +202,9 @@ public class CPU
             case RTS.STACK -> rts();
             case SBC.ABSOLUTE -> sbc(absolute(Address.of(programManager.next(), programManager.next())));
             case SBC.IMMEDIATE -> sbc(immediate(programManager.next()));
+            case SEC.IMPLIED -> sec();
+            case SED.IMPLIED -> sed();
+            case SEI.IMPLIED -> sei();
             case STA.ABSOLUTE -> sta(absolute(Address.of(programManager.next(), programManager.next())));
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
@@ -366,6 +369,9 @@ public class CPU
                 Value value = toValue(mode);
                 updateRegister(accumulator, r -> subtractWithCarry(r, value));
             }
+            case SEC _ -> status.setCarry(true);
+            case SED _ -> status.setDecimal(true);
+            case SEI _ -> status.setIrqDisable(true);
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
         }
     }

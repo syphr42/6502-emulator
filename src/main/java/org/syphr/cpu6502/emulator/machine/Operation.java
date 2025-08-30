@@ -705,6 +705,51 @@ public sealed interface Operation
         }
     }
 
+    record SEC() implements Operation
+    {
+        public static final byte IMPLIED = 0x38;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record SED() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xF8;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
+    record SEI() implements Operation
+    {
+        public static final byte IMPLIED = 0x78;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     record STA(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = (byte) 0x8D;
@@ -767,6 +812,9 @@ public sealed interface Operation
     static RTI rti() { return new RTI(); }
     static RTS rts() { return new RTS(); }
     static SBC sbc(AddressMode mode) { return new SBC(mode); }
+    static SEC sec() { return new SEC(); }
+    static SED sed() { return new SED(); }
+    static SEI sei() { return new SEI(); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // @formatter:on
 

@@ -1924,6 +1924,78 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_SEC_Implied(boolean carry)
+    {
+        // given
+        status.setCarry(carry);
+
+        setNextOp(sec());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().carry(true).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_SED_Implied(boolean decimal)
+    {
+        // given
+        status.setDecimal(decimal);
+
+        setNextOp(sed());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().decimal(true).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
+    @ValueSource(booleans = {false, true})
+    void execute_SEI_Implied(boolean irqDisable)
+    {
+        // given
+        status.setIrqDisable(irqDisable);
+
+        setNextOp(sei());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        verify(clock, times(2)).nextCycle();
+        assertState(state.accumulator(),
+                    state.x(),
+                    state.y(),
+                    state.flags().toBuilder().irqDisable(true).build(),
+                    state.programCounter().plus(Value.of(1)),
+                    state.stackPointer(),
+                    state.stackData());
+    }
+
+    @ParameterizedTest
     @ValueSource(strings = {"00", "0F", "FF"})
     void execute_STA_Absolute(String acc)
     {
