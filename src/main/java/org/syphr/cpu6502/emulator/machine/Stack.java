@@ -12,7 +12,7 @@ import java.util.List;
 @ToString(onlyExplicitlyIncluded = true)
 class Stack
 {
-    private static final Address PAGE_ONE = Address.of(0x0100);
+    private static final Value PAGE_ONE = Value.of(0x01);
     private static final int SIZE = 256;
 
     private final Reader reader;
@@ -33,7 +33,7 @@ class Stack
 
     public Address getPointer()
     {
-        return PAGE_ONE.plus(pointer);
+        return Address.of(pointer, PAGE_ONE);
     }
 
     public void push(Value value)

@@ -44,7 +44,7 @@ public record Address(short data) implements Comparable<Address>
 
     public Address plus(Value v)
     {
-        return Address.of(data + Byte.toUnsignedInt(v.data()));
+        return Address.of(data + v.data());
     }
 
     public Value low()

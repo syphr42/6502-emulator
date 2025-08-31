@@ -111,10 +111,11 @@ class AddressTest
 
     @ParameterizedTest
     @CsvSource({"0000, 01, 0001",
-                "0000, FF, 00FF",
+                "0000, FF, FFFF",
                 "00F0, 0F, 00FF",
                 "FFFF, 01, 0000",
-                "FFF0, 10, 0000"})
+                "FFF0, 10, 0000",
+                "FFF8, FD, FFF5"})
     void plus(String input, String displacement, String expected)
     {
         // given

@@ -13,6 +13,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.*;
 import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
@@ -273,8 +274,9 @@ class CPUTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",
-                "0000, FD, 0, 00FF, 3",
-                "FFFD, 01, 0, 0000, 4"})
+                "0000, FD, 0, FFFF, 4",
+                "FFFD, 01, 0, 0000, 4",
+                "FFF6, FD, 0, FFF5, 3"})
     void execute_BCC_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
@@ -302,8 +304,9 @@ class CPUTest
     @CsvSource({"0001, 10, 0, 0003, 2",
                 "0001, 10, 1, 0013, 3",
                 "00FD, 02, 1, 0101, 4",
-                "0000, FD, 1, 00FF, 3",
-                "FFFD, 01, 1, 0000, 4"})
+                "0000, FD, 1, FFFF, 4",
+                "FFFD, 01, 1, 0000, 4",
+                "FFF6, FD, 1, FFF5, 3"})
     void execute_BCS_Relative(String start, String displacement, int carry, String expectedPC, int expectedCycles)
     {
         // given
@@ -331,8 +334,9 @@ class CPUTest
     @CsvSource({"0001, 10, 0, 0003, 2",
                 "0001, 10, 1, 0013, 3",
                 "00FD, 02, 1, 0101, 4",
-                "0000, FD, 1, 00FF, 3",
-                "FFFD, 01, 1, 0000, 4"})
+                "0000, FD, 1, FFFF, 4",
+                "FFFD, 01, 1, 0000, 4",
+                "FFF6, FD, 1, FFF5, 3"})
     void execute_BEQ_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
@@ -416,8 +420,9 @@ class CPUTest
     @CsvSource({"0001, 10, 0, 0003, 2",
                 "0001, 10, 1, 0013, 3",
                 "00FD, 02, 1, 0101, 4",
-                "0000, FD, 1, 00FF, 3",
-                "FFFD, 01, 1, 0000, 4"})
+                "0000, FD, 1, FFFF, 4",
+                "FFFD, 01, 1, 0000, 4",
+                "FFF6, FD, 1, FFF5, 3"})
     void execute_BMI_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
@@ -445,8 +450,9 @@ class CPUTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",
-                "0000, FD, 0, 00FF, 3",
-                "FFFD, 01, 0, 0000, 4"})
+                "0000, FD, 0, FFFF, 4",
+                "FFFD, 01, 0, 0000, 4",
+                "FFF6, FD, 0, FFF5, 3"})
     void execute_BNE_Relative(String start, String displacement, int zero, String expectedPC, int expectedCycles)
     {
         // given
@@ -474,8 +480,9 @@ class CPUTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",
-                "0000, FD, 0, 00FF, 3",
-                "FFFD, 01, 0, 0000, 4"})
+                "0000, FD, 0, FFFF, 4",
+                "FFFD, 01, 0, 0000, 4",
+                "FFF6, FD, 0, FFF5, 3"})
     void execute_BPL_Relative(String start, String displacement, int negative, String expectedPC, int expectedCycles)
     {
         // given
@@ -500,7 +507,11 @@ class CPUTest
     }
 
     @ParameterizedTest
-    @CsvSource({"0001, 10, 0013, 3", "00FD, 02, 0101, 4", "0000, FD, 00FF, 3", "FFFD, 01, 0000, 4"})
+    @CsvSource({"0001, 10, 0013, 3",
+                "00FD, 02, 0101, 4",
+                "0000, FD, FFFF, 4",
+                "FFFD, 01, 0000, 4",
+                "FFF6, FD, FFF5, 3"})
     void execute_BRA_Relative(String start, String displacement, String expectedPC, int expectedCycles)
     {
         // given
@@ -513,22 +524,23 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(expectedCycles)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    Address.ofHex(expectedPC),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",
-                "0000, FD, 0, 00FF, 3",
-                "FFFD, 01, 0, 0000, 4"})
+                "0000, FD, 0, FFFF, 4",
+                "FFFD, 01, 0, 0000, 4",
+                "FFF6, FD, 0, FFF5, 3"})
     void execute_BVC_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
@@ -556,8 +568,9 @@ class CPUTest
     @CsvSource({"0001, 10, 0, 0003, 2",
                 "0001, 10, 1, 0013, 3",
                 "00FD, 02, 1, 0101, 4",
-                "0000, FD, 1, 00FF, 3",
-                "FFFD, 01, 1, 0000, 4"})
+                "0000, FD, 1, FFFF, 4",
+                "FFFD, 01, 1, 0000, 4",
+                "FFF6, FD, 1, FFF5, 3"})
     void execute_BVS_Relative(String start, String displacement, int overflow, String expectedPC, int expectedCycles)
     {
         // given
