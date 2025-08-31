@@ -14,13 +14,27 @@ public sealed interface Operation
     record ADC(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x6D;
+        public static final byte ABSOLUTE_X = 0x7D;
+        public static final byte ABSOLUTE_Y = 0x79;
         public static final byte IMMEDIATE = 0x69;
+        public static final byte ZP = 0x65;
+        public static final byte ZP_X_INDIRECT = 0x61;
+        public static final byte ZP_X = 0x75;
+        public static final byte ZP_INDIRECT = 0x72;
+        public static final byte ZP_INDIRECT_Y = 0x71;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
+                case AbsoluteIndexedY _ -> ABSOLUTE_Y;
                 case Immediate _ -> IMMEDIATE;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedXIndirect _ -> ZP_X_INDIRECT;
+                case ZeroPageIndexedX _ -> ZP_X;
+                case ZeroPageIndirect _ -> ZP_INDIRECT;
+                case ZeroPageIndirectIndexedY _ -> ZP_INDIRECT_Y;
                 default -> throw unsupported(this);
             });
         }
@@ -29,13 +43,27 @@ public sealed interface Operation
     record AND(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x2D;
+        public static final byte ABSOLUTE_X = 0x3D;
+        public static final byte ABSOLUTE_Y = 0x39;
         public static final byte IMMEDIATE = 0x29;
+        public static final byte ZP = 0x25;
+        public static final byte ZP_X_INDIRECT = 0x21;
+        public static final byte ZP_X = 0x35;
+        public static final byte ZP_INDIRECT = 0x32;
+        public static final byte ZP_INDIRECT_Y = 0x31;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
+                case AbsoluteIndexedY _ -> ABSOLUTE_Y;
                 case Immediate _ -> IMMEDIATE;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedXIndirect _ -> ZP_X_INDIRECT;
+                case ZeroPageIndexedX _ -> ZP_X;
+                case ZeroPageIndirect _ -> ZP_INDIRECT;
+                case ZeroPageIndirectIndexedY _ -> ZP_INDIRECT_Y;
                 default -> throw unsupported(this);
             });
         }
@@ -44,13 +72,19 @@ public sealed interface Operation
     record ASL(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x0E;
+        public static final byte ABSOLUTE_X = 0x1E;
         public static final byte ACCUMULATOR = 0x0A;
+        public static final byte ZP = 0x06;
+        public static final byte ZP_X = 0x16;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
                 case Accumulator _ -> ACCUMULATOR;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedX _ -> ZP_X;
                 default -> throw unsupported(this);
             });
         }
@@ -98,13 +132,19 @@ public sealed interface Operation
     record BIT(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x2C;
+        public static final byte ABSOLUTE_X = 0x3C;
         public static final byte IMMEDIATE = (byte) 0x89;
+        public static final byte ZP = 0x24;
+        public static final byte ZP_X = 0x34;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
                 case Immediate _ -> IMMEDIATE;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedX _ -> ZP_X;
                 default -> throw unsupported(this);
             });
         }
@@ -251,13 +291,27 @@ public sealed interface Operation
     record CMP(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = (byte) 0xCD;
+        public static final byte ABSOLUTE_X = (byte) 0xDD;
+        public static final byte ABSOLUTE_Y = (byte) 0xD9;
         public static final byte IMMEDIATE = (byte) 0xC9;
+        public static final byte ZP = (byte) 0xC5;
+        public static final byte ZP_X_INDIRECT = (byte) 0xC1;
+        public static final byte ZP_X = (byte) 0xD5;
+        public static final byte ZP_INDIRECT = (byte) 0xD2;
+        public static final byte ZP_INDIRECT_Y = (byte) 0xD1;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
+                case AbsoluteIndexedY _ -> ABSOLUTE_Y;
                 case Immediate _ -> IMMEDIATE;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedXIndirect _ -> ZP_X_INDIRECT;
+                case ZeroPageIndexedX _ -> ZP_X;
+                case ZeroPageIndirect _ -> ZP_INDIRECT;
+                case ZeroPageIndirectIndexedY _ -> ZP_INDIRECT_Y;
                 default -> throw unsupported(this);
             });
         }
@@ -267,12 +321,14 @@ public sealed interface Operation
     {
         public static final byte ABSOLUTE = (byte) 0xEC;
         public static final byte IMMEDIATE = (byte) 0xE0;
+        public static final byte ZP = (byte) 0xE4;
 
         public Value code()
         {
             return Value.of(switch (mode) {
                 case Absolute _ -> ABSOLUTE;
                 case Immediate _ -> IMMEDIATE;
+                case ZeroPage _ -> ZP;
                 default -> throw unsupported(this);
             });
         }
@@ -946,7 +1002,7 @@ public sealed interface Operation
     {
         return switch (operation.mode()) {
             case Absolute(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
-            case AbsoluteIndexedIndirectX(Address a) ->
+            case AbsoluteIndexedXIndirect(Address a) ->
                     Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
             case AbsoluteIndexedX(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
             case AbsoluteIndexedY(Address a) -> Stream.concat(Stream.of(operation.code()), a.bytes().stream()).toList();
@@ -957,7 +1013,7 @@ public sealed interface Operation
             case Relative(Value offset) -> List.of(operation.code(), offset);
             case AddressMode.Stack _ -> List.of(operation.code());
             case ZeroPage(Value offset) -> List.of(operation.code(), offset);
-            case ZeroPageIndexedIndirectX(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageIndexedXIndirect(Value offset) -> List.of(operation.code(), offset);
             case ZeroPageIndexedX(Value offset) -> List.of(operation.code(), offset);
             case ZeroPageIndexedY(Value offset) -> List.of(operation.code(), offset);
             case ZeroPageIndirect(Value offset) -> List.of(operation.code(), offset);

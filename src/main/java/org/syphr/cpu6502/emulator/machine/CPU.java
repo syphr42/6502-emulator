@@ -396,7 +396,7 @@ public class CPU
     {
         return switch (mode) {
             case Absolute(Address address) -> address;
-            case AbsoluteIndexedIndirectX(Address address) -> {
+            case AbsoluteIndexedXIndirect(Address address) -> {
                 var pointer = address.plus(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
@@ -406,7 +406,7 @@ public class CPU
                     Address.of(reader.read(address), reader.read(address.increment()));
             case Relative(Value displacement) -> programManager.getProgramCounter().plus(displacement);
             case ZeroPage(Value offset) -> Address.ZERO.plus(offset);
-            case ZeroPageIndexedIndirectX(Value offset) -> {
+            case ZeroPageIndexedXIndirect(Value offset) -> {
                 var pointer = Address.ZERO.plus(offset.plus(x.value()));
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }

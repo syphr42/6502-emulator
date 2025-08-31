@@ -6,8 +6,8 @@ public sealed interface AddressMode
     record Absolute(Address address) implements AddressMode {}
     static Absolute absolute(Address address) { return new Absolute(address); }
 
-    record AbsoluteIndexedIndirectX(Address address) implements AddressMode {}
-    static AbsoluteIndexedIndirectX axi(Address address) { return new AbsoluteIndexedIndirectX(address); }
+    record AbsoluteIndexedXIndirect(Address address) implements AddressMode {}
+    static AbsoluteIndexedXIndirect axi(Address address) { return new AbsoluteIndexedXIndirect(address); }
 
     record AbsoluteIndexedX(Address address) implements AddressMode {}
     static AbsoluteIndexedX ax(Address address) { return new AbsoluteIndexedX(address); }
@@ -36,8 +36,8 @@ public sealed interface AddressMode
     record ZeroPage(Value offset) implements AddressMode {}
     static ZeroPage zp(Value offset) { return new ZeroPage(offset); }
 
-    record ZeroPageIndexedIndirectX(Value offset) implements AddressMode {}
-    static ZeroPageIndexedIndirectX zpxi(Value offset) { return new ZeroPageIndexedIndirectX(offset); }
+    record ZeroPageIndexedXIndirect(Value offset) implements AddressMode {}
+    static ZeroPageIndexedXIndirect zpxi(Value offset) { return new ZeroPageIndexedXIndirect(offset); }
 
     record ZeroPageIndexedX(Value offset) implements AddressMode {}
     static ZeroPageIndexedX zpx(Value offset) { return new ZeroPageIndexedX(offset); }
