@@ -15,7 +15,7 @@ public interface ClockSignal
         public static final Frequency ONE_KHZ = new Frequency(Duration.ofMillis(1));
         public static final Frequency ONE_MHZ = new Frequency(Duration.ofNanos(1000));
 
-        private static final Pattern FREQUENCY_PATTERN = Pattern.compile("^\\s*(\\d{1,2})\\s*([mk]?hz)\\s*$");
+        private static final Pattern FREQUENCY_PATTERN = Pattern.compile("^\\s*(\\d{1,3})\\s*([mk]?hz)\\s*$");
 
         public static Frequency of(String frequency)
         {
