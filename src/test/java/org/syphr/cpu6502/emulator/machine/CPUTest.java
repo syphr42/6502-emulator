@@ -128,59 +128,64 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @Test
-    void execute_AND_Absolute()
+    static Stream<Arguments> execute_AND()
     {
-        // given
-        accumulator.store(Value.of(0b1100));
+        return Stream.of(andInputs(modeAbsolute(), 4, 3),
+                         andInputs(modeAbsoluteXSamePage(), 4, 3),
+                         andInputs(modeAbsoluteXCrossPage(), 5, 3),
+                         andInputs(modeAbsoluteYSamePage(), 4, 3),
+                         andInputs(modeAbsoluteYCrossPage(), 5, 3),
+                         andInputs(modeImmediate(), 2, 2),
+                         andInputs(modeZeroPage(), 3, 2),
+                         andInputs(modeZeroPageXIndirect(), 6, 2),
+                         andInputs(modeZeroPageX(), 4, 2),
+                         andInputs(modeZeroPageIndirect(), 5, 2),
+                         andInputs(modeZeroPageIndirectYSamePage(), 5, 2),
+                         andInputs(modeZeroPageIndirectYCrossPage(), 6, 2)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.of(0b0101);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(and(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.of(0b0100),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> andInputs(Function<ModeInput, AddressMode> mode, int cycles, int pcOffset)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, 0x00, false, true, pcOffset),
+                         Arguments.of(0x00, 0xFF, mode, cycles, 0x00, false, true, pcOffset),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, 0xFF, true, false, pcOffset),
+                         Arguments.of(0xFF, 0x00, mode, cycles, 0x00, false, true, pcOffset),
+                         Arguments.of(0b1100, 0b0101, mode, cycles, 0b0100, false, false, pcOffset));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, 00, false, true",
-                "00, FF, 00, false, true",
-                "FF, FF, FF, true, false",
-                "FF, 00, 00, false, true",
-                "04, 07, 04, false, false"})
-    void execute_AND_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    @MethodSource
+    void execute_AND(int givenAccumulator,
+                     int input,
+                     Function<ModeInput, AddressMode> mode,
+                     int expectedCycles,
+                     int expectedAccumulator,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(and(immediate(Value.ofHex(input))));
+        setNextOp(and(mode.apply(modeInput(input))));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(expectedAccumulator),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
