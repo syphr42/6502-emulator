@@ -527,25 +527,34 @@ public class CPU
                 var pointer = address.plus(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
-            case AbsoluteIndexedX(Address address) -> address.plus(x.value());
-            case AbsoluteIndexedY(Address address) -> address.plus(y.value());
+            case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, x.value());
+            case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, y.value());
             case AbsoluteIndirect(Address address) ->
                     Address.of(reader.read(address), reader.read(address.increment()));
-            case Relative(Value displacement) -> programManager.getProgramCounter().plus(displacement);
-            case ZeroPage(Value offset) -> Address.ZERO.plus(offset);
+            case Relative(Value displacement) ->
+                    waitToCrossPageBoundary(programManager.getProgramCounter(), displacement);
+            case ZeroPage(Value offset) -> Address.zeroPage(offset);
             case ZeroPageIndexedXIndirect(Value offset) -> {
-                var pointer = Address.ZERO.plus(offset.plus(x.value()));
+                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                var pointer = Address.zeroPage(offset.plus(x.value()));
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
-            case ZeroPageIndexedX(Value offset) -> Address.ZERO.plus(offset.plus(x.value()));
-            case ZeroPageIndexedY(Value offset) -> Address.ZERO.plus(offset.plus(y.value()));
+            case ZeroPageIndexedX(Value offset) -> {
+                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                yield Address.zeroPage(offset.plus(x.value()));
+            }
+            case ZeroPageIndexedY(Value offset) -> {
+                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                yield Address.zeroPage(offset.plus(y.value()));
+            }
             case ZeroPageIndirect(Value offset) -> {
-                var pointer = Address.ZERO.plus(offset);
+                var pointer = Address.zeroPage(offset);
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
             case ZeroPageIndirectIndexedY(Value offset) -> {
-                var pointer = Address.ZERO.plus(offset);
-                yield Address.of(reader.read(pointer), reader.read(pointer.increment())).plus(y.value());
+                var pointer = Address.zeroPage(offset);
+                Address intermediate = Address.of(reader.read(pointer), reader.read(pointer.increment()));
+                yield waitToCrossPageBoundary(intermediate, y.value());
             }
             default -> throw new UnsupportedOperationException("Mode " + mode + " does not support address conversion");
         };
@@ -651,16 +660,18 @@ public class CPU
     private void branchIf(BooleanSupplier flag, AddressMode mode)
     {
         if (flag.getAsBoolean()) {
-            Address target = waitToCrossPageBoundary(toAddress(mode));
+            Address target = toAddress(mode);
             clock.nextCycle();
             programManager.setProgramCounter(target);
         }
     }
 
-    private Address waitToCrossPageBoundary(Address target)
+    private Address waitToCrossPageBoundary(Address address, Value offset)
     {
+        Address target = address.plus(offset);
+
         // wait one cycle if a page boundary will be crossed
-        if (!programManager.getProgramCounter().high().equals(target.high())) {
+        if (!address.high().equals(target.high())) {
             clock.nextCycle();
             log.info("Crossed page boundary");
         }

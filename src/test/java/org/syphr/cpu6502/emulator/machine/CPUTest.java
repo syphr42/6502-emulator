@@ -58,26 +58,20 @@ class CPUTest
         programManager.setProgramCounter(Address.of(0x8000));
     }
 
-    record ModeInput(Value value, Reader reader) {}
-
-    static Function<ModeInput, AddressMode> modeAbsolute()
-    {
-        return (ModeInput input) -> {
-            Address target = Address.of(0x1234);
-            when(input.reader().read(target)).thenReturn(input.value());
-
-            return absolute(target);
-        };
-    }
-
-    static Function<ModeInput, AddressMode> modeImmediate()
-    {
-        return (ModeInput input) -> immediate(input.value());
-    }
-
     static Stream<Arguments> execute_ADC()
     {
-        return Stream.of(adcInputs(modeAbsolute(), 4, 3), adcInputs(modeImmediate(), 2, 2))
+        return Stream.of(adcInputs(modeAbsolute(), 4, 3),
+                         adcInputs(modeAbsoluteXSamePage(), 4, 3),
+                         adcInputs(modeAbsoluteXCrossPage(), 5, 3),
+                         adcInputs(modeAbsoluteYSamePage(), 4, 3),
+                         adcInputs(modeAbsoluteYCrossPage(), 5, 3),
+                         adcInputs(modeImmediate(), 2, 2),
+                         adcInputs(modeZeroPage(), 3, 2),
+                         adcInputs(modeZeroPageXIndirect(), 6, 2),
+                         adcInputs(modeZeroPageX(), 4, 2),
+                         adcInputs(modeZeroPageIndirect(), 5, 2),
+                         adcInputs(modeZeroPageIndirectYSamePage(), 5, 2),
+                         adcInputs(modeZeroPageIndirectYCrossPage(), 6, 2))
                      .flatMap(i -> i);
     }
 
@@ -111,7 +105,7 @@ class CPUTest
         accumulator.store(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
-        setNextOp(adc(mode.apply(new ModeInput(Value.of(input), reader))));
+        setNextOp(adc(mode.apply(modeInput(input))));
 
         // when
         CPUState state = cpu.getState();
@@ -132,77 +126,6 @@ class CPUTest
                                     state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
                                     state.stackPointer(),
                                     state.stackData()));
-    }
-
-    @Test
-    void execute_ADC_Absolute()
-    {
-        // given
-        accumulator.store(Value.of(0x01));
-        status.setCarry(false);
-
-        Address target = Address.of(0x1234);
-        Value value = Value.of(0x10);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(adc(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.of(0x11),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).overflow(false).zero(false).carry(false).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"01, 01, 0, 02, false, false, false, false",
-                "F0, 01, 0, F1, true, false, false, false",
-                "01, FF, 0, 00, false, false, true, true",
-                "02, FF, 0, 01, false, false, false, true",
-                "7F, 01, 0, 80, true, true, false, false",
-                "FF, FF, 0, FE, true, false, false, true",
-                "80, FF, 0, 7F, false, true, false, true",
-                "3F, 40, 1, 80, true, true, false, false"})
-    void execute_ADC_Immediate(String acc,
-                               String input,
-                               int carry,
-                               String expected,
-                               boolean isNegative,
-                               boolean isOverflow,
-                               boolean isZero,
-                               boolean isCarry)
-    {
-        // given
-        accumulator.store(Value.ofHex(acc));
-        status.setCarry(carry != 0);
-
-        setNextOp(adc(immediate(Value.ofHex(input))));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags()
-                         .toBuilder()
-                         .negative(isNegative)
-                         .overflow(isOverflow)
-                         .zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
     }
 
     @Test
@@ -2330,5 +2253,193 @@ class CPUTest
                                               CPUState::stackPointer,
                                               CPUState::stackData)
                                   .containsExactly(accumulator, x, y, flags, programCounter, stackPointer, stackData);
+    }
+
+    record ModeInput(Value value, Reader reader, Register x, Register y) {}
+
+    private ModeInput modeInput(int input)
+    {
+        return new ModeInput(Value.of(input), reader, x, y);
+    }
+
+    private static Function<ModeInput, AddressMode> modeAbsolute()
+    {
+        return (ModeInput input) -> {
+            Address target = Address.of(0x1234);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return absolute(target);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeAbsoluteXSamePage()
+    {
+        return (ModeInput input) -> {
+            Address intermediate = Address.of(0x1234);
+
+            Value offset = Value.of(0xFF);
+            input.x().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return absoluteX(intermediate);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeAbsoluteXCrossPage()
+    {
+        return (ModeInput input) -> {
+            Address intermediate = Address.of(0x12FE);
+
+            Value offset = Value.of(0x02);
+            input.x().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return absoluteX(intermediate);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeAbsoluteYSamePage()
+    {
+        return (ModeInput input) -> {
+            Address intermediate = Address.of(0x1234);
+
+            Value offset = Value.of(0xFF);
+            input.y().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return absoluteY(intermediate);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeAbsoluteYCrossPage()
+    {
+        return (ModeInput input) -> {
+            Address intermediate = Address.of(0x12FE);
+
+            Value offset = Value.of(0x02);
+            input.y().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return absoluteY(intermediate);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeImmediate()
+    {
+        return (ModeInput input) -> immediate(input.value());
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPage()
+    {
+        return (ModeInput input) -> {
+            Value targetOffset = Value.of(0x12);
+
+            Address target = Address.zeroPage(targetOffset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zp(targetOffset);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPageXIndirect()
+    {
+        return (ModeInput input) -> {
+            Value intermediateOffset = Value.of(0x12);
+
+            Value offset = Value.of(0x02);
+            input.x().store(offset);
+
+            Address intermediate = Address.zeroPage(intermediateOffset.plus(offset));
+            Address target = Address.of(0x1234);
+
+            when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
+            when(input.reader().read(intermediate)).thenReturn(target.low());
+            when(input.reader().read(intermediate.increment())).thenReturn(target.high());
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zpXIndirect(intermediateOffset);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPageX()
+    {
+        return (ModeInput input) -> {
+            Value intermediateOffset = Value.of(0x12);
+
+            Value offset = Value.of(0x02);
+            input.x().store(offset);
+
+            Address target = Address.zeroPage(intermediateOffset.plus(offset));
+            when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zpX(intermediateOffset);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPageIndirect()
+    {
+        return (ModeInput input) -> {
+            Value offset = Value.of(0x12);
+
+            Address intermediate = Address.zeroPage(offset);
+            Address target = Address.of(0x1234);
+
+            when(input.reader().read(intermediate)).thenReturn(target.low());
+            when(input.reader().read(intermediate.increment())).thenReturn(target.high());
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zpIndirect(offset);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPageIndirectYSamePage()
+    {
+        return (ModeInput input) -> {
+            Value pointerOffset = Value.of(0x12);
+
+            Address pointer = Address.zeroPage(pointerOffset);
+            Address intermediate = Address.of(0x1232);
+
+            when(input.reader().read(pointer)).thenReturn(intermediate.low());
+            when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
+
+            Value offset = Value.of(0xFF);
+            input.y().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zpIndirectY(pointerOffset);
+        };
+    }
+
+    private static Function<ModeInput, AddressMode> modeZeroPageIndirectYCrossPage()
+    {
+        return (ModeInput input) -> {
+            Value pointerOffset = Value.of(0x12);
+
+            Address pointer = Address.zeroPage(pointerOffset);
+            Address intermediate = Address.of(0x12FE);
+
+            when(input.reader().read(pointer)).thenReturn(intermediate.low());
+            when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
+
+            Value offset = Value.of(0x02);
+            input.y().store(offset);
+
+            Address target = intermediate.plus(offset);
+            when(input.reader().read(target)).thenReturn(input.value());
+
+            return zpIndirectY(pointerOffset);
+        };
     }
 }

@@ -4,7 +4,6 @@ import java.util.List;
 
 public record Address(short data) implements Comparable<Address>
 {
-    public static final Address ZERO = Address.of(0);
     public static final Address RESET = Address.of(0xFFFC);
 
     public static Address of(short s)
@@ -30,6 +29,11 @@ public record Address(short data) implements Comparable<Address>
     public static Address of(Value low, Value high)
     {
         return Address.of((short) ((high.data() << 8) | (low.data() & 0xFF)));
+    }
+
+    public static Address zeroPage(Value offset)
+    {
+        return Address.of(offset, Value.ZERO);
     }
 
     public Address increment()
