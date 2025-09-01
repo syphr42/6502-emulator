@@ -13,6 +13,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Stream;
 
@@ -60,31 +61,31 @@ class CPUTest
 
     static Stream<Arguments> execute_ADC()
     {
-        return Stream.of(adcInputs(modeAbsolute(), 4, 3),
-                         adcInputs(modeAbsoluteXSamePage(), 4, 3),
-                         adcInputs(modeAbsoluteXCrossPage(), 5, 3),
-                         adcInputs(modeAbsoluteYSamePage(), 4, 3),
-                         adcInputs(modeAbsoluteYCrossPage(), 5, 3),
+        return Stream.of(adcInputs(modeAbsolute(), 3, 4),
+                         adcInputs(modeAbsoluteXSamePage(), 3, 4),
+                         adcInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         adcInputs(modeAbsoluteYSamePage(), 3, 4),
+                         adcInputs(modeAbsoluteYCrossPage(), 3, 5),
                          adcInputs(modeImmediate(), 2, 2),
-                         adcInputs(modeZeroPage(), 3, 2),
-                         adcInputs(modeZeroPageXIndirect(), 6, 2),
-                         adcInputs(modeZeroPageX(), 4, 2),
-                         adcInputs(modeZeroPageIndirect(), 5, 2),
-                         adcInputs(modeZeroPageIndirectYSamePage(), 5, 2),
-                         adcInputs(modeZeroPageIndirectYCrossPage(), 6, 2))
+                         adcInputs(modeZeroPage(), 2, 3),
+                         adcInputs(modeZeroPageXIndirect(), 2, 6),
+                         adcInputs(modeZeroPageX(), 2, 4),
+                         adcInputs(modeZeroPageIndirect(), 2, 5),
+                         adcInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         adcInputs(modeZeroPageIndirectYCrossPage(), 2, 6))
                      .flatMap(i -> i);
     }
 
-    static Stream<Arguments> adcInputs(Function<ModeInput, AddressMode> mode, int cycles, int pcOffset)
+    static Stream<Arguments> adcInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
     {
-        return Stream.of(Arguments.of(0x01, 0, 0x01, mode, cycles, 0x02, false, false, false, false, pcOffset),
-                         Arguments.of(0xF0, 0, 0x01, mode, cycles, 0xF1, true, false, false, false, pcOffset),
-                         Arguments.of(0x01, 0, 0xFF, mode, cycles, 0x00, false, false, true, true, pcOffset),
-                         Arguments.of(0x02, 0, 0xFF, mode, cycles, 0x01, false, false, false, true, pcOffset),
-                         Arguments.of(0x7F, 0, 0x01, mode, cycles, 0x80, true, true, false, false, pcOffset),
-                         Arguments.of(0xFF, 0, 0xFF, mode, cycles, 0xFE, true, false, false, true, pcOffset),
-                         Arguments.of(0x80, 0, 0xFF, mode, cycles, 0x7F, false, true, false, true, pcOffset),
-                         Arguments.of(0x3F, 1, 0x40, mode, cycles, 0x80, true, true, false, false, pcOffset));
+        return Stream.of(Arguments.of(0x01, 0, 0x01, mode, cycles, 0x02, false, false, false, false, length),
+                         Arguments.of(0xF0, 0, 0x01, mode, cycles, 0xF1, true, false, false, false, length),
+                         Arguments.of(0x01, 0, 0xFF, mode, cycles, 0x00, false, false, true, true, length),
+                         Arguments.of(0x02, 0, 0xFF, mode, cycles, 0x01, false, false, false, true, length),
+                         Arguments.of(0x7F, 0, 0x01, mode, cycles, 0x80, true, true, false, false, length),
+                         Arguments.of(0xFF, 0, 0xFF, mode, cycles, 0xFE, true, false, false, true, length),
+                         Arguments.of(0x80, 0, 0xFF, mode, cycles, 0x7F, false, true, false, true, length),
+                         Arguments.of(0x3F, 1, 0x40, mode, cycles, 0x80, true, true, false, false, length));
     }
 
     @ParameterizedTest
@@ -92,7 +93,7 @@ class CPUTest
     void execute_ADC(int givenAccumulator,
                      int givenCarry,
                      int input,
-                     Function<ModeInput, AddressMode> mode,
+                     Function<ModeInput, ModeOutput> modeGen,
                      int expectedCycles,
                      int expectedAccumulator,
                      boolean expectedNegative,
@@ -105,7 +106,7 @@ class CPUTest
         accumulator.store(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
-        setNextOp(adc(mode.apply(modeInput(input))));
+        setNextOp(adc(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
@@ -130,34 +131,34 @@ class CPUTest
 
     static Stream<Arguments> execute_AND()
     {
-        return Stream.of(andInputs(modeAbsolute(), 4, 3),
-                         andInputs(modeAbsoluteXSamePage(), 4, 3),
-                         andInputs(modeAbsoluteXCrossPage(), 5, 3),
-                         andInputs(modeAbsoluteYSamePage(), 4, 3),
-                         andInputs(modeAbsoluteYCrossPage(), 5, 3),
+        return Stream.of(andInputs(modeAbsolute(), 3, 4),
+                         andInputs(modeAbsoluteXSamePage(), 3, 4),
+                         andInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         andInputs(modeAbsoluteYSamePage(), 3, 4),
+                         andInputs(modeAbsoluteYCrossPage(), 3, 5),
                          andInputs(modeImmediate(), 2, 2),
-                         andInputs(modeZeroPage(), 3, 2),
-                         andInputs(modeZeroPageXIndirect(), 6, 2),
-                         andInputs(modeZeroPageX(), 4, 2),
-                         andInputs(modeZeroPageIndirect(), 5, 2),
-                         andInputs(modeZeroPageIndirectYSamePage(), 5, 2),
-                         andInputs(modeZeroPageIndirectYCrossPage(), 6, 2)).flatMap(i -> i);
+                         andInputs(modeZeroPage(), 2, 3),
+                         andInputs(modeZeroPageXIndirect(), 2, 6),
+                         andInputs(modeZeroPageX(), 2, 4),
+                         andInputs(modeZeroPageIndirect(), 2, 5),
+                         andInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         andInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
     }
 
-    static Stream<Arguments> andInputs(Function<ModeInput, AddressMode> mode, int cycles, int pcOffset)
+    static Stream<Arguments> andInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
     {
-        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, 0x00, false, true, pcOffset),
-                         Arguments.of(0x00, 0xFF, mode, cycles, 0x00, false, true, pcOffset),
-                         Arguments.of(0xFF, 0xFF, mode, cycles, 0xFF, true, false, pcOffset),
-                         Arguments.of(0xFF, 0x00, mode, cycles, 0x00, false, true, pcOffset),
-                         Arguments.of(0b1100, 0b0101, mode, cycles, 0b0100, false, false, pcOffset));
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0b1100, 0b0101, mode, cycles, 0b0100, false, false, length));
     }
 
     @ParameterizedTest
     @MethodSource
     void execute_AND(int givenAccumulator,
                      int input,
-                     Function<ModeInput, AddressMode> mode,
+                     Function<ModeInput, ModeOutput> modeGen,
                      int expectedCycles,
                      int expectedAccumulator,
                      boolean expectedNegative,
@@ -167,7 +168,7 @@ class CPUTest
         // given
         accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(and(mode.apply(modeInput(input))));
+        setNextOp(and(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
@@ -188,64 +189,62 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"00000000, 00000000, false, true, false",
-                "00000001, 00000010, false, false, false",
-                "10000000, 00000000, false, true, true",
-                "10101010, 01010100, false, false, true",
-                "01010101, 10101010, true, false, false",
-                "11000000, 10000000, true, false, true"})
-    void execute_ASL_Absolute(String memory, String expected, boolean isNegative, boolean isZero, boolean isCarry)
+    static Stream<Arguments> execute_ASL()
     {
-        // given
-        var address = Address.of(0x1234);
-        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+        return Stream.of(aslInputs(modeAbsolute(), 3, 6),
+                         aslInputs(modeAbsoluteXSamePage(), 3, 6),
+                         aslInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         aslInputs(modeAccumulator(), 1, 2),
+                         aslInputs(modeZeroPage(), 2, 5),
+                         aslInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
 
-        setNextOp(asl(absolute(address)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(6)).nextCycle();
-        verify(writer).write(address, Value.ofBits(expected));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> aslInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0b00000000, mode, cycles, 0b00000000, false, true, false, length),
+                         Arguments.of(0b00000001, mode, cycles, 0b00000010, false, false, false, length),
+                         Arguments.of(0b10000000, mode, cycles, 0b00000000, false, true, true, length),
+                         Arguments.of(0b10101010, mode, cycles, 0b01010100, false, false, true, length),
+                         Arguments.of(0b01010101, mode, cycles, 0b10101010, true, false, false, length),
+                         Arguments.of(0b11000000, mode, cycles, 0b10000000, true, false, true, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00000000, 00000000, false, true, false",
-                "00000001, 00000010, false, false, false",
-                "10000000, 00000000, false, true, true",
-                "10101010, 01010100, false, false, true",
-                "01010101, 10101010, true, false, false",
-                "11000000, 10000000, true, false, true"})
-    void execute_ASL_Accumulator(String acc, String expected, boolean isNegative, boolean isZero, boolean isCarry)
+    @MethodSource
+    void execute_ASL(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedOutput,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofBits(acc));
-
-        setNextOp(asl(accumulator()));
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(asl(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofBits(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2260,24 +2259,26 @@ class CPUTest
                                   .containsExactly(accumulator, x, y, flags, programCounter, stackPointer, stackData);
     }
 
-    record ModeInput(Value value, Reader reader, Register x, Register y) {}
+    record ModeInput(Value value, Reader reader, Register accumulator, Register x, Register y) {}
+
+    record ModeOutput(AddressMode mode, Optional<Address> target) {}
 
     private ModeInput modeInput(int input)
     {
-        return new ModeInput(Value.of(input), reader, x, y);
+        return new ModeInput(Value.of(input), reader, accumulator, x, y);
     }
 
-    private static Function<ModeInput, AddressMode> modeAbsolute()
+    private static Function<ModeInput, ModeOutput> modeAbsolute()
     {
         return (ModeInput input) -> {
             Address target = Address.of(0x1234);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return absolute(target);
+            return new ModeOutput(absolute(target), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeAbsoluteXSamePage()
+    private static Function<ModeInput, ModeOutput> modeAbsoluteXSamePage()
     {
         return (ModeInput input) -> {
             Address intermediate = Address.of(0x1234);
@@ -2288,11 +2289,11 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return absoluteX(intermediate);
+            return new ModeOutput(absoluteX(intermediate), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeAbsoluteXCrossPage()
+    private static Function<ModeInput, ModeOutput> modeAbsoluteXCrossPage()
     {
         return (ModeInput input) -> {
             Address intermediate = Address.of(0x12FE);
@@ -2303,11 +2304,11 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return absoluteX(intermediate);
+            return new ModeOutput(absoluteX(intermediate), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeAbsoluteYSamePage()
+    private static Function<ModeInput, ModeOutput> modeAbsoluteYSamePage()
     {
         return (ModeInput input) -> {
             Address intermediate = Address.of(0x1234);
@@ -2318,11 +2319,11 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return absoluteY(intermediate);
+            return new ModeOutput(absoluteY(intermediate), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeAbsoluteYCrossPage()
+    private static Function<ModeInput, ModeOutput> modeAbsoluteYCrossPage()
     {
         return (ModeInput input) -> {
             Address intermediate = Address.of(0x12FE);
@@ -2333,16 +2334,24 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return absoluteY(intermediate);
+            return new ModeOutput(absoluteY(intermediate), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeImmediate()
+    private static Function<ModeInput, ModeOutput> modeAccumulator()
     {
-        return (ModeInput input) -> immediate(input.value());
+        return (ModeInput input) -> {
+            input.accumulator().store(input.value());
+            return new ModeOutput(accumulator(), Optional.empty());
+        };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPage()
+    private static Function<ModeInput, ModeOutput> modeImmediate()
+    {
+        return (ModeInput input) -> new ModeOutput(immediate(input.value()), Optional.empty());
+    }
+
+    private static Function<ModeInput, ModeOutput> modeZeroPage()
     {
         return (ModeInput input) -> {
             Value targetOffset = Value.of(0x12);
@@ -2350,11 +2359,11 @@ class CPUTest
             Address target = Address.zeroPage(targetOffset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zp(targetOffset);
+            return new ModeOutput(zp(targetOffset), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPageXIndirect()
+    private static Function<ModeInput, ModeOutput> modeZeroPageXIndirect()
     {
         return (ModeInput input) -> {
             Value intermediateOffset = Value.of(0x12);
@@ -2370,11 +2379,11 @@ class CPUTest
             when(input.reader().read(intermediate.increment())).thenReturn(target.high());
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zpXIndirect(intermediateOffset);
+            return new ModeOutput(zpXIndirect(intermediateOffset), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPageX()
+    private static Function<ModeInput, ModeOutput> modeZeroPageX()
     {
         return (ModeInput input) -> {
             Value intermediateOffset = Value.of(0x12);
@@ -2386,11 +2395,11 @@ class CPUTest
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zpX(intermediateOffset);
+            return new ModeOutput(zpX(intermediateOffset), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPageIndirect()
+    private static Function<ModeInput, ModeOutput> modeZeroPageIndirect()
     {
         return (ModeInput input) -> {
             Value offset = Value.of(0x12);
@@ -2402,11 +2411,11 @@ class CPUTest
             when(input.reader().read(intermediate.increment())).thenReturn(target.high());
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zpIndirect(offset);
+            return new ModeOutput(zpIndirect(offset), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPageIndirectYSamePage()
+    private static Function<ModeInput, ModeOutput> modeZeroPageIndirectYSamePage()
     {
         return (ModeInput input) -> {
             Value pointerOffset = Value.of(0x12);
@@ -2423,11 +2432,11 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zpIndirectY(pointerOffset);
+            return new ModeOutput(zpIndirectY(pointerOffset), Optional.of(target));
         };
     }
 
-    private static Function<ModeInput, AddressMode> modeZeroPageIndirectYCrossPage()
+    private static Function<ModeInput, ModeOutput> modeZeroPageIndirectYCrossPage()
     {
         return (ModeInput input) -> {
             Value pointerOffset = Value.of(0x12);
@@ -2444,7 +2453,7 @@ class CPUTest
             Address target = intermediate.plus(offset);
             when(input.reader().read(target)).thenReturn(input.value());
 
-            return zpIndirectY(pointerOffset);
+            return new ModeOutput(zpIndirectY(pointerOffset), Optional.of(target));
         };
     }
 }

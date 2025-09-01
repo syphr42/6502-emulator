@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
+import java.util.function.Function;
 
 import static org.syphr.cpu6502.emulator.machine.AddressMode.*;
 import static org.syphr.cpu6502.emulator.machine.Operation.*;
@@ -367,15 +368,8 @@ public class CPU
             }
             case ASL(AddressMode mode) -> {
                 switch (mode) {
-                    case Absolute(Address address) -> {
-                        reader.read(address); // throw-away read burns a cycle
-                        Value input = reader.read(address);
-                        Value output = shiftLeft(input);
-                        writer.write(address, output);
-                        status.setNegative(output.isNegative()).setZero(output.isZero());
-                    }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, this::shiftLeft);
                 }
             }
             case BCC(AddressMode mode) -> branchIf(not(status::carry), mode);
@@ -429,15 +423,8 @@ public class CPU
             case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
             case LSR(AddressMode mode) -> {
                 switch (mode) {
-                    case Absolute(Address address) -> {
-                        reader.read(address); // throw-away read burns a cycle
-                        Value input = reader.read(address);
-                        Value output = shiftRight(input);
-                        writer.write(address, output);
-                        status.setNegative(output.isNegative()).setZero(output.isZero());
-                    }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftRight(r.value())));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, this::shiftRight);
                 }
             }
             case NOP _ -> {}
@@ -464,28 +451,14 @@ public class CPU
             }
             case ROL(AddressMode mode) -> {
                 switch (mode) {
-                    case Absolute(Address address) -> {
-                        reader.read(address); // throw-away read burns a cycle
-                        Value input = reader.read(address);
-                        Value output = rotateLeft(input);
-                        writer.write(address, output);
-                        status.setNegative(output.isNegative()).setZero(output.isZero());
-                    }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateLeft(r.value())));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, this::rotateLeft);
                 }
             }
             case ROR(AddressMode mode) -> {
                 switch (mode) {
-                    case Absolute(Address address) -> {
-                        reader.read(address); // throw-away read burns a cycle
-                        Value input = reader.read(address);
-                        Value output = rotateRight(input);
-                        writer.write(address, output);
-                        status.setNegative(output.isNegative()).setZero(output.isZero());
-                    }
                     case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, this::rotateRight);
                 }
             }
             case RTI _ -> {
@@ -573,6 +546,18 @@ public class CPU
     {
         log.info("Performing dummy read");
         reader.read(programManager.getProgramCounter());
+    }
+
+    private void readModifyWriteMemory(AddressMode mode, Function<Value, Value> function)
+    {
+        Address address = toAddress(mode);
+
+        reader.read(address); // throw-away read burns a cycle
+        Value input = reader.read(address);
+
+        Value output = function.apply(input);
+        writer.write(address, output);
+        status.setNegative(output.isNegative()).setZero(output.isZero());
     }
 
     private void updateRegister(Register register, Consumer<Register> action)
