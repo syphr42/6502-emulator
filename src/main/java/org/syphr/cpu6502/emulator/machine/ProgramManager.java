@@ -4,19 +4,16 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Iterator;
-
 @Slf4j
 @RequiredArgsConstructor
-class ProgramManager implements Iterator<Value>
+class ProgramManager
 {
     private final Reader reader;
 
     @Getter
     private Address programCounter = Address.of(0x00FF);
 
-    @Override
-    public Value next()
+    public Value nextValue()
     {
         Value value = reader.read(programCounter);
         programCounter = programCounter.increment();
@@ -24,10 +21,9 @@ class ProgramManager implements Iterator<Value>
         return value;
     }
 
-    @Override
-    public boolean hasNext()
+    public Address nextAddress()
     {
-        return true;
+        return Address.of(nextValue(), nextValue());
     }
 
     public void setProgramCounter(Address address)

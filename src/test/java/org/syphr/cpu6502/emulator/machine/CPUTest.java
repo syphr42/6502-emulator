@@ -4,13 +4,17 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.util.List;
+import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertAll;
@@ -54,34 +58,80 @@ class CPUTest
         programManager.setProgramCounter(Address.of(0x8000));
     }
 
-    private void setNextOp(Operation op)
+    record ModeInput(Value value, Reader reader) {}
+
+    static Function<ModeInput, AddressMode> modeAbsolute()
     {
-        Address pc = programManager.getProgramCounter();
+        return (ModeInput input) -> {
+            Address target = Address.of(0x1234);
+            when(input.reader().read(target)).thenReturn(input.value());
 
-        List<Value> values = toValues(op);
-        for (int i = 0; i < values.size(); i++) {
-            when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
-        }
-
-        // single byte operations always perform a second dummy read
-        if (values.size() == 1) {
-            when(reader.read(pc.increment())).thenReturn(Value.ZERO);
-        }
+            return absolute(target);
+        };
     }
 
-    // optional method to help debugging clock cycle issues
-    private void printClockCycles()
+    static Function<ModeInput, AddressMode> modeImmediate()
     {
-        doAnswer(_ -> {
-            // TODO locate the location in the stack trace that called Clock::nextCycle
-            StackTraceElement currentExecution = new Exception().getStackTrace()[8];
-            System.out.printf("Clock::nextCycle %s.%s(%s:%d)%n",
-                              currentExecution.getClassName(),
-                              currentExecution.getMethodName(),
-                              currentExecution.getFileName(),
-                              currentExecution.getLineNumber());
-            return null;
-        }).when(clock).nextCycle();
+        return (ModeInput input) -> immediate(input.value());
+    }
+
+    static Stream<Arguments> execute_ADC()
+    {
+        return Stream.of(adcInputs(modeAbsolute(), 4, 3), adcInputs(modeImmediate(), 2, 2))
+                     .flatMap(i -> i);
+    }
+
+    static Stream<Arguments> adcInputs(Function<ModeInput, AddressMode> mode, int cycles, int pcOffset)
+    {
+        return Stream.of(Arguments.of(0x01, 0, 0x01, mode, cycles, 0x02, false, false, false, false, pcOffset),
+                         Arguments.of(0xF0, 0, 0x01, mode, cycles, 0xF1, true, false, false, false, pcOffset),
+                         Arguments.of(0x01, 0, 0xFF, mode, cycles, 0x00, false, false, true, true, pcOffset),
+                         Arguments.of(0x02, 0, 0xFF, mode, cycles, 0x01, false, false, false, true, pcOffset),
+                         Arguments.of(0x7F, 0, 0x01, mode, cycles, 0x80, true, true, false, false, pcOffset),
+                         Arguments.of(0xFF, 0, 0xFF, mode, cycles, 0xFE, true, false, false, true, pcOffset),
+                         Arguments.of(0x80, 0, 0xFF, mode, cycles, 0x7F, false, true, false, true, pcOffset),
+                         Arguments.of(0x3F, 1, 0x40, mode, cycles, 0x80, true, true, false, false, pcOffset));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_ADC(int givenAccumulator,
+                     int givenCarry,
+                     int input,
+                     Function<ModeInput, AddressMode> mode,
+                     int expectedCycles,
+                     int expectedAccumulator,
+                     boolean expectedNegative,
+                     boolean expectedOverflow,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
+    {
+        // given
+        accumulator.store(Value.of(givenAccumulator));
+        status.setCarry(givenCarry != 0);
+
+        setNextOp(adc(mode.apply(new ModeInput(Value.of(input), reader))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(expectedAccumulator),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .overflow(expectedOverflow)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @Test
@@ -2227,6 +2277,36 @@ class CPUTest
                     state.programCounter().plus(Value.of(1)),
                     state.stackPointer(),
                     state.stackData());
+    }
+
+    private void setNextOp(Operation op)
+    {
+        Address pc = programManager.getProgramCounter();
+
+        List<Value> values = toValues(op);
+        for (int i = 0; i < values.size(); i++) {
+            when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
+        }
+
+        // single byte operations always perform a second dummy read
+        if (values.size() == 1) {
+            when(reader.read(pc.increment())).thenReturn(Value.ZERO);
+        }
+    }
+
+    // optional method to help debugging clock cycle issues
+    private void printClockCycles()
+    {
+        doAnswer(_ -> {
+            // TODO locate the location in the stack trace that called Clock::nextCycle
+            StackTraceElement currentExecution = new Exception().getStackTrace()[8];
+            System.out.printf("Clock::nextCycle %s.%s(%s:%d)%n",
+                              currentExecution.getClassName(),
+                              currentExecution.getMethodName(),
+                              currentExecution.getFileName(),
+                              currentExecution.getLineNumber());
+            return null;
+        }).when(clock).nextCycle();
     }
 
     private Address offsetLow(Address address, int offset)

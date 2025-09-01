@@ -7,16 +7,16 @@ public sealed interface AddressMode
     static Absolute absolute(Address address) { return new Absolute(address); }
 
     record AbsoluteIndexedXIndirect(Address address) implements AddressMode {}
-    static AbsoluteIndexedXIndirect axi(Address address) { return new AbsoluteIndexedXIndirect(address); }
+    static AbsoluteIndexedXIndirect absoluteXIndirect(Address address) { return new AbsoluteIndexedXIndirect(address); }
 
     record AbsoluteIndexedX(Address address) implements AddressMode {}
-    static AbsoluteIndexedX ax(Address address) { return new AbsoluteIndexedX(address); }
+    static AbsoluteIndexedX absoluteX(Address address) { return new AbsoluteIndexedX(address); }
 
     record AbsoluteIndexedY(Address address) implements AddressMode {}
-    static AbsoluteIndexedY ay(Address address) { return new AbsoluteIndexedY(address); }
+    static AbsoluteIndexedY absoluteY(Address address) { return new AbsoluteIndexedY(address); }
 
     record AbsoluteIndirect(Address address) implements AddressMode {}
-    static AbsoluteIndirect ai(Address address) { return new AbsoluteIndirect(address); }
+    static AbsoluteIndirect absoluteIndirect(Address address) { return new AbsoluteIndirect(address); }
 
     record Accumulator() implements AddressMode {}
     static Accumulator accumulator() { return new Accumulator(); }
@@ -37,18 +37,18 @@ public sealed interface AddressMode
     static ZeroPage zp(Value offset) { return new ZeroPage(offset); }
 
     record ZeroPageIndexedXIndirect(Value offset) implements AddressMode {}
-    static ZeroPageIndexedXIndirect zpxi(Value offset) { return new ZeroPageIndexedXIndirect(offset); }
+    static ZeroPageIndexedXIndirect zpXIndirect(Value offset) { return new ZeroPageIndexedXIndirect(offset); }
 
     record ZeroPageIndexedX(Value offset) implements AddressMode {}
-    static ZeroPageIndexedX zpx(Value offset) { return new ZeroPageIndexedX(offset); }
+    static ZeroPageIndexedX zpX(Value offset) { return new ZeroPageIndexedX(offset); }
 
     record ZeroPageIndexedY(Value offset) implements AddressMode {}
-    static ZeroPageIndexedY zpy(Value offset) { return new ZeroPageIndexedY(offset); }
+    static ZeroPageIndexedY zpY(Value offset) { return new ZeroPageIndexedY(offset); }
 
     record ZeroPageIndirect(Value offset) implements AddressMode {}
-    static ZeroPageIndirect zpi(Value offset) { return new ZeroPageIndirect(offset); }
+    static ZeroPageIndirect zpIndirect(Value offset) { return new ZeroPageIndirect(offset); }
 
     record ZeroPageIndirectIndexedY(Value offset) implements AddressMode {}
-    static ZeroPageIndirectIndexedY zpiy(Value offset) { return new ZeroPageIndirectIndexedY(offset); }
+    static ZeroPageIndirectIndexedY zpIndirectY(Value offset) { return new ZeroPageIndirectIndexedY(offset); }
     // @formatter:on
 }
