@@ -832,28 +832,58 @@ class CPUTest
                                     state.stackData()));
     }
 
+    static Stream<Arguments> execute_DEC()
+    {
+        return Stream.of(decInputs(modeAbsolute(), 3, 6),
+                         decInputs(modeAbsoluteXSamePage(), 3, 6),
+                         decInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         decInputs(modeAccumulator(), 1, 2),
+                         decInputs(modeZeroPage(), 2, 5),
+                         decInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> decInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0x01, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0x02, mode, cycles, 0x01, false, false, length),
+                         Arguments.of(0xFF, mode, cycles, 0xFE, true, false, length));
+    }
+
     @ParameterizedTest
-    @CsvSource({"00, FF, true, false", "01, 00, false, true", "FF, FE, true, false"})
-    void execute_DEC_Accumulator(String acc, String expected, boolean isNegative, boolean isZero)
+    @MethodSource
+    void execute_DEC(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedOutput,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
-
-        setNextOp(dec(accumulator()));
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(dec(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -962,6 +992,60 @@ class CPUTest
                     state.programCounter().plus(Value.of(2)),
                     state.stackPointer(),
                     state.stackData());
+    }
+
+    static Stream<Arguments> execute_INC()
+    {
+        return Stream.of(incInputs(modeAbsolute(), 3, 6),
+                         incInputs(modeAbsoluteXSamePage(), 3, 6),
+                         incInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         incInputs(modeAccumulator(), 1, 2),
+                         incInputs(modeZeroPage(), 2, 5),
+                         incInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> incInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0xFF, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0x00, mode, cycles, 0x01, false, false, length),
+                         Arguments.of(0x01, mode, cycles, 0x02, false, false, length),
+                         Arguments.of(0xFE, mode, cycles, 0xFF, true, false, length));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_INC(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedOutput,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
+    {
+        // given
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(inc(modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest

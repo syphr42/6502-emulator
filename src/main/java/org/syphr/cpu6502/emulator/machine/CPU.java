@@ -398,7 +398,7 @@ public class CPU
             case DEC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::decrement);
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, Value::decrement);
                 }
             }
             case DEX _ -> updateRegister(x, Register::decrement);
@@ -407,7 +407,7 @@ public class CPU
             case INC(AddressMode mode) -> {
                 switch (mode) {
                     case Accumulator _ -> updateRegister(accumulator, Register::increment);
-                    default -> throw new UnsupportedOperationException("Unsupported operation: " + operation);
+                    default -> readModifyWriteMemory(mode, Value::increment);
                 }
             }
             case INX _ -> updateRegister(x, Register::increment);
