@@ -934,64 +934,64 @@ class CPUTest
                     state.stackData());
     }
 
-    @ParameterizedTest
-    @CsvSource({"00, 00, 00, false, true",
-                "00, FF, FF, true, false",
-                "FF, FF, 00, false, true",
-                "FF, 00, FF, true, false",
-                "04, 07, 03, false, false"})
-    void execute_EOR_Absolute(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    static Stream<Arguments> execute_EOR()
     {
-        // given
-        accumulator.store(Value.ofHex(acc));
+        return Stream.of(eorInputs(modeAbsolute(), 3, 4),
+                         eorInputs(modeAbsoluteXSamePage(), 3, 4),
+                         eorInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         eorInputs(modeAbsoluteYSamePage(), 3, 4),
+                         eorInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         eorInputs(modeImmediate(), 2, 2),
+                         eorInputs(modeZeroPage(), 2, 3),
+                         eorInputs(modeZeroPageXIndirect(), 2, 6),
+                         eorInputs(modeZeroPageX(), 2, 4),
+                         eorInputs(modeZeroPageIndirect(), 2, 5),
+                         eorInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         eorInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(eor(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> eorInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0b1100, 0b0101, mode, cycles, 0b1001, false, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, 00, false, true",
-                "00, FF, FF, true, false",
-                "FF, FF, 00, false, true",
-                "FF, 00, FF, true, false",
-                "04, 07, 03, false, false"})
-    void execute_EOR_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    @MethodSource
+    void execute_EOR(int givenAccumulator,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedAccumulator,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(eor(immediate(Value.ofHex(input))));
+        setNextOp(eor(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(expectedAccumulator),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     static Stream<Arguments> execute_INC()
