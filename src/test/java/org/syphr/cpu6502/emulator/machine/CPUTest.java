@@ -728,124 +728,108 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CPX_Absolute(String xVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    static Stream<Arguments> execute_CPX()
     {
-        // given
-        x.store(Value.ofHex(xVal));
+        return Stream.of(cpxInputs(modeAbsolute(), 3, 4),
+                         cpxInputs(modeImmediate(), 2, 2),
+                         cpxInputs(modeZeroPage(), 2, 3)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(cpx(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(state.accumulator(),
-                    Value.ofHex(xVal),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> cpxInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, false, true, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, false, false, false, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, false, true, true, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, true, false, true, length),
+                         Arguments.of(0x04, 0x02, mode, cycles, false, false, true, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CPX_Immediate(String xVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    @MethodSource
+    void execute_CPX(int givenX,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        x.store(Value.ofHex(xVal));
+        x.store(Value.of(givenX));
 
-        setNextOp(cpx(immediate(Value.ofHex(input))));
+        setNextOp(cpx(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    Value.ofHex(xVal),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    static Stream<Arguments> execute_CPY()
+    {
+        return Stream.of(cpyInputs(modeAbsolute(), 3, 4),
+                         cpyInputs(modeImmediate(), 2, 2),
+                         cpyInputs(modeZeroPage(), 2, 3)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> cpyInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, false, true, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, false, false, false, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, false, true, true, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, true, false, true, length),
+                         Arguments.of(0x04, 0x02, mode, cycles, false, false, true, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CPY_Absolute(String yVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    @MethodSource
+    void execute_CPY(int givenY,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        y.store(Value.ofHex(yVal));
+        y.store(Value.of(givenY));
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(cpy(absolute(target)));
+        setNextOp(cpy(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(4)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    Value.ofHex(yVal),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CPY_Immediate(String yVal, String input, boolean isNegative, boolean isZero, boolean isCarry)
-    {
-        // given
-        y.store(Value.ofHex(yVal));
-
-        setNextOp(cpy(immediate(Value.ofHex(input))));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    Value.ofHex(yVal),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
