@@ -667,64 +667,65 @@ class CPUTest
                     state.stackData());
     }
 
-    @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CMP_Absolute(String acc, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    static Stream<Arguments> execute_CMP()
     {
-        // given
-        accumulator.store(Value.ofHex(acc));
+        return Stream.of(cmpInputs(modeAbsolute(), 3, 4),
+                         cmpInputs(modeAbsoluteXSamePage(), 3, 4),
+                         cmpInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         cmpInputs(modeAbsoluteYSamePage(), 3, 4),
+                         cmpInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         cmpInputs(modeImmediate(), 2, 2),
+                         cmpInputs(modeZeroPage(), 2, 3),
+                         cmpInputs(modeZeroPageXIndirect(), 2, 6),
+                         cmpInputs(modeZeroPageX(), 2, 4),
+                         cmpInputs(modeZeroPageIndirect(), 2, 5),
+                         cmpInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         cmpInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(cmp(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.ofHex(acc),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> cmpInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, false, true, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, false, false, false, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, false, true, true, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, true, false, true, length),
+                         Arguments.of(0x04, 0x02, mode, cycles, false, false, true, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, false, true, true",
-                "00, FF, false, false, false",
-                "FF, FF, false, true, true",
-                "FF, 00, true, false, true",
-                "04, 02, false, false, true"})
-    void execute_CMP_Immediate(String acc, String input, boolean isNegative, boolean isZero, boolean isCarry)
+    @MethodSource
+    void execute_CMP(int givenAccumulator,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(cmp(immediate(Value.ofHex(input))));
+        setNextOp(cmp(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(acc),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
