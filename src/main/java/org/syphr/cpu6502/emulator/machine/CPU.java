@@ -358,20 +358,9 @@ public class CPU
     void execute(Operation operation)
     {
         switch (operation) {
-            case ADC(AddressMode mode) -> {
-                Value value = toValue(mode);
-                updateRegister(accumulator, r -> addWithCarry(r, value));
-            }
-            case AND(AddressMode mode) -> {
-                Value value = toValue(mode);
-                updateRegister(accumulator, r -> r.store(r.value().and(value)));
-            }
-            case ASL(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftLeft(r.value())));
-                    default -> readModifyWriteMemory(mode, this::shiftLeft);
-                }
-            }
+            case ADC(AddressMode mode) -> updateRegister(accumulator, r -> addWithCarry(r, toValue(mode)));
+            case AND(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().and(toValue(mode))));
+            case ASL(AddressMode mode) -> readModifyWrite(mode, this::shiftLeft);
             case BCC(AddressMode mode) -> branchIf(not(status::carry), mode);
             case BCS(AddressMode mode) -> branchIf(status::carry, mode);
             case BEQ(AddressMode mode) -> branchIf(status::zero, mode);
@@ -395,21 +384,11 @@ public class CPU
             case CMP(AddressMode mode) -> compare(accumulator, toValue(mode));
             case CPX(AddressMode mode) -> compare(x, toValue(mode));
             case CPY(AddressMode mode) -> compare(y, toValue(mode));
-            case DEC(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, Register::decrement);
-                    default -> readModifyWriteMemory(mode, Value::decrement);
-                }
-            }
+            case DEC(AddressMode mode) -> readModifyWrite(mode, Value::decrement);
             case DEX _ -> updateRegister(x, Register::decrement);
             case DEY _ -> updateRegister(y, Register::decrement);
             case EOR(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().xor(toValue(mode))));
-            case INC(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, Register::increment);
-                    default -> readModifyWriteMemory(mode, Value::increment);
-                }
-            }
+            case INC(AddressMode mode) -> readModifyWrite(mode, Value::increment);
             case INX _ -> updateRegister(x, Register::increment);
             case INY _ -> updateRegister(y, Register::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
@@ -421,48 +400,20 @@ public class CPU
             case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
             case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
             case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
-            case LSR(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(shiftRight(r.value())));
-                    default -> readModifyWriteMemory(mode, this::shiftRight);
-                }
-            }
+            case LSR(AddressMode mode) -> readModifyWrite(mode, this::shiftRight);
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
             case PHP _ -> pushToStack(status);
             case PHX _ -> pushToStack(x);
             case PHY _ -> pushToStack(y);
-            case PLA _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
-                updateRegister(accumulator, this::pullFromStack);
-            }
-            case PLP _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
-                pullFromStack(status);
-            }
-            case PLX _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
-                updateRegister(x, this::pullFromStack);
-            }
-            case PLY _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
-                updateRegister(y, this::pullFromStack);
-            }
-            case ROL(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateLeft(r.value())));
-                    default -> readModifyWriteMemory(mode, this::rotateLeft);
-                }
-            }
-            case ROR(AddressMode mode) -> {
-                switch (mode) {
-                    case Accumulator _ -> updateRegister(accumulator, r -> r.store(rotateRight(r.value())));
-                    default -> readModifyWriteMemory(mode, this::rotateRight);
-                }
-            }
+            case PLA _ -> updateRegister(accumulator, this::pullFromStack);
+            case PLP _ -> pullFromStack(status);
+            case PLX _ -> updateRegister(x, this::pullFromStack);
+            case PLY _ -> updateRegister(y, this::pullFromStack);
+            case ROL(AddressMode mode) -> readModifyWrite(mode, this::rotateLeft);
+            case ROR(AddressMode mode) -> readModifyWrite(mode, this::rotateRight);
             case RTI _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
                 pullFromStack(status);
                 var address = Address.of(stack.pop(), stack.pop());
                 programManager.setProgramCounter(address);
@@ -473,10 +424,7 @@ public class CPU
                 clock.nextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
-            case SBC(AddressMode mode) -> {
-                Value value = toValue(mode);
-                updateRegister(accumulator, r -> subtractWithCarry(r, value));
-            }
+            case SBC(AddressMode mode) -> updateRegister(accumulator, r -> subtractWithCarry(r, toValue(mode)));
             case SEC _ -> status.setCarry(true);
             case SED _ -> status.setDecimal(true);
             case SEI _ -> status.setIrqDisable(true);
@@ -548,16 +496,20 @@ public class CPU
         reader.read(programManager.getProgramCounter());
     }
 
-    private void readModifyWriteMemory(AddressMode mode, Function<Value, Value> function)
+    private void readModifyWrite(AddressMode mode, Function<Value, Value> function)
     {
-        Address address = toAddress(mode);
+        if (mode instanceof Accumulator) {
+            updateRegister(accumulator, r -> r.store(function.apply(r.value())));
+        } else {
+            Address address = toAddress(mode);
 
-        reader.read(address); // throw-away read burns a cycle
-        Value input = reader.read(address);
+            reader.read(address); // throw-away read burns a cycle
+            Value input = reader.read(address);
 
-        Value output = function.apply(input);
-        writer.write(address, output);
-        status.setNegative(output.isNegative()).setZero(output.isZero());
+            Value output = function.apply(input);
+            writer.write(address, output);
+            status.setNegative(output.isNegative()).setZero(output.isZero());
+        }
     }
 
     private void updateRegister(Register register, Consumer<Register> action)
@@ -573,6 +525,7 @@ public class CPU
 
     private void pullFromStack(Register register)
     {
+        clock.nextCycle(); // burn a cycle to increment the stack pointer
         register.store(stack.pop());
     }
 
