@@ -337,60 +337,60 @@ class CPUTest
                     state.stackData());
     }
 
-    @ParameterizedTest
-    @CsvSource({"00, 00, false, false, true",
-                "00, FF, true, true, true",
-                "FF, FF, true, true, false",
-                "FF, 00, false, false, true",
-                "04, 87, true, false, false"})
-    void execute_BIT_Absolute(String acc, String input, boolean bit7, boolean bit6, boolean isZero)
+    static Stream<Arguments> execute_BIT()
     {
-        // given
-        accumulator.store(Value.ofHex(acc));
+        return Stream.of(bitInputs(modeAbsolute(), 3, 4),
+                         bitInputs(modeAbsoluteXSamePage(), 3, 4),
+                         bitInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         bitInputs(modeImmediate(), 2, 2),
+                         bitInputs(modeZeroPage(), 2, 3),
+                         bitInputs(modeZeroPageX(), 2, 4)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(bit(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.ofHex(acc),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(bit7).overflow(bit6).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> bitInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, false, false, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, true, true, true, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, true, true, false, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, false, false, true, length),
+                         Arguments.of(0x04, 0x87, mode, cycles, true, false, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, true", "00, FF, true", "FF, FF, false", "FF, 00, true", "04, 87, false"})
-    void execute_BIT_Immediate(String acc, String input, boolean isZero)
+    @MethodSource
+    void execute_BIT(int givenAccumulator,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean inputBit7,
+                     boolean inputBit6,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(bit(immediate(Value.ofHex(input))));
+        AddressMode mode = modeGen.apply(modeInput(input)).mode();
+        setNextOp(bit(mode));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(acc),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(), () -> {
+            var expectedFlags = state.flags().toBuilder().zero(expectedZero);
+            if (!(mode instanceof Immediate)) {
+                expectedFlags = expectedFlags.negative(inputBit7).overflow(inputBit6);
+            }
+            assertState(state.accumulator(),
+                        state.x(),
+                        state.y(),
+                        expectedFlags.build(),
+                        state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                        state.stackPointer(),
+                        state.stackData());
+        });
     }
 
     @ParameterizedTest
