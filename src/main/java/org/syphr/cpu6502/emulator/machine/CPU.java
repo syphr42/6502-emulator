@@ -445,13 +445,16 @@ public class CPU
         return switch (mode) {
             case Absolute(Address address) -> address;
             case AbsoluteIndexedXIndirect(Address address) -> {
-                var pointer = address.plus(x.value());
+                clock.nextCycle(); // burn a cycle to fix page boundary bug
+                var pointer = address.plusUnsigned(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
             case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, x.value());
             case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, y.value());
-            case AbsoluteIndirect(Address address) ->
-                    Address.of(reader.read(address), reader.read(address.increment()));
+            case AbsoluteIndirect(Address address) -> {
+                clock.nextCycle(); // burn a cycle to fix page boundary bug
+                yield Address.of(reader.read(address), reader.read(address.increment()));
+            }
             case Relative(Value displacement) ->
                     waitToCrossPageBoundary(programManager.getProgramCounter(), displacement);
             case ZeroPage(Value offset) -> Address.zeroPage(offset);

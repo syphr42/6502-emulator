@@ -1120,26 +1120,55 @@ class CPUTest
                     state.stackData());
     }
 
-    @Test
-    void execute_JMP_Absolute()
+    static Stream<Arguments> execute_JMP()
+    {
+        return Stream.of(Arguments.of((Function<ModeInput, ModeOutput>) (ModeInput _) -> {
+            Address target = Address.of(0x1234);
+            return new ModeOutput(absolute(target), Optional.of(target));
+        }, 3), Arguments.of((Function<ModeInput, ModeOutput>) (ModeInput input) -> {
+            Address intermediate = Address.of(0x4321);
+
+            Value offset = Value.of(0xFF);
+            input.x().store(offset);
+
+            Address pointer = intermediate.plusUnsigned(offset);
+            Address target = Address.of(0x1234);
+            when(input.reader().read(pointer)).thenReturn(target.low());
+            when(input.reader().read(pointer.increment())).thenReturn(target.high());
+
+            return new ModeOutput(absoluteXIndirect(intermediate), Optional.of(target));
+        }, 6), Arguments.of((Function<ModeInput, ModeOutput>) (ModeInput input) -> {
+            Address intermediate = Address.of(0x4321);
+
+            Address target = Address.of(0x1234);
+            when(input.reader().read(intermediate)).thenReturn(target.low());
+            when(input.reader().read(intermediate.increment())).thenReturn(target.high());
+
+            return new ModeOutput(absoluteIndirect(intermediate), Optional.of(target));
+        }, 6));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_JMP(Function<ModeInput, ModeOutput> modeGen, int expectedCycles)
     {
         // given
-        Address address = Address.of(0x1234);
-        setNextOp(jmp(absolute(address)));
+        ModeOutput modeOutput = modeGen.apply(modeInput(0));
+        setNextOp(jmp(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(3)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    address,
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    modeOutput.target().orElseThrow(),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @Test
