@@ -3,8 +3,10 @@ package org.syphr.cpu6502.emulator.machine;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvSource;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -79,6 +81,25 @@ class AddressTest
         assertThat(result).isEqualTo(Address.ofHex(expected));
     }
 
+    static IntStream zeroPage()
+    {
+        return IntStream.range(0x00, 0xFF);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void zeroPage(int input)
+    {
+        // given
+        var offset = Value.of(input);
+
+        // when
+        var result = Address.zeroPage(offset);
+
+        // then
+        assertThat(result).isEqualTo(Address.of(offset, Value.ZERO));
+    }
+
     @ParameterizedTest
     @CsvSource({"0000, 0001",
                 "FFFF, 0000"})
@@ -123,6 +144,25 @@ class AddressTest
 
         // when
         Address result = start.plus(Value.ofHex(displacement));
+
+        // then
+        assertThat(result).isEqualTo(Address.ofHex(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0000, 01, 0001",
+                "0000, FF, 00FF",
+                "00F0, 0F, 00FF",
+                "FFFF, 01, 0000",
+                "FFF0, 10, 0000",
+                "FFF8, FD, 00F5"})
+    void plusUnsigned(String input, String displacement, String expected)
+    {
+        // given
+        var start = Address.ofHex(input);
+
+        // when
+        Address result = start.plusUnsigned(Value.ofHex(displacement));
 
         // then
         assertThat(result).isEqualTo(Address.ofHex(expected));
