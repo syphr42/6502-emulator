@@ -1863,14 +1863,21 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(6)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    new Flags(isNegative, isOverflow, isUser, isBreakCommand, isDecimal, isIrqDisable, isZero, isCarry),
-                    Address.of(0x1234),
-                    offsetLow(state.stackPointer(), 3),
-                    List.of());
+        assertAll(() -> verify(clock, times(6)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    new Flags(isNegative,
+                                              isOverflow,
+                                              isUser,
+                                              isBreakCommand,
+                                              isDecimal,
+                                              isIrqDisable,
+                                              isZero,
+                                              isCarry),
+                                    Address.of(0x1234),
+                                    offsetLow(state.stackPointer(), 3),
+                                    List.of()));
     }
 
     @Test
@@ -1888,14 +1895,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(6)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    Address.of(0x1234),
-                    offsetLow(state.stackPointer(), 2),
-                    List.of());
+        assertAll(() -> verify(clock, times(6)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.of(0x1234),
+                                    offsetLow(state.stackPointer(), 2),
+                                    List.of()));
     }
 
     @ParameterizedTest
@@ -1996,14 +2003,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().carry(true).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().carry(true).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2020,14 +2027,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().decimal(true).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().decimal(true).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2044,14 +2051,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().irqDisable(true).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().irqDisable(true).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2146,14 +2153,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    Value.ofHex(expected),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    Value.ofHex(expected),
+                                    state.y(),
+                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2170,14 +2177,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    Value.ofHex(expected),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    Value.ofHex(expected),
+                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2194,14 +2201,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    Value.ofHex(expected),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    Value.ofHex(expected),
+                                    state.y(),
+                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2218,14 +2225,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(Value.ofHex(expected),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @Test
@@ -2241,14 +2248,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    state.programCounter().plus(Value.of(1)),
-                    Address.of(Value.of(0x12), state.stackPointer().high()),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    Address.of(Value.of(0x12), state.stackPointer().high()),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2265,14 +2272,14 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(2)).nextCycle(),
+                  () -> assertState(Value.ofHex(expected),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     private void setNextOp(Operation op)
