@@ -1710,146 +1710,124 @@ class CPUTest
                                     List.of()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"0, 00000000, 00000000, 0, false, true",
-                "0, 00000001, 00000000, 1, false, false",
-                "1, 00000000, 10000000, 0, false, true",
-                "1, 00000001, 10000000, 1, false, false",
-                "0, 11111111, 01111111, 1, true, false"})
-    void execute_ROL_Absolute(int expectedCarry,
-                              String expected,
-                              String memory,
-                              int carry,
-                              boolean isNegative,
-                              boolean isZero)
+    static Stream<Arguments> execute_ROL()
     {
-        // given
-        status.setCarry(carry != 0);
+        return Stream.of(rolInputs(modeAbsolute(), 3, 6),
+                         rolInputs(modeAbsoluteXSamePage(), 3, 6),
+                         rolInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         rolInputs(modeAccumulator(), 1, 2),
+                         rolInputs(modeZeroPage(), 2, 5),
+                         rolInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
 
-        var address = Address.of(0x1234);
-        when(reader.read(address)).thenReturn(Value.ofBits(memory));
-
-        setNextOp(rol(absolute(address)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(6)).nextCycle();
-        verify(writer).write(address, Value.ofBits(expected));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> rolInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0, 0b00000000, 0b00000000, 0, mode, cycles, false, true, length),
+                         Arguments.of(0, 0b00000001, 0b00000000, 1, mode, cycles, false, false, length),
+                         Arguments.of(1, 0b00000000, 0b10000000, 0, mode, cycles, false, true, length),
+                         Arguments.of(1, 0b00000001, 0b10000000, 1, mode, cycles, false, false, length),
+                         Arguments.of(0, 0b11111111, 0b01111111, 1, mode, cycles, true, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"0, 00000000, 00000000, 0, false, true",
-                "0, 00000001, 00000000, 1, false, false",
-                "1, 00000000, 10000000, 0, false, true",
-                "1, 00000001, 10000000, 1, false, false",
-                "0, 11111111, 01111111, 1, true, false"})
-    void execute_ROL_Accumulator(int expectedCarry,
-                                 String expected,
-                                 String acc,
-                                 int carry,
-                                 boolean isNegative,
-                                 boolean isZero)
+    @MethodSource
+    void execute_ROL(int expectedCarry,
+                     int expectedOutput,
+                     int input,
+                     int givenCarry,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofBits(acc));
-        status.setCarry(carry != 0);
+        status.setCarry(givenCarry != 0);
 
-        setNextOp(rol(accumulator()));
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(rol(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofBits(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry != 0)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    static Stream<Arguments> execute_ROR()
+    {
+        return Stream.of(rorInputs(modeAbsolute(), 3, 6),
+                         rorInputs(modeAbsoluteXSamePage(), 3, 6),
+                         rorInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         rorInputs(modeAccumulator(), 1, 2),
+                         rorInputs(modeZeroPage(), 2, 5),
+                         rorInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> rorInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0, 0b00000000, 0b00000000, 0, mode, cycles, false, true, length),
+                         Arguments.of(0, 0b00000001, 0b00000000, 1, mode, cycles, false, true, length),
+                         Arguments.of(1, 0b00000000, 0b10000000, 0, mode, cycles, true, false, length),
+                         Arguments.of(1, 0b00000001, 0b10000000, 1, mode, cycles, true, false, length),
+                         Arguments.of(0, 0b11111111, 0b01111111, 1, mode, cycles, false, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"0, 00000000, 00000000, 0, false, true",
-                "0, 00000001, 00000000, 1, false, true",
-                "1, 00000000, 10000000, 0, true, false",
-                "1, 00000001, 10000000, 1, true, false",
-                "0, 11111111, 01111111, 1, false, false"})
-    void execute_ROR_Absolute(int carry,
-                              String memory,
-                              String expected,
-                              int expectedCarry,
-                              boolean isNegative,
-                              boolean isZero)
+    @MethodSource
+    void execute_ROR(int givenCarry,
+                     int input,
+                     int expectedOutput,
+                     int expectedCarry,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        status.setCarry(carry != 0);
+        status.setCarry(givenCarry != 0);
 
-        var address = Address.of(0x1234);
-        when(reader.read(address)).thenReturn(Value.ofBits(memory));
-
-        setNextOp(ror(absolute(address)));
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(ror(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(6)).nextCycle();
-        verify(writer).write(address, Value.ofBits(expected));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"0, 00000000, 00000000, 0, false, true",
-                "0, 00000001, 00000000, 1, false, true",
-                "1, 00000000, 10000000, 0, true, false",
-                "1, 00000001, 10000000, 1, true, false",
-                "0, 11111111, 01111111, 1, false, false"})
-    void execute_ROR_Accumulator(int carry,
-                                 String acc,
-                                 String expected,
-                                 int expectedCarry,
-                                 boolean isNegative,
-                                 boolean isZero)
-    {
-        // given
-        accumulator.store(Value.ofBits(acc));
-        status.setCarry(carry != 0);
-
-        setNextOp(ror(accumulator()));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofBits(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).carry(expectedCarry != 0).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry != 0)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
