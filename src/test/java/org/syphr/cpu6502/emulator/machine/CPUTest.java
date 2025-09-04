@@ -1198,51 +1198,58 @@ class CPUTest
                     List.of(Value.of(0x36), Value.of(0x12)));
     }
 
-    @Test
-    void execute_LDA_Absolute()
+    static Stream<Arguments> execute_LDA()
     {
-        // given
-        Address target = Address.of(0x1234);
-        Value value = Value.of(0x10);
-        when(reader.read(target)).thenReturn(value);
+        return Stream.of(ldaInputs(modeAbsolute(), 3, 4),
+                         ldaInputs(modeAbsoluteXSamePage(), 3, 4),
+                         ldaInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         ldaInputs(modeAbsoluteYSamePage(), 3, 4),
+                         ldaInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         ldaInputs(modeImmediate(), 2, 2),
+                         ldaInputs(modeZeroPage(), 2, 3),
+                         ldaInputs(modeZeroPageXIndirect(), 2, 6),
+                         ldaInputs(modeZeroPageX(), 2, 4),
+                         ldaInputs(modeZeroPageIndirect(), 2, 5),
+                         ldaInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         ldaInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
+    }
 
-        setNextOp(lda(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(value,
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> ldaInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, mode, cycles, false, true, length),
+                         Arguments.of(0x01, mode, cycles, false, false, length),
+                         Arguments.of(0xFF, mode, cycles, true, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
-    void execute_LDA_Immediate(String input, String expected, boolean isNegative, boolean isZero)
+    @MethodSource
+    void execute_LDA(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        setNextOp(lda(immediate(Value.ofHex(input))));
+        setNextOp(lda(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(input),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @Test
