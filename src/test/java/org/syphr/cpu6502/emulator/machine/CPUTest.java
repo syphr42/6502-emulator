@@ -1401,59 +1401,64 @@ class CPUTest
                     state.stackData());
     }
 
-    @Test
-    void execute_ORA_Absolute()
+    static Stream<Arguments> execute_ORA()
     {
-        // given
-        accumulator.store(Value.of(0b1100));
+        return Stream.of(oraInputs(modeAbsolute(), 3, 4),
+                         oraInputs(modeAbsoluteXSamePage(), 3, 4),
+                         oraInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         oraInputs(modeAbsoluteYSamePage(), 3, 4),
+                         oraInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         oraInputs(modeImmediate(), 2, 2),
+                         oraInputs(modeZeroPage(), 2, 3),
+                         oraInputs(modeZeroPageXIndirect(), 2, 6),
+                         oraInputs(modeZeroPageX(), 2, 4),
+                         oraInputs(modeZeroPageIndirect(), 2, 5),
+                         oraInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         oraInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.of(0b0101);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(ora(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.of(0b1101),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> oraInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, 0x00, mode, cycles, 0x00, false, true, length),
+                         Arguments.of(0x00, 0xFF, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0xFF, 0xFF, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0xFF, 0x00, mode, cycles, 0xFF, true, false, length),
+                         Arguments.of(0b1100, 0b0101, mode, cycles, 0b1101, false, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 00, 00, false, true",
-                "00, FF, FF, true, false",
-                "FF, FF, FF, true, false",
-                "FF, 00, FF, true, false",
-                "04, 07, 07, false, false"})
-    void execute_ORA_Immediate(String acc, String input, String expected, boolean isNegative, boolean isZero)
+    @MethodSource
+    void execute_ORA(int givenAccumulator,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedAccumulator,
+                     boolean expectedNegative,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.store(Value.of(givenAccumulator));
 
-        setNextOp(ora(immediate(Value.ofHex(input))));
+        setNextOp(ora(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(expectedAccumulator),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .zero(expectedZero)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
