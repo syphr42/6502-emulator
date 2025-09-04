@@ -1905,88 +1905,72 @@ class CPUTest
                                     List.of()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"02, 03, 0, FE, true, false, false, false",
-                "02, 03, 1, FF, true, false, false, false",
-                "08, 01, 1, 07, false, false, false, true",
-                "01, 01, 1, 00, false, false, true, true",
-                "80, 01, 1, 7F, false, true, false, true"})
-    void execute_SBC_Absolute(String acc,
-                              String input,
-                              int carry,
-                              String expected,
-                              boolean isNegative,
-                              boolean isOverflow,
-                              boolean isZero,
-                              boolean isCarry)
+    static Stream<Arguments> execute_SBC()
     {
-        // given
-        accumulator.store(Value.ofHex(acc));
-        status.setCarry(carry != 0);
+        return Stream.of(sbcInputs(modeAbsolute(), 3, 4),
+                         sbcInputs(modeAbsoluteXSamePage(), 3, 4),
+                         sbcInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         sbcInputs(modeAbsoluteYSamePage(), 3, 4),
+                         sbcInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         sbcInputs(modeImmediate(), 2, 2),
+                         sbcInputs(modeZeroPage(), 2, 3),
+                         sbcInputs(modeZeroPageXIndirect(), 2, 6),
+                         sbcInputs(modeZeroPageX(), 2, 4),
+                         sbcInputs(modeZeroPageIndirect(), 2, 5),
+                         sbcInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         sbcInputs(modeZeroPageIndirectYCrossPage(), 2, 6))
+                     .flatMap(i -> i);
+    }
 
-        Address target = Address.of(0x1234);
-        Value value = Value.ofHex(input);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(sbc(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags()
-                         .toBuilder()
-                         .negative(isNegative)
-                         .overflow(isOverflow)
-                         .zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> sbcInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x02, 0, 0x03, mode, cycles, 0xFE, true, false, false, false, length),
+                         Arguments.of(0x02, 1, 0x03, mode, cycles, 0xFF, true, false, false, false, length),
+                         Arguments.of(0x08, 1, 0x01, mode, cycles, 0x07, false, false, false, true, length),
+                         Arguments.of(0x01, 1, 0x01, mode, cycles, 0x00, false, false, true, true, length),
+                         Arguments.of(0x80, 1, 0x01, mode, cycles, 0x7F, false, true, false, true, length),
+                         Arguments.of(0x7F, 1, 0xFF, mode, cycles, 0x80, true, true, false, false, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"02, 03, 0, FE, true, false, false, false",
-                "02, 03, 1, FF, true, false, false, false",
-                "08, 01, 1, 07, false, false, false, true",
-                "01, 01, 1, 00, false, false, true, true",
-                "80, 01, 1, 7F, false, true, false, true"})
-    void execute_SBC_Immediate(String acc,
-                               String input,
-                               int carry,
-                               String expected,
-                               boolean isNegative,
-                               boolean isOverflow,
-                               boolean isZero,
-                               boolean isCarry)
+    @MethodSource
+    void execute_SBC(int givenAccumulator,
+                     int givenCarry,
+                     int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedAccumulator,
+                     boolean expectedNegative,
+                     boolean expectedOverflow,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
-        status.setCarry(carry != 0);
+        accumulator.store(Value.of(givenAccumulator));
+        status.setCarry(givenCarry != 0);
 
-        setNextOp(sbc(immediate(Value.ofHex(input))));
+        setNextOp(sbc(modeGen.apply(modeInput(input)).mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofHex(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags()
-                         .toBuilder()
-                         .negative(isNegative)
-                         .overflow(isOverflow)
-                         .zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(Value.of(expectedAccumulator),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .negative(expectedNegative)
+                                         .overflow(expectedOverflow)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
