@@ -1,5 +1,6 @@
 package org.syphr.cpu6502.emulator.machine;
 
+import org.jspecify.annotations.Nullable;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -2045,82 +2046,144 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_STA_Absolute(String acc)
+    static Stream<Arguments> execute_STA()
     {
-        // given
-        accumulator.store(Value.ofHex(acc));
+        return Stream.of(staInputs(modeAbsolute(), 3, 4),
+                         staInputs(modeAbsoluteXSamePage(), 3, 4),
+                         staInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         staInputs(modeAbsoluteYSamePage(), 3, 4),
+                         staInputs(modeAbsoluteYCrossPage(), 3, 5),
+                         staInputs(modeZeroPage(), 2, 3),
+                         staInputs(modeZeroPageXIndirect(), 2, 6),
+                         staInputs(modeZeroPageX(), 2, 4),
+                         staInputs(modeZeroPageIndirect(), 2, 5),
+                         staInputs(modeZeroPageIndirectYSamePage(), 2, 5),
+                         staInputs(modeZeroPageIndirectYCrossPage(), 2, 6)).flatMap(i -> i);
+    }
 
-        var target = Address.of(0x1234);
-        setNextOp(sta(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        verify(writer).write(target, Value.ofHex(acc));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> staInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, mode, cycles, length),
+                         Arguments.of(0x01, mode, cycles, length),
+                         Arguments.of(0xFF, mode, cycles, length));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_STX_Absolute(String xVal)
+    @MethodSource
+    void execute_STA(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedProgramCounterOffset)
     {
         // given
-        x.store(Value.ofHex(xVal));
+        var value = Value.of(input);
+        accumulator.store(value);
 
-        var target = Address.of(0x1234);
-        setNextOp(stx(absolute(target)));
+        ModeOutput modeOutput = modeGen.apply(modeInput());
+        setNextOp(sta(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(4)).nextCycle();
-        verify(writer).write(target, Value.ofHex(xVal));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    static Stream<Arguments> execute_STX()
+    {
+        return Stream.of(stxInputs(modeAbsolute(), 3, 4),
+                         stxInputs(modeZeroPage(), 2, 3),
+                         stxInputs(modeZeroPageY(), 2, 4)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> stxInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, mode, cycles, length),
+                         Arguments.of(0x01, mode, cycles, length),
+                         Arguments.of(0xFF, mode, cycles, length));
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"00", "0F", "FF"})
-    void execute_STY_Absolute(String yVal)
+    @MethodSource
+    void execute_STX(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedProgramCounterOffset)
     {
         // given
-        y.store(Value.ofHex(yVal));
+        var value = Value.of(input);
+        x.store(value);
 
-        var target = Address.of(0x1234);
-        setNextOp(sty(absolute(target)));
+        ModeOutput modeOutput = modeGen.apply(modeInput());
+        setNextOp(stx(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(4)).nextCycle();
-        verify(writer).write(target, Value.ofHex(yVal));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    static Stream<Arguments> execute_STY()
+    {
+        return Stream.of(styInputs(modeAbsolute(), 3, 4),
+                         styInputs(modeZeroPage(), 2, 3),
+                         styInputs(modeZeroPageX(), 2, 4)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> styInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0x00, mode, cycles, length),
+                         Arguments.of(0x01, mode, cycles, length),
+                         Arguments.of(0xFF, mode, cycles, length));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_STY(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedProgramCounterOffset)
+    {
+        // given
+        var value = Value.of(input);
+        y.store(value);
+
+        ModeOutput modeOutput = modeGen.apply(modeInput());
+        setNextOp(sty(modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @ParameterizedTest
@@ -2319,7 +2382,7 @@ class CPUTest
                                   .containsExactly(accumulator, x, y, flags, programCounter, stackPointer, stackData);
     }
 
-    record ModeInput(Value value, Reader reader, Register accumulator, Register x, Register y) {}
+    record ModeInput(@Nullable Value value, Reader reader, Register accumulator, Register x, Register y) {}
 
     record ModeOutput(AddressMode mode, Optional<Address> target) {}
 
@@ -2328,11 +2391,18 @@ class CPUTest
         return new ModeInput(Value.of(input), reader, accumulator, x, y);
     }
 
+    private ModeInput modeInput()
+    {
+        return new ModeInput(null, reader, accumulator, x, y);
+    }
+
     private static Function<ModeInput, ModeOutput> modeAbsolute()
     {
         return (ModeInput input) -> {
             Address target = Address.of(0x1234);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(absolute(target), Optional.of(target));
         };
@@ -2347,7 +2417,9 @@ class CPUTest
             input.x().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(absoluteX(intermediate), Optional.of(target));
         };
@@ -2362,7 +2434,9 @@ class CPUTest
             input.x().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(absoluteX(intermediate), Optional.of(target));
         };
@@ -2377,7 +2451,9 @@ class CPUTest
             input.y().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(absoluteY(intermediate), Optional.of(target));
         };
@@ -2392,7 +2468,9 @@ class CPUTest
             input.y().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(absoluteY(intermediate), Optional.of(target));
         };
@@ -2401,14 +2479,21 @@ class CPUTest
     private static Function<ModeInput, ModeOutput> modeAccumulator()
     {
         return (ModeInput input) -> {
-            input.accumulator().store(input.value());
+            if (input.value() != null) {
+                input.accumulator().store(input.value());
+            }
             return new ModeOutput(accumulator(), Optional.empty());
         };
     }
 
     private static Function<ModeInput, ModeOutput> modeImmediate()
     {
-        return (ModeInput input) -> new ModeOutput(immediate(input.value()), Optional.empty());
+        return (ModeInput input) -> {
+            if (input.value() == null) {
+                throw new IllegalArgumentException("Input cannot be null for immediate mode");
+            }
+            return new ModeOutput(immediate(input.value()), Optional.empty());
+        };
     }
 
     private static Function<ModeInput, ModeOutput> modeZeroPage()
@@ -2417,7 +2502,9 @@ class CPUTest
             Value targetOffset = Value.of(0x12);
 
             Address target = Address.zeroPage(targetOffset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zp(targetOffset), Optional.of(target));
         };
@@ -2437,7 +2524,9 @@ class CPUTest
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
             when(input.reader().read(intermediate)).thenReturn(target.low());
             when(input.reader().read(intermediate.increment())).thenReturn(target.high());
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpXIndirect(intermediateOffset), Optional.of(target));
         };
@@ -2453,7 +2542,9 @@ class CPUTest
 
             Address target = Address.zeroPage(intermediateOffset.plus(offset));
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpX(intermediateOffset), Optional.of(target));
         };
@@ -2469,7 +2560,9 @@ class CPUTest
 
             Address target = Address.zeroPage(intermediateOffset.plus(offset));
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpY(intermediateOffset), Optional.of(target));
         };
@@ -2485,7 +2578,9 @@ class CPUTest
 
             when(input.reader().read(intermediate)).thenReturn(target.low());
             when(input.reader().read(intermediate.increment())).thenReturn(target.high());
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpIndirect(offset), Optional.of(target));
         };
@@ -2506,7 +2601,9 @@ class CPUTest
             input.y().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpIndirectY(pointerOffset), Optional.of(target));
         };
@@ -2527,7 +2624,9 @@ class CPUTest
             input.y().store(offset);
 
             Address target = intermediate.plus(offset);
-            when(input.reader().read(target)).thenReturn(input.value());
+            if (input.value() != null) {
+                when(input.reader().read(target)).thenReturn(input.value());
+            }
 
             return new ModeOutput(zpIndirectY(pointerOffset), Optional.of(target));
         };
