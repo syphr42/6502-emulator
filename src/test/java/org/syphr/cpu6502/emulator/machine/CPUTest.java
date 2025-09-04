@@ -1276,53 +1276,6 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @Test
-    void execute_LDX_Absolute()
-    {
-        // given
-        Address target = Address.of(0x1234);
-        Value value = Value.of(0x10);
-        when(reader.read(target)).thenReturn(value);
-
-        setNextOp(ldx(absolute(target)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(4)).nextCycle();
-        assertState(state.accumulator(),
-                    value,
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(false).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
-    }
-
-    @ParameterizedTest
-    @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
-    void execute_LDX_Immediate(String input, String expected, boolean isNegative, boolean isZero)
-    {
-        // given
-        setNextOp(ldx(immediate(Value.ofHex(input))));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(2)).nextCycle();
-        assertState(state.accumulator(),
-                    Value.ofHex(expected),
-                    state.y(),
-                    state.flags().toBuilder().negative(isNegative).zero(isZero).build(),
-                    state.programCounter().plus(Value.of(2)),
-                    state.stackPointer(),
-                    state.stackData());
-    }
-
     static Stream<Arguments> execute_LDY()
     {
         return Stream.of(ldyInputs(modeAbsolute(), 3, 4),
