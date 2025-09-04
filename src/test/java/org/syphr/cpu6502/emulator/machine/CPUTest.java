@@ -1324,64 +1324,60 @@ class CPUTest
                                     state.stackData()));
     }
 
-    @ParameterizedTest
-    @CsvSource({"00000000, 00000000, true, false",
-                "10000000, 01000000, false, false",
-                "00000001, 00000000, true, true",
-                "01010101, 00101010, false, true",
-                "10101010, 01010101, false, false",
-                "00000011, 00000001, false, true"})
-    void execute_LSR_Absolute(String memory, String expected, boolean isZero, boolean isCarry)
+    static Stream<Arguments> execute_LSR()
     {
-        // given
-        var address = Address.of(0x1234);
-        when(reader.read(address)).thenReturn(Value.ofBits(memory));
+        return Stream.of(lsrInputs(modeAbsolute(), 3, 6),
+                         lsrInputs(modeAbsoluteXSamePage(), 3, 6),
+                         lsrInputs(modeAbsoluteXCrossPage(), 3, 7),
+                         lsrInputs(modeAccumulator(), 1, 2),
+                         lsrInputs(modeZeroPage(), 2, 5),
+                         lsrInputs(modeZeroPageX(), 2, 6)).flatMap(i -> i);
+    }
 
-        setNextOp(lsr(absolute(address)));
-
-        // when
-        CPUState state = cpu.getState();
-        cpu.executeNext();
-
-        // then
-        verify(clock, times(6)).nextCycle();
-        verify(writer).write(address, Value.ofBits(expected));
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(3)),
-                    state.stackPointer(),
-                    state.stackData());
+    static Stream<Arguments> lsrInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0b00000000, mode, cycles, 0b00000000, true, false, length),
+                         Arguments.of(0b10000000, mode, cycles, 0b01000000, false, false, length),
+                         Arguments.of(0b00000001, mode, cycles, 0b00000000, true, true, length),
+                         Arguments.of(0b01010101, mode, cycles, 0b00101010, false, true, length),
+                         Arguments.of(0b10101010, mode, cycles, 0b01010101, false, false, length),
+                         Arguments.of(0b00000011, mode, cycles, 0b00000001, false, true, length));
     }
 
     @ParameterizedTest
-    @CsvSource({"00000000, 00000000, true, false",
-                "10000000, 01000000, false, false",
-                "00000001, 00000000, true, true",
-                "01010101, 00101010, false, true",
-                "10101010, 01010101, false, false",
-                "00000011, 00000001, false, true"})
-    void execute_LSR_Accumulator(String acc, String expected, boolean isZero, boolean isCarry)
+    @MethodSource
+    void execute_LSR(int input,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     int expectedOutput,
+                     boolean expectedZero,
+                     boolean expectedCarry,
+                     int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.ofBits(acc));
-
-        setNextOp(lsr(accumulator()));
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(lsr(modeOutput.mode()));
 
         // when
         CPUState state = cpu.getState();
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
-        assertState(Value.ofBits(expected),
-                    state.x(),
-                    state.y(),
-                    state.flags().toBuilder().negative(false).zero(isZero).carry(isCarry).build(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
+                  () -> assertState(modeOutput.mode() instanceof Accumulator
+                                    ? Value.of(expectedOutput)
+                                    : state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
     }
 
     @Test
