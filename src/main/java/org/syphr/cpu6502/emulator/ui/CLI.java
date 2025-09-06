@@ -27,12 +27,12 @@ public class CLI
 {
     private final Terminal terminal;
 
-    @Command(command = "execute")
-    public void execute(@Option(defaultValue = "2hz") String clock,
-                        @Option(defaultValue = "false") boolean disableClockManager,
-                        @Option @Nullable Path rom,
-                        @Option @Nullable Address romStart,
-                        @Option(defaultValue = "false") boolean stepping) throws IOException
+    @Command(command = "run")
+    public void run(@Option(defaultValue = "2hz") String clock,
+                    @Option(defaultValue = "false") boolean disableClockManager,
+                    @Option @Nullable Path rom,
+                    @Option @Nullable Address romStart,
+                    @Option(defaultValue = "false") boolean stepping) throws IOException
     {
         ClockSignal clockSignal = disableClockManager
                                   ? simpleClockSignal(clock, stepping)
