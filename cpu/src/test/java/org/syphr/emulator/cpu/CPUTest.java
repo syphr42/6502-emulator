@@ -528,6 +528,61 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"true, true, true, true, true, true, true, true",
+                "false, true, true, true, true, true, true, true",
+                "false, false, true, true, true, true, true, true",
+                "false, false, false, true, true, true, true, true",
+                "false, false, false, false, true, true, true, true",
+                "false, false, false, false, false, true, true, true",
+                "false, false, false, false, false, false, true, true",
+                "false, false, false, false, false, false, false, true",
+                "false, false, false, false, false, false, false, false"})
+    void execute_BRK_Stack(boolean isNegative,
+                           boolean isOverflow,
+                           boolean isUser,
+                           boolean isBreakCommand,
+                           boolean isDecimal,
+                           boolean isIrqDisable,
+                           boolean isZero,
+                           boolean isCarry)
+    {
+        // given
+        var start = Address.of(0x1234);
+        programManager.setProgramCounter(start);
+        status.setNegative(isNegative)
+              .setOverflow(isOverflow)
+              .setUser(isUser)
+              .setBreakCommand(isBreakCommand)
+              .setDecimal(isDecimal)
+              .setIrqDisable(isIrqDisable)
+              .setZero(isZero)
+              .setCarry(isCarry);
+
+        var irq = Address.of(0x4321);
+        when(reader.read(Address.IRQ)).thenReturn(irq.low());
+        when(reader.read(Address.IRQ.increment())).thenReturn(irq.high());
+
+        setNextOp(brk());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(7)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().decimal(false).irqDisable(true).build(),
+                                    irq,
+                                    offsetLow(state.stackPointer(), -3),
+                                    List.of(StatusRegister.of(state.flags().toBuilder().breakCommand(true).build())
+                                                          .value(),
+                                            start.plus(Value.of(2)).low(),
+                                            start.plus(Value.of(2)).high())));
+    }
+
+    @ParameterizedTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",

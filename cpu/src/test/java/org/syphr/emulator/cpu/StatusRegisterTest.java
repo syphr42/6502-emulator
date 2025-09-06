@@ -42,6 +42,44 @@ class StatusRegisterTest
                 "00000011, false, false, false, false, false, false, true, true",
                 "00000001, false, false, false, false, false, false, false, true",
                 "00000000, false, false, false, false, false, false, false, false"})
+    void of(String bits,
+            boolean isNegative,
+            boolean isOverflow,
+            boolean isUser,
+            boolean isBreakCommand,
+            boolean isDecimal,
+            boolean isIrqDisable,
+            boolean isZero,
+            boolean isCarry)
+    {
+        // given
+        var flags = new Flags(isNegative,
+                              isOverflow,
+                              isUser,
+                              isBreakCommand,
+                              isDecimal,
+                              isIrqDisable,
+                              isZero,
+                              isCarry);
+
+        // when
+        StatusRegister result = StatusRegister.of(flags);
+
+        // then
+        status.store(Value.ofBits(bits));
+        assertThat(result).isEqualTo(status);
+    }
+
+    @ParameterizedTest
+    @CsvSource({"11111111, true, true, true, true, true, true, true, true",
+                "01111111, false, true, true, true, true, true, true, true",
+                "00111111, false, false, true, true, true, true, true, true",
+                "00011111, false, false, false, true, true, true, true, true",
+                "00001111, false, false, false, false, true, true, true, true",
+                "00000111, false, false, false, false, false, true, true, true",
+                "00000011, false, false, false, false, false, false, true, true",
+                "00000001, false, false, false, false, false, false, false, true",
+                "00000000, false, false, false, false, false, false, false, false"})
     void flags(String bits,
                boolean isNegative,
                boolean isOverflow,
@@ -155,5 +193,27 @@ class StatusRegisterTest
 
         // then
         assertThat(status.carry()).isEqualTo(input);
+    }
+
+    @ParameterizedTest
+    @ValueSource(ints = {0b11111111,
+                         0b01111111,
+                         0b00111111,
+                         0b00011111,
+                         0b00001111,
+                         0b00000111,
+                         0b00000011,
+                         0b00000001,
+                         0b00000000})
+    void copy(int value)
+    {
+        // given
+        status.store(Value.of(value));
+
+        // when
+        StatusRegister result = status.copy();
+
+        // then
+        assertThat(result).isEqualTo(status);
     }
 }

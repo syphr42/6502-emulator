@@ -197,6 +197,9 @@ public class CPU
             case BNE.RELATIVE -> bne(relative(programManager.nextValue()));
             case BPL.RELATIVE -> bpl(relative(programManager.nextValue()));
             case BRA.RELATIVE -> bra(relative(programManager.nextValue()));
+
+            case BRK.STACK -> brk();
+
             case BVC.RELATIVE -> bvc(relative(programManager.nextValue()));
             case BVS.RELATIVE -> bvs(relative(programManager.nextValue()));
 
@@ -393,6 +396,13 @@ public class CPU
             case BNE(AddressMode mode) -> branchIf(not(status::zero), mode);
             case BPL(AddressMode mode) -> branchIf(not(status::negative), mode);
             case BRA(AddressMode mode) -> branchIf(() -> true, mode);
+            case BRK _ -> {
+                stack.pushAll(programManager.getProgramCounter().increment().bytes().reversed());
+                pushToStack(status.copy().setBreakCommand(true));
+                programManager.setProgramCounter(Address.of(reader.read(Address.IRQ),
+                                                            reader.read(Address.IRQ.increment())));
+                status.setDecimal(false).setIrqDisable(true);
+            }
             case BVC(AddressMode mode) -> branchIf(not(status::overflow), mode);
             case BVS(AddressMode mode) -> branchIf(status::overflow, mode);
             case CLC _ -> status.setCarry(false);

@@ -15,15 +15,15 @@
  */
 package org.syphr.emulator.cpu;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.BitSet;
-
 @Slf4j
 @RequiredArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode
 class Register
 {
     @ToString.Include
@@ -57,10 +57,5 @@ class Register
     public Value value()
     {
         return value;
-    }
-
-    public BitSet toBits()
-    {
-        return BitSet.valueOf(new byte[] {value.data()});
     }
 }

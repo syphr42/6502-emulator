@@ -29,6 +29,19 @@ class StatusRegister extends Register
     private static final int ZERO_BIT_POSITION = 1;
     private static final int CARRY_BIT_POSITION = 0;
 
+    public static StatusRegister of(Flags flags)
+    {
+        var status = new StatusRegister();
+        return status.setNegative(flags.negative())
+                     .setOverflow(flags.overflow())
+                     .setUser(flags.user())
+                     .setBreakCommand(flags.breakCommand())
+                     .setDecimal(flags.decimal())
+                     .setIrqDisable(flags.irqDisable())
+                     .setZero(flags.zero())
+                     .setCarry(flags.carry());
+    }
+
     public Flags flags()
     {
         return Flags.builder()
@@ -137,6 +150,14 @@ class StatusRegister extends Register
     {
         update(b, CARRY_BIT_POSITION);
         return this;
+    }
+
+    public StatusRegister copy()
+    {
+        var copy = new StatusRegister();
+        copy.store(value());
+
+        return copy;
     }
 
     private void update(boolean b, int position)
