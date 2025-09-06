@@ -25,7 +25,7 @@ public interface AddressHandler extends Reader, Writer
     }
 
     @RequiredArgsConstructor
-    public static class AddressHandlerImpl implements AddressHandler
+    class AddressHandlerImpl implements AddressHandler
     {
         private final Reader reader;
         private final Writer writer;
