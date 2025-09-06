@@ -1,4 +1,10 @@
 logging:
+  level:
+    org:
+      syphr:
+        emulator:
+          cli:
+            Application: warn
   pattern:
     level: "%5level op:%3mdc{op}"
 
