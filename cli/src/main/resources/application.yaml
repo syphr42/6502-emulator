@@ -3,6 +3,8 @@ logging:
     level: "%5level op:%3mdc{op}"
 
 spring:
+  main:
+    banner-mode: "off"
   shell:
     command:
       history:
