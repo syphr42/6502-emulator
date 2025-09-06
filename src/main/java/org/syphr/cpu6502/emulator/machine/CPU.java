@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
@@ -130,7 +131,9 @@ public class CPU
         log.info("Reading next operation");
         Operation op = nextOp();
         log.info("Executing op {}", op);
-        execute(op);
+        try (MDC.MDCCloseable _ = MDC.putCloseable("op", op.getClass().getSimpleName())) {
+            execute(op);
+        }
         log.info("Completed op {}", op);
     }
 
