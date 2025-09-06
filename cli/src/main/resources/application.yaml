@@ -1,3 +1,7 @@
+logging:
+  pattern:
+    level: "%5level op:%3mdc{op}"
+
 spring:
   shell:
     option:
