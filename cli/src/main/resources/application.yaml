@@ -4,6 +4,8 @@ logging:
 
 spring:
   shell:
+    history:
+      enabled: false
     option:
       naming:
         case-type: kebab
