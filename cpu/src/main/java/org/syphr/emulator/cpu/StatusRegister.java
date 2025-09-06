@@ -18,7 +18,7 @@ package org.syphr.emulator.cpu;
 import lombok.ToString;
 
 @ToString(onlyExplicitlyIncluded = true)
-public class StatusRegister extends Register
+class StatusRegister extends Register
 {
     private static final int NEGATIVE_BIT_POSITION = 7;
     private static final int OVERFLOW_BIT_POSITION = 6;

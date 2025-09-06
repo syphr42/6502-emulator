@@ -24,7 +24,7 @@ import java.util.BitSet;
 @Slf4j
 @RequiredArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
-public class Register
+class Register
 {
     @ToString.Include
     private Value value = Value.ZERO;
