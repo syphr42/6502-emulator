@@ -33,6 +33,8 @@
     <description>Command line interface for the 6502 emulator</description>
 
     <properties>
+        <main-class>org.syphr.emulator.cli.Application</main-class>
+
         <!-- Dependencies -->
         <spring-shell.version>3.4.1</spring-shell.version>
 
@@ -95,9 +97,75 @@
                         </exclude>
                     </excludes>
                 </configuration>
+
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>repackage</goal>
+                        </goals>
+                        <configuration>
+                            <classifier>exec</classifier>
+                            <mainClass>${main-class}</mainClass>
+                        </configuration>
+                    </execution>
+                </executions>
             </plugin>
         </plugins>
     </build>
+
+    <profiles>
+        <profile>
+            <id>native</id>
+
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>org.graalvm.buildtools</groupId>
+                        <artifactId>native-maven-plugin</artifactId>
+                        <extensions>true</extensions>
+
+                        <configuration>
+                            <classesDirectory>${project.build.outputDirectory}</classesDirectory>
+                            <mainClass>${main-class}</mainClass>
+                            <imageName>6502</imageName>
+                        </configuration>
+
+                        <executions>
+                            <execution>
+                                <id>add-reachability-metadata</id>
+                                <goals>
+                                    <goal>add-reachability-metadata</goal>
+                                </goals>
+                            </execution>
+
+                            <execution>
+                                <id>build-native</id>
+                                <goals>
+                                    <goal>compile-no-fork</goal>
+                                </goals>
+                                <phase>package</phase>
+                            </execution>
+                        </executions>
+                    </plugin>
+
+                    <plugin>
+                        <groupId>org.springframework.boot</groupId>
+                        <artifactId>spring-boot-maven-plugin</artifactId>
+                        <version>${plugin.spring-boot.version}</version>
+
+                        <executions>
+                            <execution>
+                                <id>process-aot</id>
+                                <goals>
+                                    <goal>process-aot</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+    </profiles>
 
     <dependencyManagement>
         <dependencies>
