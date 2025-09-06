@@ -4,6 +4,11 @@ logging:
 
 spring:
   shell:
+    command:
+      history:
+        enabled: false
+      script:
+        enabled: false
     history:
       enabled: false
     option:
