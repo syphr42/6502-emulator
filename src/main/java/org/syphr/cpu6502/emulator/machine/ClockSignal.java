@@ -44,6 +44,11 @@ public interface ClockSignal
             return new Frequency(this.cycle.dividedBy(multiplier));
         }
 
+        public Frequency dividedBy(int divisor)
+        {
+            return new Frequency(this.cycle.multipliedBy(divisor));
+        }
+
         @Override
         public void await() throws InterruptedException
         {

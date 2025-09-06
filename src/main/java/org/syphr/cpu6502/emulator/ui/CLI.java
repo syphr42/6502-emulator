@@ -29,11 +29,14 @@ public class CLI
 
     @Command(command = "execute")
     public void execute(@Option(defaultValue = "2hz") String clock,
+                        @Option(defaultValue = "false") boolean disableClockManager,
                         @Option @Nullable Path rom,
                         @Option @Nullable Address romStart,
                         @Option(defaultValue = "false") boolean stepping) throws IOException
     {
-        ClockSignal clockSignal = stepping ? this::readLine : ClockSignal.Frequency.of(clock);
+        ClockSignal clockSignal = disableClockManager
+                                  ? simpleClockSignal(clock, stepping)
+                                  : new ClockSignalManager(terminal, ClockSignal.Frequency.of(clock), stepping);
         var cpu = new CPU(clockSignal, createMemoryMap(romStart, rom));
 
         System.out.println("CPU initial state: " + cpu.getState());
@@ -42,6 +45,11 @@ public class CLI
         } finally {
             System.out.println("CPU final state: " + cpu.getState());
         }
+    }
+
+    private ClockSignal simpleClockSignal(String clock, boolean stepping)
+    {
+        return stepping ? this::readLine : ClockSignal.Frequency.of(clock);
     }
 
     private void readLine() throws InterruptedException
