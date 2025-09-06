@@ -25,14 +25,20 @@ import static org.syphr.emulator.cpu.Operation.*;
 @RequiredArgsConstructor
 public class CLI
 {
+    private static final String ARG_DESC_CLOCK = "Clock frequency when not stepping (hz, khz, or mhz)";
+    private static final String ARG_DESC_CLOCK_MGR = "Disable adjustable clock manager";
+    private static final String ARG_DESC_ROM = "Path to binary program file";
+    private static final String ARG_DESC_ROM_START = "Start address when a ROM is provided";
+    private static final String ARG_DESC_STEPPING = "Start clock in single-step mode";
+
     private final Terminal terminal;
 
     @Command(command = "run", description = "Execute a program")
-    public void run(@Option(defaultValue = "2hz") String clock,
-                    @Option(defaultValue = "false") boolean disableClockManager,
-                    @Option @Nullable Path rom,
-                    @Option @Nullable Address romStart,
-                    @Option(defaultValue = "false") boolean stepping) throws IOException
+    public void run(@Option(defaultValue = "2hz", description = ARG_DESC_CLOCK) String clock,
+                    @Option(defaultValue = "false", description = ARG_DESC_CLOCK_MGR) boolean disableClockManager,
+                    @Option(description = ARG_DESC_ROM) @Nullable Path rom,
+                    @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START) Address romStart,
+                    @Option(defaultValue = "false", description = ARG_DESC_STEPPING) boolean stepping) throws IOException
     {
         ClockSignal clockSignal = disableClockManager
                                   ? simpleClockSignal(clock, stepping)
@@ -62,14 +68,10 @@ public class CLI
         }
     }
 
-    private MemoryMap createMemoryMap(@Nullable Address romStart, @Nullable Path rom) throws IOException
+    private MemoryMap createMemoryMap(Address romStart, @Nullable Path rom) throws IOException
     {
-        if (rom == null && romStart == null) {
+        if (rom == null) {
             return hardCodedMemoryMap();
-        }
-
-        if (rom == null || romStart == null) {
-            throw new IllegalArgumentException("rom and romStart must be supplied together");
         }
 
         return MemoryMap.of(romStart, rom);
