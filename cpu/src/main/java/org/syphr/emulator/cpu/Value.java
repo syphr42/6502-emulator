@@ -76,6 +76,9 @@ public record Value(byte data)
 
     public boolean isSet(int position)
     {
+        if (position < 0 || position > 7) {
+            throw new IllegalArgumentException("Position must be 0-7 to reference the bits of a single byte");
+        }
         return !and(Value.of(1 << position)).equals(ZERO);
     }
 
