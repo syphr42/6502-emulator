@@ -265,42 +265,33 @@ public sealed interface Operation
         }
     }
 
-    record BCC(AddressMode mode) implements Operation
+    record BCC(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0x90;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BCS(AddressMode mode) implements Operation
+    record BCS(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0xB0;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BEQ(AddressMode mode) implements Operation
+    record BEQ(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0xF0;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
@@ -325,55 +316,43 @@ public sealed interface Operation
         }
     }
 
-    record BMI(AddressMode mode) implements Operation
+    record BMI(Relative mode) implements Operation
     {
         public static final byte RELATIVE = 0x30;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BNE(AddressMode mode) implements Operation
+    record BNE(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0xD0;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BPL(AddressMode mode) implements Operation
+    record BPL(Relative mode) implements Operation
     {
         public static final byte RELATIVE = 0x10;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BRA(AddressMode mode) implements Operation
+    record BRA(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0x80;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
@@ -392,29 +371,23 @@ public sealed interface Operation
         }
     }
 
-    record BVC(AddressMode mode) implements Operation
+    record BVC(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0x50;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
-    record BVS(AddressMode mode) implements Operation
+    record BVS(Relative mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0x70;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Relative _ -> RELATIVE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(RELATIVE);
         }
     }
 
@@ -689,16 +662,13 @@ public sealed interface Operation
         }
     }
 
-    record JSR(AddressMode mode) implements Operation
+    record JSR(Absolute mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x20;
 
         public Value code()
         {
-            return Value.of(switch (mode) {
-                case Absolute _ -> ABSOLUTE;
-                default -> throw unsupported(this);
-            });
+            return Value.of(ABSOLUTE);
         }
     }
 
@@ -1275,17 +1245,17 @@ public sealed interface Operation
     static BBS5 bbs5(ZeroPageRelative mode) { return new BBS5(mode); }
     static BBS6 bbs6(ZeroPageRelative mode) { return new BBS6(mode); }
     static BBS7 bbs7(ZeroPageRelative mode) { return new BBS7(mode); }
-    static BCC bcc(AddressMode mode) { return new BCC(mode); }
-    static BCS bcs(AddressMode mode) { return new BCS(mode); }
-    static BEQ beq(AddressMode mode) { return new BEQ(mode); }
+    static BCC bcc(Relative mode) { return new BCC(mode); }
+    static BCS bcs(Relative mode) { return new BCS(mode); }
+    static BEQ beq(Relative mode) { return new BEQ(mode); }
     static BIT bit(AddressMode mode) { return new BIT(mode); }
-    static BMI bmi(AddressMode mode) { return new BMI(mode); }
-    static BNE bne(AddressMode mode) { return new BNE(mode); }
-    static BPL bpl(AddressMode mode) { return new BPL(mode); }
-    static BRA bra(AddressMode mode) { return new BRA(mode); }
+    static BMI bmi(Relative mode) { return new BMI(mode); }
+    static BNE bne(Relative mode) { return new BNE(mode); }
+    static BPL bpl(Relative mode) { return new BPL(mode); }
+    static BRA bra(Relative mode) { return new BRA(mode); }
     static BRK brk() { return new BRK(); }
-    static BVC bvc(AddressMode mode) { return new BVC(mode); }
-    static BVS bvs(AddressMode mode) { return new BVS(mode); }
+    static BVC bvc(Relative mode) { return new BVC(mode); }
+    static BVS bvs(Relative mode) { return new BVS(mode); }
     static CLC clc() { return new CLC(); }
     static CLD cld() { return new CLD(); }
     static CLI cli() { return new CLI(); }
@@ -1301,7 +1271,7 @@ public sealed interface Operation
     static INX inx() { return new INX(); }
     static INY iny() { return new INY(); }
     static JMP jmp(AddressMode mode) { return new JMP(mode); }
-    static JSR jsr(AddressMode mode) { return new JSR(mode); }
+    static JSR jsr(Absolute mode) { return new JSR(mode); }
     static LDA lda(AddressMode mode) { return new LDA(mode); }
     static LDX ldx(AddressMode mode) { return new LDX(mode); }
     static LDY ldy(AddressMode mode) { return new LDY(mode); }
@@ -1316,6 +1286,7 @@ public sealed interface Operation
     static PLP plp() { return new PLP(); }
     static PLX plx() { return new PLX(); }
     static PLY ply() { return new PLY(); }
+    // TODO RMB#
     static ROL rol(AddressMode mode) { return new ROL(mode); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTI rti() { return new RTI(); }
@@ -1324,15 +1295,21 @@ public sealed interface Operation
     static SEC sec() { return new SEC(); }
     static SED sed() { return new SED(); }
     static SEI sei() { return new SEI(); }
+    // TODO SMB#
     static STA sta(AddressMode mode) { return new STA(mode); }
+    // TODO STP
     static STX stx(AddressMode mode) { return new STX(mode); }
     static STY sty(AddressMode mode) { return new STY(mode); }
+    // TODO STZ
     static TAX tax() { return new TAX(); }
     static TAY tay() { return new TAY(); }
+    // TODO TRB
+    // TODO TSB
     static TSX tsx() { return new TSX(); }
     static TXA txa() { return new TXA(); }
     static TXS txs() { return new TXS(); }
     static TYA tya() { return new TYA(); }
+    // TODO WAI
     // @formatter:on
 
     static List<Value> toValues(Operation operation)
