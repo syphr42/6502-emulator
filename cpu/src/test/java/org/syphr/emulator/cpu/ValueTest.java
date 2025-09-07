@@ -211,6 +211,91 @@ class ValueTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00000000, 0, false",
+                "00000001, 0, true",
+                "00000010, 0, false",
+                "00000100, 0, false",
+                "00001000, 0, false",
+                "00010000, 0, false",
+                "00100000, 0, false",
+                "01000000, 0, false",
+                "10000000, 0, false",
+                "00000000, 1, false",
+                "00000001, 1, false",
+                "00000010, 1, true",
+                "00000100, 1, false",
+                "00001000, 1, false",
+                "00010000, 1, false",
+                "00100000, 1, false",
+                "01000000, 1, false",
+                "10000000, 1, false",
+                "00000000, 2, false",
+                "00000001, 2, false",
+                "00000010, 2, false",
+                "00000100, 2, true",
+                "00001000, 2, false",
+                "00010000, 2, false",
+                "00100000, 2, false",
+                "01000000, 2, false",
+                "10000000, 2, false",
+                "00000000, 3, false",
+                "00000001, 3, false",
+                "00000010, 3, false",
+                "00000100, 3, false",
+                "00001000, 3, true",
+                "00010000, 3, false",
+                "00100000, 3, false",
+                "01000000, 3, false",
+                "10000000, 3, false",
+                "00000000, 4, false",
+                "00000001, 4, false",
+                "00000010, 4, false",
+                "00000100, 4, false",
+                "00001000, 4, false",
+                "00010000, 4, true",
+                "00100000, 4, false",
+                "01000000, 4, false",
+                "10000000, 4, false",
+                "00000000, 5, false",
+                "00000001, 5, false",
+                "00000010, 5, false",
+                "00000100, 5, false",
+                "00001000, 5, false",
+                "00010000, 5, false",
+                "00100000, 5, true",
+                "01000000, 5, false",
+                "10000000, 5, false",
+                "00000000, 6, false",
+                "00000001, 6, false",
+                "00000010, 6, false",
+                "00000100, 6, false",
+                "00001000, 6, false",
+                "00010000, 6, false",
+                "00100000, 6, false",
+                "01000000, 6, true",
+                "10000000, 6, false",
+                "00000000, 7, false",
+                "00000001, 7, false",
+                "00000010, 7, false",
+                "00000100, 7, false",
+                "00001000, 7, false",
+                "00010000, 7, false",
+                "00100000, 7, false",
+                "01000000, 7, false",
+                "10000000, 7, true"})
+    void isSet(String init, int position, boolean expected)
+    {
+        // given
+        var value = Value.ofBits(init);
+
+        // when
+        boolean result = value.isSet(position);
+
+        // then
+        assertThat(result).isEqualTo(expected);
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, 01, 01",
                 "00, FF, FF",
                 "F0, 0F, FF",

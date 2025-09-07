@@ -65,5 +65,8 @@ public sealed interface AddressMode
 
     record ZeroPageIndirectIndexedY(Value offset) implements AddressMode {}
     static ZeroPageIndirectIndexedY zpIndirectY(Value offset) { return new ZeroPageIndirectIndexedY(offset); }
+
+    record ZeroPageRelative(ZeroPage zp, Relative relative) implements AddressMode {}
+    static ZeroPageRelative zpRelative(ZeroPage zp, Relative relative) { return new ZeroPageRelative(zp, relative); }
     // @formatter:on
 }

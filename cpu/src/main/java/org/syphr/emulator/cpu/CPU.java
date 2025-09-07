@@ -183,6 +183,24 @@ public class CPU
             case ASL.ZP -> asl(zp(programManager.nextValue()));
             case ASL.ZP_X -> asl(zpX(programManager.nextValue()));
 
+            case BBR0.ZP_RELATIVE -> bbr0(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR1.ZP_RELATIVE -> bbr1(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR2.ZP_RELATIVE -> bbr2(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR3.ZP_RELATIVE -> bbr3(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR4.ZP_RELATIVE -> bbr4(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR5.ZP_RELATIVE -> bbr5(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR6.ZP_RELATIVE -> bbr6(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBR7.ZP_RELATIVE -> bbr7(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+
+            case BBS0.ZP_RELATIVE -> bbs0(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS1.ZP_RELATIVE -> bbs1(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS2.ZP_RELATIVE -> bbs2(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS3.ZP_RELATIVE -> bbs3(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS4.ZP_RELATIVE -> bbs4(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS5.ZP_RELATIVE -> bbs5(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS6.ZP_RELATIVE -> bbs6(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+            case BBS7.ZP_RELATIVE -> bbs7(zpRelative(zp(programManager.nextValue()), relative(programManager.nextValue())));
+
             case BCC.RELATIVE -> bcc(relative(programManager.nextValue()));
             case BCS.RELATIVE -> bcs(relative(programManager.nextValue()));
             case BEQ.RELATIVE -> beq(relative(programManager.nextValue()));
@@ -382,6 +400,22 @@ public class CPU
             case ADC(AddressMode mode) -> updateRegister(accumulator, r -> addWithCarry(r, toValue(mode)));
             case AND(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().and(toValue(mode))));
             case ASL(AddressMode mode) -> readModifyWrite(mode, this::shiftLeft);
+            case BBR0(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 0)), mode.relative());
+            case BBR1(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 1)), mode.relative());
+            case BBR2(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 2)), mode.relative());
+            case BBR3(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 3)), mode.relative());
+            case BBR4(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 4)), mode.relative());
+            case BBR5(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 5)), mode.relative());
+            case BBR6(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 6)), mode.relative());
+            case BBR7(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 7)), mode.relative());
+            case BBS0(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 0), mode.relative());
+            case BBS1(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 1), mode.relative());
+            case BBS2(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 2), mode.relative());
+            case BBS3(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 3), mode.relative());
+            case BBS4(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 4), mode.relative());
+            case BBS5(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 5), mode.relative());
+            case BBS6(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 6), mode.relative());
+            case BBS7(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 7), mode.relative());
             case BCC(AddressMode mode) -> branchIf(not(status::carry), mode);
             case BCS(AddressMode mode) -> branchIf(status::carry, mode);
             case BEQ(AddressMode mode) -> branchIf(status::zero, mode);
@@ -646,6 +680,14 @@ public class CPU
         }
 
         return target;
+    }
+
+    private boolean isBitSet(Value value, int position)
+    {
+        // burn a cycle performing the bit test
+        clock.nextCycle();
+
+        return value.isSet(position);
     }
 
     private void compare(Register register, Value value)

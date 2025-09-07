@@ -264,6 +264,582 @@ class CPUTest
     }
 
     @ParameterizedTest
+    @CsvSource({"0201, 10, 00000001, 0204, 5",
+                "0201, 10, 11111110, 0214, 6",
+                "02FC, 02, 11111110, 0301, 7",
+                "0000, FC, 11111110, FFFF, 7",
+                "FFFC, 01, 11111110, 0000, 7",
+                "FFF6, FC, 11111110, FFF5, 6"})
+    void execute_BBR0_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr0(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 00000010, 0204, 5",
+                "0201, 10, 11111101, 0214, 6",
+                "02FC, 02, 11111101, 0301, 7",
+                "0000, FC, 11111101, FFFF, 7",
+                "FFFC, 01, 11111101, 0000, 7",
+                "FFF6, FC, 11111101, FFF5, 6"})
+    void execute_BBR1_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr1(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 00000100, 0204, 5",
+                "0201, 10, 11111011, 0214, 6",
+                "02FC, 02, 11111011, 0301, 7",
+                "0000, FC, 11111011, FFFF, 7",
+                "FFFC, 01, 11111011, 0000, 7",
+                "FFF6, FC, 11111011, FFF5, 6"})
+    void execute_BBR2_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr2(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 00001000, 0204, 5",
+                "0201, 10, 11110111, 0214, 6",
+                "02FC, 02, 11110111, 0301, 7",
+                "0000, FC, 11110111, FFFF, 7",
+                "FFFC, 01, 11110111, 0000, 7",
+                "FFF6, FC, 11110111, FFF5, 6"})
+    void execute_BBR3_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr3(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 00010000, 0204, 5",
+                "0201, 10, 11101111, 0214, 6",
+                "02FC, 02, 11101111, 0301, 7",
+                "0000, FC, 11101111, FFFF, 7",
+                "FFFC, 01, 11101111, 0000, 7",
+                "FFF6, FC, 11101111, FFF5, 6"})
+    void execute_BBR4_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr4(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 00100000, 0204, 5",
+                "0201, 10, 11011111, 0214, 6",
+                "02FC, 02, 11011111, 0301, 7",
+                "0000, FC, 11011111, FFFF, 7",
+                "FFFC, 01, 11011111, 0000, 7",
+                "FFF6, FC, 11011111, FFF5, 6"})
+    void execute_BBR5_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr5(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 01000000, 0204, 5",
+                "0201, 10, 10111111, 0214, 6",
+                "02FC, 02, 10111111, 0301, 7",
+                "0000, FC, 10111111, FFFF, 7",
+                "FFFC, 01, 10111111, 0000, 7",
+                "FFF6, FC, 10111111, FFF5, 6"})
+    void execute_BBR6_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr6(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 10000000, 0204, 5",
+                "0201, 10, 01111111, 0214, 6",
+                "02FC, 02, 01111111, 0301, 7",
+                "0000, FC, 01111111, FFFF, 7",
+                "FFFC, 01, 01111111, 0000, 7",
+                "FFF6, FC, 01111111, FFF5, 6"})
+    void execute_BBR7_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbr7(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11111110, 0204, 5",
+                "0201, 10, 00000001, 0214, 6",
+                "02FC, 02, 00000001, 0301, 7",
+                "0000, FC, 00000001, FFFF, 7",
+                "FFFC, 01, 00000001, 0000, 7",
+                "FFF6, FC, 00000001, FFF5, 6"})
+    void execute_BBS0_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs0(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11111101, 0204, 5",
+                "0201, 10, 00000010, 0214, 6",
+                "02FC, 02, 00000010, 0301, 7",
+                "0000, FC, 00000010, FFFF, 7",
+                "FFFC, 01, 00000010, 0000, 7",
+                "FFF6, FC, 00000010, FFF5, 6"})
+    void execute_BBS1_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs1(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11111011, 0204, 5",
+                "0201, 10, 00000100, 0214, 6",
+                "02FC, 02, 00000100, 0301, 7",
+                "0000, FC, 00000100, FFFF, 7",
+                "FFFC, 01, 00000100, 0000, 7",
+                "FFF6, FC, 00000100, FFF5, 6"})
+    void execute_BBS2_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs2(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11110111, 0204, 5",
+                "0201, 10, 00001000, 0214, 6",
+                "02FC, 02, 00001000, 0301, 7",
+                "0000, FC, 00001000, FFFF, 7",
+                "FFFC, 01, 00001000, 0000, 7",
+                "FFF6, FC, 00001000, FFF5, 6"})
+    void execute_BBS3_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs3(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11101111, 0204, 5",
+                "0201, 10, 00010000, 0214, 6",
+                "02FC, 02, 00010000, 0301, 7",
+                "0000, FC, 00010000, FFFF, 7",
+                "FFFC, 01, 00010000, 0000, 7",
+                "FFF6, FC, 00010000, FFF5, 6"})
+    void execute_BBS4_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs4(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 11011111, 0204, 5",
+                "0201, 10, 00100000, 0214, 6",
+                "02FC, 02, 00100000, 0301, 7",
+                "0000, FC, 00100000, FFFF, 7",
+                "FFFC, 01, 00100000, 0000, 7",
+                "FFF6, FC, 00100000, FFF5, 6"})
+    void execute_BBS5_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs5(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 10111111, 0204, 5",
+                "0201, 10, 01000000, 0214, 6",
+                "02FC, 02, 01000000, 0301, 7",
+                "0000, FC, 01000000, FFFF, 7",
+                "FFFC, 01, 01000000, 0000, 7",
+                "FFF6, FC, 01000000, FFF5, 6"})
+    void execute_BBS6_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs6(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0201, 10, 01111111, 0204, 5",
+                "0201, 10, 10000000, 0214, 6",
+                "02FC, 02, 10000000, 0301, 7",
+                "0000, FC, 10000000, FFFF, 7",
+                "FFFC, 01, 10000000, 0000, 7",
+                "FFF6, FC, 10000000, FFF5, 6"})
+    void execute_BBS7_ZeroPageRelative(String start,
+                                       String displacement,
+                                       String input,
+                                       String expectedPC,
+                                       int expectedCycles)
+    {
+        // given
+        programManager.setProgramCounter(Address.ofHex(start));
+
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        setNextOp(bbs7(zpRelative(zp(offset), relative(Value.ofHex(displacement)))));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    Address.ofHex(expectedPC),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    @ParameterizedTest
     @CsvSource({"0001, 10, 1, 0003, 2",
                 "0001, 10, 0, 0013, 3",
                 "00FD, 02, 0, 0101, 4",

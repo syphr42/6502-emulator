@@ -74,6 +74,11 @@ public record Value(byte data)
         return data == 0;
     }
 
+    public boolean isSet(int position)
+    {
+        return !and(Value.of(1 << position)).equals(ZERO);
+    }
+
     public Value plus(Value other)
     {
         return Value.of(data + Byte.toUnsignedInt(other.data()));

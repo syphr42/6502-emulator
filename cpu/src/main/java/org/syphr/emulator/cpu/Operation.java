@@ -105,6 +105,166 @@ public sealed interface Operation
         }
     }
 
+    record BBR0(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x0F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR1(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x1F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR2(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x2F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR3(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x3F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR4(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x4F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR5(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x5F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR6(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x6F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBR7(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = 0x7F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS0(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0x8F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS1(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0x9F;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS2(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xAF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS3(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xBF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS4(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xCF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS5(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xDF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS6(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xEF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
+    record BBS7(ZeroPageRelative mode) implements Operation
+    {
+        public static final byte ZP_RELATIVE = (byte) 0xFF;
+
+        public Value code()
+        {
+            return Value.of(ZP_RELATIVE);
+        }
+    }
+
     record BCC(AddressMode mode) implements Operation
     {
         public static final byte RELATIVE = (byte) 0x90;
@@ -1099,6 +1259,22 @@ public sealed interface Operation
     static ADC adc(AddressMode mode) { return new ADC(mode); }
     static AND and(AddressMode mode) { return new AND(mode); }
     static ASL asl(AddressMode mode) { return new ASL(mode); }
+    static BBR0 bbr0(ZeroPageRelative mode) { return new BBR0(mode); }
+    static BBR1 bbr1(ZeroPageRelative mode) { return new BBR1(mode); }
+    static BBR2 bbr2(ZeroPageRelative mode) { return new BBR2(mode); }
+    static BBR3 bbr3(ZeroPageRelative mode) { return new BBR3(mode); }
+    static BBR4 bbr4(ZeroPageRelative mode) { return new BBR4(mode); }
+    static BBR5 bbr5(ZeroPageRelative mode) { return new BBR5(mode); }
+    static BBR6 bbr6(ZeroPageRelative mode) { return new BBR6(mode); }
+    static BBR7 bbr7(ZeroPageRelative mode) { return new BBR7(mode); }
+    static BBS0 bbs0(ZeroPageRelative mode) { return new BBS0(mode); }
+    static BBS1 bbs1(ZeroPageRelative mode) { return new BBS1(mode); }
+    static BBS2 bbs2(ZeroPageRelative mode) { return new BBS2(mode); }
+    static BBS3 bbs3(ZeroPageRelative mode) { return new BBS3(mode); }
+    static BBS4 bbs4(ZeroPageRelative mode) { return new BBS4(mode); }
+    static BBS5 bbs5(ZeroPageRelative mode) { return new BBS5(mode); }
+    static BBS6 bbs6(ZeroPageRelative mode) { return new BBS6(mode); }
+    static BBS7 bbs7(ZeroPageRelative mode) { return new BBS7(mode); }
     static BCC bcc(AddressMode mode) { return new BCC(mode); }
     static BCS bcs(AddressMode mode) { return new BCS(mode); }
     static BEQ beq(AddressMode mode) { return new BEQ(mode); }
@@ -1179,6 +1355,8 @@ public sealed interface Operation
             case ZeroPageIndexedY(Value offset) -> List.of(operation.code(), offset);
             case ZeroPageIndirect(Value offset) -> List.of(operation.code(), offset);
             case ZeroPageIndirectIndexedY(Value offset) -> List.of(operation.code(), offset);
+            case ZeroPageRelative(ZeroPage zp, Relative relative) ->
+                    List.of(operation.code(), zp.offset(), relative.displacement());
         };
     }
 
