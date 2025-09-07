@@ -374,6 +374,11 @@ public class CPU
             case STY.ZP -> sty(zp(programManager.nextValue()));
             case STY.ZP_X -> sty(zpX(programManager.nextValue()));
 
+            case STZ.ABSOLUTE -> stz(absolute(programManager.nextAddress()));
+            case STZ.ABSOLUTE_X -> stz(absoluteX(programManager.nextAddress()));
+            case STZ.ZP -> stz(zp(programManager.nextValue()));
+            case STZ.ZP_X -> stz(zpX(programManager.nextValue()));
+
             case TAX.IMPLIED -> tax();
             case TAY.IMPLIED -> tay();
             case TSX.IMPLIED -> tsx();
@@ -493,6 +498,7 @@ public class CPU
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
             case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
+            case STZ(AddressMode mode) -> writer.write(toAddress(mode), Value.ZERO);
             case TAX _ -> updateRegister(x, r -> r.store(accumulator.value()));
             case TAY _ -> updateRegister(y, r -> r.store(accumulator.value()));
             case TSX _ -> updateRegister(x, r -> r.store(stack.getPointer().low()));

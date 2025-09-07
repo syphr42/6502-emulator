@@ -2832,6 +2832,44 @@ class CPUTest
                                     state.stackData()));
     }
 
+    static Stream<Arguments> execute_STZ()
+    {
+        return Stream.of(stzInputs(modeAbsolute(), 3, 4),
+                         stzInputs(modeAbsoluteXSamePage(), 3, 4),
+                         stzInputs(modeAbsoluteXCrossPage(), 3, 5),
+                         stzInputs(modeZeroPage(), 2, 3),
+                         stzInputs(modeZeroPageX(), 2, 4)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> stzInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(mode, cycles, length));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_STZ(Function<ModeInput, ModeOutput> modeGen, int expectedCycles, int expectedProgramCounterOffset)
+    {
+        // given
+        ModeOutput modeOutput = modeGen.apply(modeInput());
+        setNextOp(stz(modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.ZERO),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
     @ParameterizedTest
     @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
     void execute_TAX_Implied(String input, String expected, boolean isNegative, boolean isZero)

@@ -1135,6 +1135,25 @@ public sealed interface Operation
         }
     }
 
+    record STZ(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = (byte) 0x9C;
+        public static final byte ABSOLUTE_X = (byte) 0x9E;
+        public static final byte ZP = 0x64;
+        public static final byte ZP_X = 0x74;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case AbsoluteIndexedX _ -> ABSOLUTE_X;
+                case ZeroPage _ -> ZP;
+                case ZeroPageIndexedX _ -> ZP_X;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record TAX() implements Operation
     {
         public static final byte IMPLIED = (byte) 0xAA;
@@ -1300,7 +1319,7 @@ public sealed interface Operation
     // TODO STP
     static STX stx(AddressMode mode) { return new STX(mode); }
     static STY sty(AddressMode mode) { return new STY(mode); }
-    // TODO STZ
+    static STZ stz(AddressMode mode) { return new STZ(mode); }
     static TAX tax() { return new TAX(); }
     static TAY tay() { return new TAY(); }
     // TODO TRB
