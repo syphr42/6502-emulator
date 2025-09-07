@@ -22,7 +22,6 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
-import java.util.function.BooleanSupplier;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -405,25 +404,25 @@ public class CPU
             case ADC(AddressMode mode) -> updateRegister(accumulator, r -> addWithCarry(r, toValue(mode)));
             case AND(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().and(toValue(mode))));
             case ASL(AddressMode mode) -> readModifyWrite(mode, this::shiftLeft);
-            case BBR0(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 0)), mode.relative());
-            case BBR1(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 1)), mode.relative());
-            case BBR2(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 2)), mode.relative());
-            case BBR3(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 3)), mode.relative());
-            case BBR4(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 4)), mode.relative());
-            case BBR5(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 5)), mode.relative());
-            case BBR6(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 6)), mode.relative());
-            case BBR7(ZeroPageRelative mode) -> branchIf(not(() -> isBitSet(toValue(mode.zp()), 7)), mode.relative());
-            case BBS0(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 0), mode.relative());
-            case BBS1(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 1), mode.relative());
-            case BBS2(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 2), mode.relative());
-            case BBS3(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 3), mode.relative());
-            case BBS4(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 4), mode.relative());
-            case BBS5(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 5), mode.relative());
-            case BBS6(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 6), mode.relative());
-            case BBS7(ZeroPageRelative mode) -> branchIf(() -> isBitSet(toValue(mode.zp()), 7), mode.relative());
-            case BCC(AddressMode mode) -> branchIf(not(status::carry), mode);
-            case BCS(AddressMode mode) -> branchIf(status::carry, mode);
-            case BEQ(AddressMode mode) -> branchIf(status::zero, mode);
+            case BBR0(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 0), mode.relative());
+            case BBR1(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 1), mode.relative());
+            case BBR2(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 2), mode.relative());
+            case BBR3(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 3), mode.relative());
+            case BBR4(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 4), mode.relative());
+            case BBR5(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 5), mode.relative());
+            case BBR6(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 6), mode.relative());
+            case BBR7(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 7), mode.relative());
+            case BBS0(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 0), mode.relative());
+            case BBS1(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 1), mode.relative());
+            case BBS2(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 2), mode.relative());
+            case BBS3(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 3), mode.relative());
+            case BBS4(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 4), mode.relative());
+            case BBS5(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 5), mode.relative());
+            case BBS6(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 6), mode.relative());
+            case BBS7(ZeroPageRelative mode) -> branchIf(isBitSet(toValue(mode.zp()), 7), mode.relative());
+            case BCC(AddressMode mode) -> branchIf(!status.carry(), mode);
+            case BCS(AddressMode mode) -> branchIf(status.carry(), mode);
+            case BEQ(AddressMode mode) -> branchIf(status.zero(), mode);
             case BIT(AddressMode mode) -> {
                 Value value = toValue(mode);
                 if (!(mode instanceof Immediate)) {
@@ -431,10 +430,10 @@ public class CPU
                 }
                 status.setZero(accumulator.value().and(value).isZero());
             }
-            case BMI(AddressMode mode) -> branchIf(status::negative, mode);
-            case BNE(AddressMode mode) -> branchIf(not(status::zero), mode);
-            case BPL(AddressMode mode) -> branchIf(not(status::negative), mode);
-            case BRA(AddressMode mode) -> branchIf(() -> true, mode);
+            case BMI(AddressMode mode) -> branchIf(status.negative(), mode);
+            case BNE(AddressMode mode) -> branchIf(!status.zero(), mode);
+            case BPL(AddressMode mode) -> branchIf(!status.negative(), mode);
+            case BRA(AddressMode mode) -> branchIf(true, mode);
             case BRK _ -> {
                 stack.pushAll(programManager.getProgramCounter().increment().bytes().reversed());
                 pushToStack(status.copy().setBreakCommand(true));
@@ -442,8 +441,8 @@ public class CPU
                                                             reader.read(Address.IRQ.increment())));
                 status.setDecimal(false).setIrqDisable(true);
             }
-            case BVC(AddressMode mode) -> branchIf(not(status::overflow), mode);
-            case BVS(AddressMode mode) -> branchIf(status::overflow, mode);
+            case BVC(AddressMode mode) -> branchIf(!status.overflow(), mode);
+            case BVS(AddressMode mode) -> branchIf(status.overflow(), mode);
             case CLC _ -> status.setCarry(false);
             case CLD _ -> status.setDecimal(false);
             case CLI _ -> status.setIrqDisable(false);
@@ -666,9 +665,9 @@ public class CPU
         return Value.of(c | (Byte.toUnsignedInt(r) >> 1));
     }
 
-    private void branchIf(BooleanSupplier flag, AddressMode mode)
+    private void branchIf(boolean condition, AddressMode mode)
     {
-        if (flag.getAsBoolean()) {
+        if (condition) {
             Address target = toAddress(mode);
             clock.nextCycle();
             programManager.setProgramCounter(target);
@@ -700,11 +699,6 @@ public class CPU
     {
         int compare = Byte.compareUnsigned(register.value().data(), value.data());
         status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
-    }
-
-    private BooleanSupplier not(BooleanSupplier supplier)
-    {
-        return () -> !supplier.getAsBoolean();
     }
 
     @RequiredArgsConstructor
