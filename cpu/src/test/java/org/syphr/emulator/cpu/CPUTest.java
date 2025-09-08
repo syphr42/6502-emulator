@@ -3398,6 +3398,94 @@ class CPUTest
                                     state.stackData()));
     }
 
+    static Stream<Arguments> execute_TRB()
+    {
+        return Stream.of(trbInputs(modeAbsolute(), 3, 6),
+                         trbInputs(modeZeroPage(), 2, 5)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> trbInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0b00110011, 0b10100110, 0b10000100, mode, cycles, false, length),
+                         Arguments.of(0b01000001, 0b10100110, 0b10100110, mode, cycles, true, length));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_TRB(int givenAccumulator,
+                     int input,
+                     int expectedOutput,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
+    {
+        // given
+        accumulator.store(Value.of(givenAccumulator));
+
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(trb(modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.of(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().zero(expectedZero).build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
+    static Stream<Arguments> execute_TSB()
+    {
+        return Stream.of(tsbInputs(modeAbsolute(), 3, 6),
+                         tsbInputs(modeZeroPage(), 2, 5)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> tsbInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
+    {
+        return Stream.of(Arguments.of(0b00110011, 0b10100110, 0b10110111, mode, cycles, false, length),
+                         Arguments.of(0b01000001, 0b10100110, 0b11100111, mode, cycles, true, length));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_TSB(int givenAccumulator,
+                     int input,
+                     int expectedOutput,
+                     Function<ModeInput, ModeOutput> modeGen,
+                     int expectedCycles,
+                     boolean expectedZero,
+                     int expectedProgramCounterOffset)
+    {
+        // given
+        accumulator.store(Value.of(givenAccumulator));
+
+        ModeOutput modeOutput = modeGen.apply(modeInput(input));
+        setNextOp(tsb(modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+                  () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.of(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().zero(expectedZero).build(),
+                                    state.programCounter().plus(Value.of(expectedProgramCounterOffset)),
+                                    state.stackPointer(),
+                                    state.stackData()));
+    }
+
     @ParameterizedTest
     @CsvSource({"00, 00, false, true", "01, 01, false, false", "FF, FF, true, false"})
     void execute_TSX_Implied(String input, String expected, boolean isNegative, boolean isZero)

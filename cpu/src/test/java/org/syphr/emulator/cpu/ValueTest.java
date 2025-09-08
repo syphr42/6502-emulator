@@ -136,6 +136,22 @@ class ValueTest
     }
 
     @ParameterizedTest
+    @CsvSource({"00, FF",
+                "FF, 00",
+                "12, ED"})
+    void not(String initVal, String expected)
+    {
+        // given
+        var value = Value.ofHex(initVal);
+
+        // when
+        Value result = value.not();
+
+        // then
+        assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
+
+    @ParameterizedTest
     @CsvSource({"00, 01",
                 "FF, 00"})
     void increment(String init, String expected)

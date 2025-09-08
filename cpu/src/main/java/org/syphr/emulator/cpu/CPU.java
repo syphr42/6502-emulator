@@ -398,6 +398,13 @@ public class CPU
 
             case TAX.IMPLIED -> tax();
             case TAY.IMPLIED -> tay();
+
+            case TRB.ABSOLUTE -> trb(absolute(programManager.nextAddress()));
+            case TRB.ZP -> trb(zp(programManager.nextValue()));
+
+            case TSB.ABSOLUTE -> tsb(absolute(programManager.nextAddress()));
+            case TSB.ZP -> tsb(zp(programManager.nextValue()));
+
             case TSX.IMPLIED -> tsx();
             case TXA.IMPLIED -> txa();
             case TXS.IMPLIED -> txs();
@@ -534,6 +541,14 @@ public class CPU
             case STZ(AddressMode mode) -> writer.write(toAddress(mode), Value.ZERO);
             case TAX _ -> updateRegister(x, r -> r.store(accumulator.value()));
             case TAY _ -> updateRegister(y, r -> r.store(accumulator.value()));
+            case TRB(AddressMode mode) -> readModifyWrite(mode, v -> {
+                status.setZero(accumulator.value().and(v).isZero());
+                return accumulator.value().not().and(v);
+            });
+            case TSB(AddressMode mode) -> readModifyWrite(mode, v -> {
+                status.setZero(accumulator.value().and(v).isZero());
+                return accumulator.value().or(v);
+            });
             case TSX _ -> updateRegister(x, r -> r.store(stack.getPointer().low()));
             case TXA _ -> updateRegister(accumulator, r -> r.store(x.value()));
             case TXS _ -> stack.setPointer(x.value());

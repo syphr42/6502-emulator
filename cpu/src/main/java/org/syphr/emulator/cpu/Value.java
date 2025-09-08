@@ -54,6 +54,11 @@ public record Value(byte data)
         return Value.of(data ^ other.data);
     }
 
+    public Value not()
+    {
+        return Value.of(~data);
+    }
+
     public Value increment()
     {
         return Value.of(data + 1);

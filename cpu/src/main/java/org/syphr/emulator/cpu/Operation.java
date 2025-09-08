@@ -1344,6 +1344,36 @@ public sealed interface Operation
         }
     }
 
+    record TRB(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = 0x1C;
+        public static final byte ZP = 0x14;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case ZeroPage _ -> ZP;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
+    record TSB(AddressMode mode) implements Operation
+    {
+        public static final byte ABSOLUTE = 0x0C;
+        public static final byte ZP = 0x04;
+
+        public Value code()
+        {
+            return Value.of(switch (mode) {
+                case Absolute _ -> ABSOLUTE;
+                case ZeroPage _ -> ZP;
+                default -> throw unsupported(this);
+            });
+        }
+    }
+
     record TSX() implements Operation
     {
         public static final byte IMPLIED = (byte) 0xBA;
@@ -1496,8 +1526,8 @@ public sealed interface Operation
     static STZ stz(AddressMode mode) { return new STZ(mode); }
     static TAX tax() { return new TAX(); }
     static TAY tay() { return new TAY(); }
-    // TODO TRB
-    // TODO TSB
+    static TRB trb(AddressMode mode) { return new TRB(mode); }
+    static TSB tsb(AddressMode mode) { return new TSB(mode); }
     static TSX tsx() { return new TSX(); }
     static TXA txa() { return new TXA(); }
     static TXS txs() { return new TXS(); }
