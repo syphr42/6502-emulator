@@ -928,6 +928,86 @@ public sealed interface Operation
         }
     }
 
+    record RMB0(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x07;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB1(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x17;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB2(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x27;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB3(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x37;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB4(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x47;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB5(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x57;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB6(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x67;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record RMB7(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = 0x77;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
     record ROL(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x2E;
@@ -1071,6 +1151,86 @@ public sealed interface Operation
         public Value code()
         {
             return Value.of(IMPLIED);
+        }
+    }
+
+    record SMB0(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0x87;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB1(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0x97;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB2(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xA7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB3(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xB7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB4(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xC7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB5(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xD7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB6(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xE7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
+        }
+    }
+
+    record SMB7(ZeroPage mode) implements Operation
+    {
+        public static final byte ZP = (byte) 0xF7;
+
+        public Value code()
+        {
+            return Value.of(ZP);
         }
     }
 
@@ -1305,7 +1465,14 @@ public sealed interface Operation
     static PLP plp() { return new PLP(); }
     static PLX plx() { return new PLX(); }
     static PLY ply() { return new PLY(); }
-    // TODO RMB#
+    static RMB0 rmb0(ZeroPage mode) { return new RMB0(mode); }
+    static RMB1 rmb1(ZeroPage mode) { return new RMB1(mode); }
+    static RMB2 rmb2(ZeroPage mode) { return new RMB2(mode); }
+    static RMB3 rmb3(ZeroPage mode) { return new RMB3(mode); }
+    static RMB4 rmb4(ZeroPage mode) { return new RMB4(mode); }
+    static RMB5 rmb5(ZeroPage mode) { return new RMB5(mode); }
+    static RMB6 rmb6(ZeroPage mode) { return new RMB6(mode); }
+    static RMB7 rmb7(ZeroPage mode) { return new RMB7(mode); }
     static ROL rol(AddressMode mode) { return new ROL(mode); }
     static ROR ror(AddressMode mode) { return new ROR(mode); }
     static RTI rti() { return new RTI(); }
@@ -1314,7 +1481,14 @@ public sealed interface Operation
     static SEC sec() { return new SEC(); }
     static SED sed() { return new SED(); }
     static SEI sei() { return new SEI(); }
-    // TODO SMB#
+    static SMB0 smb0(ZeroPage mode) { return new SMB0(mode); }
+    static SMB1 smb1(ZeroPage mode) { return new SMB1(mode); }
+    static SMB2 smb2(ZeroPage mode) { return new SMB2(mode); }
+    static SMB3 smb3(ZeroPage mode) { return new SMB3(mode); }
+    static SMB4 smb4(ZeroPage mode) { return new SMB4(mode); }
+    static SMB5 smb5(ZeroPage mode) { return new SMB5(mode); }
+    static SMB6 smb6(ZeroPage mode) { return new SMB6(mode); }
+    static SMB7 smb7(ZeroPage mode) { return new SMB7(mode); }
     static STA sta(AddressMode mode) { return new STA(mode); }
     // TODO STP
     static STX stx(AddressMode mode) { return new STX(mode); }

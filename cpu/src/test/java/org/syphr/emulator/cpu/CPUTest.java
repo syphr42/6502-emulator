@@ -2357,6 +2357,246 @@ class CPUTest
                                     List.of()));
     }
 
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00000001, 00000000",
+                "11111110, 11111110",
+                "11111111, 11111110"})
+    void execute_RMB0_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb0(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00000010, 00000000",
+                "11111101, 11111101",
+                "11111111, 11111101"})
+    void execute_RMB1_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb1(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00000100, 00000000",
+                "11111011, 11111011",
+                "11111111, 11111011"})
+    void execute_RMB2_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb2(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00001000, 00000000",
+                "11110111, 11110111",
+                "11111111, 11110111"})
+    void execute_RMB3_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb3(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00010000, 00000000",
+                "11101111, 11101111",
+                "11111111, 11101111"})
+    void execute_RMB4_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb4(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "00100000, 00000000",
+                "11011111, 11011111",
+                "11111111, 11011111"})
+    void execute_RMB5_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb5(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "01000000, 00000000",
+                "10111111, 10111111",
+                "11111111, 10111111"})
+    void execute_RMB6_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb6(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000000",
+                "10000000, 00000000",
+                "01111111, 01111111",
+                "11111111, 01111111"})
+    void execute_RMB7_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(rmb7(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
     static Stream<Arguments> execute_ROL()
     {
         return Stream.of(rolInputs(modeAbsolute(), 3, 6),
@@ -2690,6 +2930,246 @@ class CPUTest
                                     state.programCounter().plus(Value.of(1)),
                                     state.stackPointer(),
                                     state.stackData()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000001",
+                "00000001, 00000001",
+                "11111110, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB0_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb0(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000010",
+                "00000010, 00000010",
+                "11111101, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB1_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb1(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00000100",
+                "00000100, 00000100",
+                "11111011, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB2_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb2(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00001000",
+                "00001000, 00001000",
+                "11110111, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB3_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb3(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00010000",
+                "00010000, 00010000",
+                "11101111, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB4_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb4(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 00100000",
+                "00100000, 00100000",
+                "11011111, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB5_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb5(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 01000000",
+                "01000000, 01000000",
+                "10111111, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB6_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb6(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 10000000",
+                "10000000, 10000000",
+                "01111111, 11111111",
+                "11111111, 11111111"})
+    void execute_SMB7_ZeroPage(String input, String expectedOutput)
+    {
+        // given
+        var offset = Value.of(0xFF);
+        when(reader.read(Address.zeroPage(offset))).thenReturn(Value.ofBits(input));
+
+        reset(clock);
+        setNextOp(smb7(zp(offset)));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(() -> verify(clock, times(5)).nextCycle(),
+                  () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(2)),
+                                    state.stackPointer(),
+                                    List.of()));
     }
 
     static Stream<Arguments> execute_STA()

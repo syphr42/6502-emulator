@@ -64,6 +64,16 @@ public record Value(byte data)
         return Value.of(data - 1);
     }
 
+    public Value set(int position)
+    {
+        return or(Value.of(1 << position));
+    }
+
+    public Value clear(int position)
+    {
+        return and(Value.of(~(1 << position)));
+    }
+
     public boolean isNegative()
     {
         return data < 0;

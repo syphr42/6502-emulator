@@ -135,17 +135,19 @@ class ValueTest
         assertThat(result).isEqualTo(Value.ofHex(expected));
     }
 
-    @Test
-    void toStringTest()
+    @ParameterizedTest
+    @CsvSource({"00, 01",
+                "FF, 00"})
+    void increment(String init, String expected)
     {
         // given
-        var value = Value.of(0x12);
+        var value = Value.ofHex(init);
 
         // when
-        String result = value.toString();
+        Value result = value.increment();
 
         // then
-        assertThat(result).isEqualTo(Value.class.getSimpleName() + "[0x12]");
+        assertThat(result).isEqualTo(Value.ofHex(expected));
     }
 
     @ParameterizedTest
@@ -164,18 +166,93 @@ class ValueTest
     }
 
     @ParameterizedTest
-    @CsvSource({"00, 01",
-                "FF, 00"})
-    void increment(String init, String expected)
+    @CsvSource({"00000000, 0, 00000001",
+                "00000001, 0, 00000001",
+                "11111110, 0, 11111111",
+                "11111111, 0, 11111111",
+                "00000000, 1, 00000010",
+                "00000010, 1, 00000010",
+                "11111101, 1, 11111111",
+                "11111111, 1, 11111111",
+                "00000000, 2, 00000100",
+                "00000100, 2, 00000100",
+                "11111011, 2, 11111111",
+                "11111111, 2, 11111111",
+                "00000000, 3, 00001000",
+                "00001000, 3, 00001000",
+                "11110111, 3, 11111111",
+                "11111111, 3, 11111111",
+                "00000000, 4, 00010000",
+                "00010000, 4, 00010000",
+                "11101111, 4, 11111111",
+                "11111111, 4, 11111111",
+                "00000000, 5, 00100000",
+                "00100000, 5, 00100000",
+                "11011111, 5, 11111111",
+                "11111111, 5, 11111111",
+                "00000000, 6, 01000000",
+                "01000000, 6, 01000000",
+                "10111111, 6, 11111111",
+                "11111111, 6, 11111111",
+                "00000000, 7, 10000000",
+                "10000000, 7, 10000000",
+                "01111111, 7, 11111111",
+                "11111111, 7, 11111111"})
+    void set(String init, int position, String expected)
     {
         // given
-        var value = Value.ofHex(init);
+        var value = Value.ofBits(init);
 
         // when
-        Value result = value.increment();
+        Value result = value.set(position);
 
         // then
-        assertThat(result).isEqualTo(Value.ofHex(expected));
+        assertThat(result).isEqualTo(Value.ofBits(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"00000000, 0, 00000000",
+                "00000001, 0, 00000000",
+                "11111110, 0, 11111110",
+                "11111111, 0, 11111110",
+                "00000000, 1, 00000000",
+                "00000010, 1, 00000000",
+                "11111101, 1, 11111101",
+                "11111111, 1, 11111101",
+                "00000000, 2, 00000000",
+                "00000100, 2, 00000000",
+                "11111011, 2, 11111011",
+                "11111111, 2, 11111011",
+                "00000000, 3, 00000000",
+                "00001000, 3, 00000000",
+                "11110111, 3, 11110111",
+                "11111111, 3, 11110111",
+                "00000000, 4, 00000000",
+                "00010000, 4, 00000000",
+                "11101111, 4, 11101111",
+                "11111111, 4, 11101111",
+                "00000000, 5, 00000000",
+                "00100000, 5, 00000000",
+                "11011111, 5, 11011111",
+                "11111111, 5, 11011111",
+                "00000000, 6, 00000000",
+                "01000000, 6, 00000000",
+                "10111111, 6, 10111111",
+                "11111111, 6, 10111111",
+                "00000000, 7, 00000000",
+                "10000000, 7, 00000000",
+                "01111111, 7, 01111111",
+                "11111111, 7, 01111111"})
+    void clear(String init, int position, String expected)
+    {
+        // given
+        var value = Value.ofBits(init);
+
+        // when
+        Value result = value.clear(position);
+
+        // then
+        assertThat(result).isEqualTo(Value.ofBits(expected));
     }
 
     @ParameterizedTest
@@ -311,5 +388,18 @@ class ValueTest
 
         // then
         assertThat(result).isEqualTo(Value.ofHex(expected));
+    }
+
+    @Test
+    void toStringTest()
+    {
+        // given
+        var value = Value.of(0x12);
+
+        // when
+        String result = value.toString();
+
+        // then
+        assertThat(result).isEqualTo(Value.class.getSimpleName() + "[0x12]");
     }
 }

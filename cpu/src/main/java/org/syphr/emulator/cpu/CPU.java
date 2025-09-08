@@ -327,6 +327,15 @@ public class CPU
             case PLX.STACK -> plx();
             case PLY.STACK -> ply();
 
+            case RMB0.ZP -> rmb0(zp(programManager.nextValue()));
+            case RMB1.ZP -> rmb1(zp(programManager.nextValue()));
+            case RMB2.ZP -> rmb2(zp(programManager.nextValue()));
+            case RMB3.ZP -> rmb3(zp(programManager.nextValue()));
+            case RMB4.ZP -> rmb4(zp(programManager.nextValue()));
+            case RMB5.ZP -> rmb5(zp(programManager.nextValue()));
+            case RMB6.ZP -> rmb6(zp(programManager.nextValue()));
+            case RMB7.ZP -> rmb7(zp(programManager.nextValue()));
+
             case ROL.ABSOLUTE -> rol(absolute(programManager.nextAddress()));
             case ROL.ABSOLUTE_X -> rol(absoluteX(programManager.nextAddress()));
             case ROL.ACCUMULATOR -> rol(accumulator());
@@ -355,6 +364,15 @@ public class CPU
             case SEC.IMPLIED -> sec();
             case SED.IMPLIED -> sed();
             case SEI.IMPLIED -> sei();
+
+            case SMB0.ZP -> smb0(zp(programManager.nextValue()));
+            case SMB1.ZP -> smb1(zp(programManager.nextValue()));
+            case SMB2.ZP -> smb2(zp(programManager.nextValue()));
+            case SMB3.ZP -> smb3(zp(programManager.nextValue()));
+            case SMB4.ZP -> smb4(zp(programManager.nextValue()));
+            case SMB5.ZP -> smb5(zp(programManager.nextValue()));
+            case SMB6.ZP -> smb6(zp(programManager.nextValue()));
+            case SMB7.ZP -> smb7(zp(programManager.nextValue()));
 
             case STA.ABSOLUTE -> sta(absolute(programManager.nextAddress()));
             case STA.ABSOLUTE_X -> sta(absoluteX(programManager.nextAddress()));
@@ -403,7 +421,7 @@ public class CPU
         switch (operation) {
             case ADC(AddressMode mode) -> updateRegister(accumulator, r -> addWithCarry(r, toValue(mode)));
             case AND(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().and(toValue(mode))));
-            case ASL(AddressMode mode) -> readModifyWrite(mode, this::shiftLeft);
+            case ASL(AddressMode mode) -> readModifyWriteWithFlags(mode, this::shiftLeft);
             case BBR0(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 0), mode.relative());
             case BBR1(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 1), mode.relative());
             case BBR2(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 2), mode.relative());
@@ -450,11 +468,11 @@ public class CPU
             case CMP(AddressMode mode) -> compare(accumulator, toValue(mode));
             case CPX(AddressMode mode) -> compare(x, toValue(mode));
             case CPY(AddressMode mode) -> compare(y, toValue(mode));
-            case DEC(AddressMode mode) -> readModifyWrite(mode, Value::decrement);
+            case DEC(AddressMode mode) -> readModifyWriteWithFlags(mode, Value::decrement);
             case DEX _ -> updateRegister(x, Register::decrement);
             case DEY _ -> updateRegister(y, Register::decrement);
             case EOR(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().xor(toValue(mode))));
-            case INC(AddressMode mode) -> readModifyWrite(mode, Value::increment);
+            case INC(AddressMode mode) -> readModifyWriteWithFlags(mode, Value::increment);
             case INX _ -> updateRegister(x, Register::increment);
             case INY _ -> updateRegister(y, Register::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
@@ -466,7 +484,7 @@ public class CPU
             case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
             case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
             case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
-            case LSR(AddressMode mode) -> readModifyWrite(mode, this::shiftRight);
+            case LSR(AddressMode mode) -> readModifyWriteWithFlags(mode, this::shiftRight);
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
@@ -477,8 +495,16 @@ public class CPU
             case PLP _ -> pullFromStack(status);
             case PLX _ -> updateRegister(x, this::pullFromStack);
             case PLY _ -> updateRegister(y, this::pullFromStack);
-            case ROL(AddressMode mode) -> readModifyWrite(mode, this::rotateLeft);
-            case ROR(AddressMode mode) -> readModifyWrite(mode, this::rotateRight);
+            case RMB0(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(0));
+            case RMB1(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(1));
+            case RMB2(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(2));
+            case RMB3(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(3));
+            case RMB4(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(4));
+            case RMB5(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(5));
+            case RMB6(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(6));
+            case RMB7(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(7));
+            case ROL(AddressMode mode) -> readModifyWriteWithFlags(mode, this::rotateLeft);
+            case ROR(AddressMode mode) -> readModifyWriteWithFlags(mode, this::rotateRight);
             case RTI _ -> {
                 pullFromStack(status);
                 var address = Address.of(stack.pop(), stack.pop());
@@ -494,6 +520,14 @@ public class CPU
             case SEC _ -> status.setCarry(true);
             case SED _ -> status.setDecimal(true);
             case SEI _ -> status.setIrqDisable(true);
+            case SMB0(AddressMode mode) -> readModifyWrite(mode, v -> v.set(0));
+            case SMB1(AddressMode mode) -> readModifyWrite(mode, v -> v.set(1));
+            case SMB2(AddressMode mode) -> readModifyWrite(mode, v -> v.set(2));
+            case SMB3(AddressMode mode) -> readModifyWrite(mode, v -> v.set(3));
+            case SMB4(AddressMode mode) -> readModifyWrite(mode, v -> v.set(4));
+            case SMB5(AddressMode mode) -> readModifyWrite(mode, v -> v.set(5));
+            case SMB6(AddressMode mode) -> readModifyWrite(mode, v -> v.set(6));
+            case SMB7(AddressMode mode) -> readModifyWrite(mode, v -> v.set(7));
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
             case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
@@ -566,10 +600,19 @@ public class CPU
         reader.read(programManager.getProgramCounter());
     }
 
-    private void readModifyWrite(AddressMode mode, Function<Value, Value> function)
+    private void readModifyWriteWithFlags(AddressMode mode, Function<Value, Value> function)
+    {
+        Value result = readModifyWrite(mode, function);
+        status.setNegative(result.isNegative()).setZero(result.isZero());
+    }
+
+    private Value readModifyWrite(AddressMode mode, Function<Value, Value> function)
     {
         if (mode instanceof Accumulator) {
-            updateRegister(accumulator, r -> r.store(function.apply(r.value())));
+            Value output = function.apply(accumulator.value());
+            accumulator.store(output);
+
+            return output;
         } else {
             Address address = toAddress(mode);
 
@@ -578,7 +621,8 @@ public class CPU
 
             Value output = function.apply(input);
             writer.write(address, output);
-            status.setNegative(output.isNegative()).setZero(output.isZero());
+
+            return output;
         }
     }
 
