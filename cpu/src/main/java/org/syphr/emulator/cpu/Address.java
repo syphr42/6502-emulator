@@ -97,6 +97,6 @@ public record Address(short data) implements Comparable<Address>
     @Override
     public String toString()
     {
-        return Address.class.getSimpleName() + "[0x%04X]".formatted(data);
+        return "0x%04X".formatted(data);
     }
 }

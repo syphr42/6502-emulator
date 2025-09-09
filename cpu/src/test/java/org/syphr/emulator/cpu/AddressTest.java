@@ -232,6 +232,6 @@ class AddressTest
         String result = address.toString();
 
         // then
-        assertThat(result).isEqualTo(Address.class.getSimpleName() + "[0x1234]");
+        assertThat(result).isEqualTo("0x1234");
     }
 }

@@ -105,6 +105,6 @@ public record Value(byte data)
     @Override
     public String toString()
     {
-        return Value.class.getSimpleName() + "[0x%02X]".formatted(data);
+        return "0x%02X".formatted(data);
     }
 }

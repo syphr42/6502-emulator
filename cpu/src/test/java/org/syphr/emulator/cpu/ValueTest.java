@@ -416,6 +416,6 @@ class ValueTest
         String result = value.toString();
 
         // then
-        assertThat(result).isEqualTo(Value.class.getSimpleName() + "[0x12]");
+        assertThat(result).isEqualTo("0x12");
     }
 }
