@@ -62,7 +62,7 @@ public class CLI
 
         System.out.println("CPU initial state: " + cpu.getState());
         try {
-            cpu.start();
+            cpu.run();
         } finally {
             System.out.println("CPU final state: " + cpu.getState());
         }
