@@ -148,8 +148,8 @@ class CPUTest
                                     offsetLow(state.stackPointer(), -3),
                                     List.of(StatusRegister.of(state.flags().toBuilder().breakCommand(false).build())
                                                           .value(),
-                                            state.programCounter().increment().low(),
-                                            state.programCounter().increment().high())));
+                                            state.programCounter().low(),
+                                            state.programCounter().high())));
     }
 
     @Test

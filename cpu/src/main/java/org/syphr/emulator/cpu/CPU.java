@@ -192,7 +192,9 @@ public class CPU implements Runnable
             case RESET -> Address.RESET;
         };
 
-        if (InterruptType.BREAK != type) {
+        if (InterruptType.BREAK == type) {
+            programManager.setProgramCounter(programManager.getProgramCounter().increment());
+        } else {
             // cycles 1-2: microcode selection
             clock.nextCycle();
             clock.nextCycle();
@@ -212,7 +214,7 @@ public class CPU implements Runnable
             stack.setPointer(stack.getPointer().low().decrement());
         } else {
             // cycles 3-4: push program counter to stack
-            stack.pushAll(programManager.getProgramCounter().increment().bytes().reversed());
+            stack.pushAll(programManager.getProgramCounter().bytes().reversed());
 
             // cycle 5: push status to stack
             pushToStack(status.copy().setBreakCommand(InterruptType.BREAK == type));
