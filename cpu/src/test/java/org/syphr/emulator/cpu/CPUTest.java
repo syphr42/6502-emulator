@@ -75,6 +75,19 @@ class CPUTest
         programManager.setProgramCounter(Address.of(0x8000));
     }
 
+    @Test
+    void construct_StartAddressGiven_ProgramCounterSetToStart()
+    {
+        // given
+        var start = Address.of(0x1234);
+
+        // when
+        var cpu = new CPU(clock, reader, writer, start);
+
+        // then
+        assertThat(cpu.getProgramManager().getProgramCounter()).isEqualTo(start);
+    }
+
     static Stream<Arguments> executeInterrupt_IRQ_NMI()
     {
         return Stream.of(interruptInputs(CPU.InterruptType.IRQ, Address.IRQ),

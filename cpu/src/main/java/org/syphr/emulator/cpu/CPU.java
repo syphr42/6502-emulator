@@ -20,8 +20,10 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 
+import java.util.Objects;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
@@ -55,17 +57,66 @@ public class CPU implements Runnable
     private final Clock clock;
     private final ProgramManager programManager;
 
-    public CPU(ClockSignal clockSignal, AddressHandler addressHandler)
+    public static Builder builder()
     {
-        this(clockSignal, addressHandler, addressHandler);
+        return new Builder();
     }
 
-    public CPU(ClockSignal clockSignal, Reader reader, Writer writer)
+    public static class Builder
     {
-        this(new Clock(clockSignal), reader, writer);
+        @Nullable
+        private ClockSignal clockSignal;
+        @Nullable
+        private Reader reader;
+        @Nullable
+        private Writer writer;
+        @Nullable
+        private Address start;
+
+        public Builder clockSignal(ClockSignal clockSignal)
+        {
+            this.clockSignal = clockSignal;
+            return this;
+        }
+
+        public Builder addressHandler(AddressHandler addressHandler)
+        {
+            return reader(addressHandler).writer(addressHandler);
+        }
+
+        public Builder reader(Reader reader)
+        {
+            this.reader = reader;
+            return this;
+        }
+
+        public Builder writer(Writer writer)
+        {
+            this.writer = writer;
+            return this;
+        }
+
+        public Builder start(@Nullable Address start)
+        {
+            this.start = start;
+            return this;
+        }
+
+        public CPU build()
+        {
+            return new CPU(Objects.requireNonNull(clockSignal),
+                           Objects.requireNonNull(reader),
+                           Objects.requireNonNull(writer),
+                           start);
+        }
     }
 
-    CPU(Clock clock, Reader reader, Writer writer)
+    public CPU(ClockSignal clockSignal, Reader reader, Writer writer, @Nullable Address start)
+    {
+        this(new Clock(clockSignal), reader, writer, start);
+    }
+
+    CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start)
     {
         this.accumulator = new Register();
         this.x = new Register();
@@ -77,6 +128,10 @@ public class CPU implements Runnable
 
         stack = new Stack(this.reader, this.writer);
         programManager = new ProgramManager(this.reader);
+
+        if (start != null) {
+            programManager.setProgramCounter(start);
+        }
     }
 
     public void run()

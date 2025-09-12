@@ -42,6 +42,7 @@ public class CLI
 {
     private static final String ARG_DESC_CLOCK = "Clock frequency when not stepping (hz, khz, or mhz)";
     private static final String ARG_DESC_CLOCK_MGR = "Disable adjustable clock manager";
+    private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address";
     private static final String ARG_DESC_ROM = "Path to binary program file";
     private static final String ARG_DESC_ROM_START = "Start address when a ROM is provided";
     private static final String ARG_DESC_STEPPING = "Start clock in single-step mode";
@@ -51,6 +52,7 @@ public class CLI
     @Command(command = "run", description = "Execute a program")
     public void run(@Option(defaultValue = "2hz", description = ARG_DESC_CLOCK) String clock,
                     @Option(defaultValue = "false", description = ARG_DESC_CLOCK_MGR) boolean disableClockManager,
+                    @Option(description = ARG_DESC_EXECUTION_START) @Nullable Address executionStart,
                     @Option(description = ARG_DESC_ROM) @Nullable Path rom,
                     @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START) Address romStart,
                     @Option(defaultValue = "false", description = ARG_DESC_STEPPING) boolean stepping) throws IOException
@@ -58,13 +60,20 @@ public class CLI
         ClockSignal clockSignal = disableClockManager
                                   ? simpleClockSignal(clock, stepping)
                                   : new ClockSignalManager(terminal, ClockSignal.Frequency.of(clock), stepping);
-        var cpu = new CPU(clockSignal, createMemoryMap(romStart, rom));
+        var cpu = CPU.builder()
+                     .clockSignal(clockSignal)
+                     .addressHandler(createMemoryMap(romStart, rom))
+                     .start(executionStart)
+                     .build();
 
         System.out.println("CPU initial state: " + cpu.getState());
-        var cpuThread = new Thread(cpu);
+        var cpuThread = new Thread(cpu, "CPU");
         try {
+            if (executionStart == null) {
+                cpu.reset();
+            }
+
             cpuThread.start();
-            cpu.reset();
             cpuThread.join();
         } catch (InterruptedException e) {
             // exit gracefully
