@@ -127,7 +127,7 @@ public class CPU implements Runnable
         interrupts.add(InterruptType.NMI);
     }
 
-    private void executeInterrupt(InterruptType type)
+    void executeInterrupt(InterruptType type)
     {
         log.info("Executing interrupt {}", type);
 
@@ -825,7 +825,7 @@ public class CPU implements Runnable
         }
     }
 
-    private enum InterruptType
+    enum InterruptType
     {
         RESET, IRQ, NMI, BREAK
     }

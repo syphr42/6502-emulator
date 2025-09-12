@@ -75,6 +75,103 @@ class CPUTest
         programManager.setProgramCounter(Address.of(0x8000));
     }
 
+    static Stream<Arguments> executeInterrupt_IRQ_NMI()
+    {
+        return Stream.of(interruptInputs(CPU.InterruptType.IRQ, Address.IRQ),
+                         interruptInputs(CPU.InterruptType.NMI, Address.NMI)).flatMap(i -> i);
+    }
+
+    static Stream<Arguments> interruptInputs(CPU.InterruptType type, Address vector)
+    {
+        return Stream.of(Arguments.of(type, vector, true, true, true, true, true, true, true, true),
+                         Arguments.of(type, vector, false, true, true, true, true, true, true, true),
+                         Arguments.of(type, vector, false, false, true, true, true, true, true, true),
+                         Arguments.of(type, vector, false, false, false, true, true, true, true, true),
+                         Arguments.of(type, vector, false, false, false, false, true, true, true, true),
+                         Arguments.of(type, vector, false, false, false, false, false, true, true, true),
+                         Arguments.of(type, vector, false, false, false, false, false, false, true, true),
+                         Arguments.of(type, vector, false, false, false, false, false, false, false, true),
+                         Arguments.of(type, vector, false, false, false, false, false, false, false, false));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void executeInterrupt_IRQ_NMI(CPU.InterruptType type,
+                                  Address vector,
+                                  boolean isNegative,
+                                  boolean isOverflow,
+                                  boolean isUser,
+                                  boolean isBreakCommand,
+                                  boolean isDecimal,
+                                  boolean isIrqDisable,
+                                  boolean isZero,
+                                  boolean isCarry)
+    {
+        // given
+        status.setNegative(isNegative)
+              .setOverflow(isOverflow)
+              .setUser(isUser)
+              .setBreakCommand(isBreakCommand)
+              .setDecimal(isDecimal)
+              .setIrqDisable(isIrqDisable)
+              .setZero(isZero)
+              .setCarry(isCarry);
+
+        Address target = Address.of(0x1234);
+        when(reader.read(vector)).thenReturn(target.low());
+        when(reader.read(vector.increment())).thenReturn(target.high());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeInterrupt(type);
+
+        // then
+        assertAll(() -> verify(clock, times(7)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags().toBuilder().decimal(false).irqDisable(true).build(),
+                                    target,
+                                    offsetLow(state.stackPointer(), -3),
+                                    List.of(StatusRegister.of(state.flags().toBuilder().breakCommand(false).build())
+                                                          .value(),
+                                            state.programCounter().increment().low(),
+                                            state.programCounter().increment().high())));
+    }
+
+    @Test
+    void executeInterrupt_RESET()
+    {
+        // given
+        when(reader.read(stack.getPointer())).thenReturn(Value.ZERO);
+        when(reader.read(offsetLow(stack.getPointer(), -1))).thenReturn(Value.ZERO);
+        when(reader.read(offsetLow(stack.getPointer(), -2))).thenReturn(Value.ZERO);
+
+        Address target = Address.of(0x1234);
+        when(reader.read(Address.RESET)).thenReturn(target.low());
+        when(reader.read(Address.RESET.increment())).thenReturn(target.high());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeInterrupt(CPU.InterruptType.RESET);
+
+        // then
+        assertAll(() -> verify(clock, times(7)).nextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags()
+                                         .toBuilder()
+                                         .user(true)
+                                         .breakCommand(true)
+                                         .decimal(false)
+                                         .irqDisable(true)
+                                         .build(),
+                                    target,
+                                    offsetLow(state.stackPointer(), -3),
+                                    state.stackData()));
+    }
+
     static Stream<Arguments> execute_ADC()
     {
         return Stream.of(adcInputs(modeAbsolute(), 3, 4),
