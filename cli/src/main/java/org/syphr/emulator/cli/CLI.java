@@ -61,9 +61,15 @@ public class CLI
         var cpu = new CPU(clockSignal, createMemoryMap(romStart, rom));
 
         System.out.println("CPU initial state: " + cpu.getState());
+        var cpuThread = new Thread(cpu);
         try {
-            cpu.run();
+            cpuThread.start();
+            cpu.reset();
+            cpuThread.join();
+        } catch (InterruptedException e) {
+            // exit gracefully
         } finally {
+            cpuThread.interrupt();
             System.out.println("CPU final state: " + cpu.getState());
         }
     }

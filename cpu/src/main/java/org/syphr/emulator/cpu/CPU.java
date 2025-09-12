@@ -22,9 +22,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
 
-import java.util.concurrent.locks.Condition;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
+import java.util.Queue;
+import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -36,9 +35,7 @@ import static org.syphr.emulator.cpu.Operation.*;
 @Getter(AccessLevel.PACKAGE)
 public class CPU implements Runnable
 {
-    private final Lock lock = new ReentrantLock();
-    private final Condition interrupt = lock.newCondition();
-    private boolean executionInterrupted = false;
+    private final Queue<InterruptType> interrupts = new ConcurrentLinkedQueue<>();
 
     @ToString.Include
     private final Register accumulator;
@@ -89,6 +86,11 @@ public class CPU implements Runnable
 
         try {
             while (!Thread.interrupted()) {
+                InterruptType interrupt = interrupts.poll();
+                if (interrupt != null) {
+                    executeInterrupt(interrupt);
+                }
+
                 executeNext();
                 log.info(getState().toString());
             }
@@ -112,75 +114,54 @@ public class CPU implements Runnable
 
     public void reset()
     {
-        // TODO signal CPU to run reset
-        throw new UnsupportedOperationException("Reset not implemented");
+        interrupts.add(InterruptType.RESET);
     }
 
     public void interrupt()
     {
-        // TODO signal CPU to run irq
-        throw new UnsupportedOperationException("Interrupt not implemented");
+        interrupts.add(InterruptType.IRQ);
     }
 
     public void nonMaskableInterrupt()
     {
-        // TODO signal CPU to run nmi
-        throw new UnsupportedOperationException("Non-maskable interrupt not implemented");
-    }
-
-    private void executeReset()
-    {
-        log.info("Resetting CPU");
-
-        // cycles 1-2: microcode selection
-        clock.nextCycle();
-        clock.nextCycle();
-
-        // cycle 3: read stack and decrement pointer
-        reader.read(stack.getPointer());
-        stack.setPointer(stack.getPointer().low().decrement());
-
-        // cycle 4: read stack and decrement pointer
-        reader.read(stack.getPointer());
-        stack.setPointer(stack.getPointer().low().decrement());
-
-        // cycle 5: read stack and decrement pointer
-        reader.read(stack.getPointer());
-        stack.setPointer(stack.getPointer().low().decrement());
-
-        // cycle 6: read low byte of reset vector
-        Value low = reader.read(Address.RESET);
-
-        // cycle 7: read high byte of the reset vector
-        Value high = reader.read(Address.RESET.increment());
-
-        // set the program counter ready for the first instruction
-        programManager.setProgramCounter(Address.of(low, high));
-
-        // set hardware-initialized status flags
-        status.setUser(true).setBreakCommand(true).setDecimal(false).setIrqDisable(true);
+        interrupts.add(InterruptType.NMI);
     }
 
     private void executeInterrupt(InterruptType type)
     {
-        log.info("Executing interrupt");
+        log.info("Executing interrupt {}", type);
 
         var vector = switch (type) {
             case NMI -> Address.NMI;
-            case IRQ, BRK -> Address.IRQ;
+            case IRQ, BREAK -> Address.IRQ;
+            case RESET -> Address.RESET;
         };
 
-        if (InterruptType.BRK != type) {
+        if (InterruptType.BREAK != type) {
             // cycles 1-2: microcode selection
             clock.nextCycle();
             clock.nextCycle();
         }
 
-        // cycles 3-4: push program counter to stack
-        stack.pushAll(programManager.getProgramCounter().increment().bytes().reversed());
+        if (InterruptType.RESET == type) {
+            // cycle 3: read stack and decrement pointer
+            reader.read(stack.getPointer());
+            stack.setPointer(stack.getPointer().low().decrement());
 
-        // cycle 5: push status to stack
-        pushToStack(status.copy().setBreakCommand(InterruptType.BRK == type));
+            // cycle 4: read stack and decrement pointer
+            reader.read(stack.getPointer());
+            stack.setPointer(stack.getPointer().low().decrement());
+
+            // cycle 5: read stack and decrement pointer
+            reader.read(stack.getPointer());
+            stack.setPointer(stack.getPointer().low().decrement());
+        } else {
+            // cycles 3-4: push program counter to stack
+            stack.pushAll(programManager.getProgramCounter().increment().bytes().reversed());
+
+            // cycle 5: push status to stack
+            pushToStack(status.copy().setBreakCommand(InterruptType.BREAK == type));
+        }
 
         // cycle 6: read low byte of the vector
         Value low = reader.read(vector);
@@ -192,6 +173,9 @@ public class CPU implements Runnable
         programManager.setProgramCounter(Address.of(low, high));
 
         // set flags
+        if (InterruptType.RESET == type) {
+            status.setUser(true).setBreakCommand(true);
+        }
         status.setDecimal(false).setIrqDisable(true);
     }
 
@@ -514,7 +498,7 @@ public class CPU implements Runnable
             case BNE(AddressMode mode) -> branchIf(!status.zero(), mode);
             case BPL(AddressMode mode) -> branchIf(!status.negative(), mode);
             case BRA(AddressMode mode) -> branchIf(true, mode);
-            case BRK _ -> executeInterrupt(InterruptType.BRK);
+            case BRK _ -> executeInterrupt(InterruptType.BREAK);
             case BVC(AddressMode mode) -> branchIf(!status.overflow(), mode);
             case BVS(AddressMode mode) -> branchIf(status.overflow(), mode);
             case CLC _ -> status.setCarry(false);
@@ -843,6 +827,6 @@ public class CPU implements Runnable
 
     private enum InterruptType
     {
-        IRQ, NMI, BRK
+        RESET, IRQ, NMI, BREAK
     }
 }
