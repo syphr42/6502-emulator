@@ -40,6 +40,7 @@ import static org.syphr.emulator.cpu.Operation.*;
 @RequiredArgsConstructor
 public class CLI
 {
+    private static final String ARG_DESC_BREAK_ON_CYCLE = "Switch to stepping mode when the clock reaches the given cycle count (counter starts at 1)";
     private static final String ARG_DESC_CLOCK = "Clock frequency when not stepping (hz, khz, or mhz)";
     private static final String ARG_DESC_CLOCK_MGR = "Disable adjustable clock manager";
     private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address";
@@ -50,16 +51,25 @@ public class CLI
     private final Terminal terminal;
 
     @Command(command = "run", description = "Execute a program")
-    public void run(@Option(defaultValue = "2hz", description = ARG_DESC_CLOCK) String clock,
+    public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_ON_CYCLE) long breakOnCycle,
+                    @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK) String clock,
                     @Option(defaultValue = "false", description = ARG_DESC_CLOCK_MGR) boolean disableClockManager,
                     @Option(description = ARG_DESC_EXECUTION_START) @Nullable Address executionStart,
                     @Option(description = ARG_DESC_ROM) @Nullable Path rom,
                     @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START) Address romStart,
                     @Option(defaultValue = "false", description = ARG_DESC_STEPPING) boolean stepping) throws IOException
     {
+        if (disableClockManager) {
+            System.out.println(
+                    "WARNING: Clock manager is disabled. Dynamic control of the clock or breaking on cycle is not available.");
+        }
+
         ClockSignal clockSignal = disableClockManager
                                   ? simpleClockSignal(clock, stepping)
-                                  : new ClockSignalManager(terminal, ClockSignal.Frequency.of(clock), stepping);
+                                  : new ClockSignalManager(terminal,
+                                                           ClockSignal.Frequency.of(clock),
+                                                           stepping,
+                                                           breakOnCycle);
         var cpu = CPU.builder()
                      .clockSignal(clockSignal)
                      .addressHandler(createMemoryMap(romStart, rom))
@@ -88,7 +98,7 @@ public class CLI
         return stepping ? this::readLine : ClockSignal.Frequency.of(clock);
     }
 
-    private void readLine() throws InterruptedException
+    private void readLine(long cycle) throws InterruptedException
     {
         LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
         try {

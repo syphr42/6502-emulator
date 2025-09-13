@@ -31,26 +31,27 @@ class Clock implements Runnable
 
     private final ClockSignal signal;
 
-    // shared between threads while locked
+    // used only while locked
     private boolean newCycle;
 
-    // not shared
-    private long tick;
+    // mutated while locked
+    private long cycleCount;
 
     public void run()
     {
         while (!Thread.interrupted()) {
             lock.lock();
             try {
+                cycleCount++;
+                log.info("Clock cycle {}", cycleCount);
                 newCycle = true;
-                log.info("Clock tick {}", ++tick);
                 cycle.signal();
             } finally {
                 lock.unlock();
             }
 
             try {
-                signal.await();
+                signal.await(cycleCount);
             } catch (InterruptedException e) {
                 return;
             }

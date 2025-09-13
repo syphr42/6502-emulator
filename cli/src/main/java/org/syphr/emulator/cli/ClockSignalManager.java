@@ -41,16 +41,20 @@ public class ClockSignalManager implements ClockSignal
     private final AtomicReference<Frequency> frequency;
     private final AtomicReference<Boolean> stepping;
 
+    private final long breakOnCycle;
+
     private final Terminal terminal;
     private final Attributes saveTermAttributes;
 
     private final BindingReader bindingReader;
     private final KeyMap<Action> keyMap;
 
-    public ClockSignalManager(Terminal terminal, Frequency frequency, boolean stepping)
+    public ClockSignalManager(Terminal terminal, Frequency frequency, boolean stepping, long breakOnCycle)
     {
         this.frequency = new AtomicReference<>(frequency);
         this.stepping = new AtomicReference<>(stepping);
+
+        this.breakOnCycle = breakOnCycle;
 
         this.terminal = terminal;
         saveTermAttributes = terminal.enterRawMode();
@@ -71,12 +75,16 @@ public class ClockSignalManager implements ClockSignal
     }
 
     @Override
-    public void await() throws InterruptedException
+    public void await(long cycle) throws InterruptedException
     {
+        if (cycle == breakOnCycle) {
+            stepping.set(true);
+        }
+
         if (stepping.get()) {
             awaitStep();
         } else {
-            frequency.get().await();
+            frequency.get().await(cycle);
         }
     }
 
