@@ -23,9 +23,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 
+import java.util.Deque;
 import java.util.Objects;
-import java.util.Queue;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.ConcurrentLinkedDeque;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
@@ -37,7 +37,7 @@ import static org.syphr.emulator.cpu.Operation.*;
 @Getter(AccessLevel.PACKAGE)
 public class CPU implements Runnable
 {
-    private final Queue<InterruptType> interrupts = new ConcurrentLinkedQueue<>();
+    private final Deque<InterruptType> interrupts = new ConcurrentLinkedDeque<>();
 
     @ToString.Include
     private final Register accumulator;
@@ -174,12 +174,14 @@ public class CPU implements Runnable
 
     public void interrupt()
     {
-        interrupts.add(InterruptType.IRQ);
+        if (!status.irqDisable()) {
+            interrupts.add(InterruptType.IRQ);
+        }
     }
 
     public void nonMaskableInterrupt()
     {
-        interrupts.add(InterruptType.NMI);
+        interrupts.addFirst(InterruptType.NMI);
     }
 
     void executeInterrupt(InterruptType type)
