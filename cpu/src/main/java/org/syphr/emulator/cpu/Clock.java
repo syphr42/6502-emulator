@@ -24,12 +24,10 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @RequiredArgsConstructor
-class Clock implements Runnable
+class Clock
 {
     private final Lock lock = new ReentrantLock();
     private final Condition cycle = lock.newCondition();
-
-    private final ClockSignal signal;
 
     // used only while locked
     private boolean newCycle;
@@ -37,28 +35,22 @@ class Clock implements Runnable
     // mutated while locked
     private long cycleCount;
 
-    public void run()
+    public long startNextCycle()
     {
-        while (!Thread.interrupted()) {
-            lock.lock();
-            try {
-                cycleCount++;
-                log.info("Clock cycle {}", cycleCount);
-                newCycle = true;
-                cycle.signal();
-            } finally {
-                lock.unlock();
-            }
-
-            try {
-                signal.await(cycleCount);
-            } catch (InterruptedException e) {
-                return;
-            }
+        lock.lock();
+        try {
+            cycleCount++;
+            log.info("Clock cycle {}", cycleCount);
+            newCycle = true;
+            cycle.signal();
+        } finally {
+            lock.unlock();
         }
+
+        return cycleCount;
     }
 
-    public void nextCycle()
+    public void awaitNextCycle()
     {
         lock.lock();
         try {

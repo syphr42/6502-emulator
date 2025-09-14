@@ -65,19 +65,11 @@ public class CPU implements Runnable
     public static class Builder
     {
         @Nullable
-        private ClockSignal clockSignal;
-        @Nullable
         private Reader reader;
         @Nullable
         private Writer writer;
         @Nullable
         private Address start;
-
-        public Builder clockSignal(ClockSignal clockSignal)
-        {
-            this.clockSignal = clockSignal;
-            return this;
-        }
 
         public Builder addressable(Addressable addressable)
         {
@@ -104,16 +96,15 @@ public class CPU implements Runnable
 
         public CPU build()
         {
-            return new CPU(Objects.requireNonNull(clockSignal),
-                           Objects.requireNonNull(reader),
+            return new CPU(Objects.requireNonNull(reader),
                            Objects.requireNonNull(writer),
                            start);
         }
     }
 
-    public CPU(ClockSignal clockSignal, Reader reader, Writer writer, @Nullable Address start)
+    public CPU(Reader reader, Writer writer, @Nullable Address start)
     {
-        this(new Clock(clockSignal), reader, writer, start);
+        this(new Clock(), reader, writer, start);
     }
 
     CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start)
@@ -136,9 +127,6 @@ public class CPU implements Runnable
 
     public void run()
     {
-        var clockThread = new Thread(clock, "Clock");
-        clockThread.start();
-
         try {
             while (!Thread.interrupted()) {
                 interrupts.poll().filter(i -> i != IRQ || !status.irqDisable()).ifPresent(this::executeInterrupt);
@@ -146,8 +134,6 @@ public class CPU implements Runnable
             }
         } catch (HaltException e) {
             // stop execution
-        } finally {
-            clockThread.interrupt();
         }
     }
 
@@ -160,6 +146,13 @@ public class CPU implements Runnable
                             stack.getPointer(),
                             stack.getData(),
                             status.flags());
+    }
+
+    // --------------- Start External Inputs ------------------
+
+    public long advanceClock()
+    {
+        return clock.startNextCycle();
     }
 
     public void reset()
@@ -180,6 +173,8 @@ public class CPU implements Runnable
         log.info("Non-maskable interrupt triggered");
     }
 
+    // --------------- End External Inputs ------------------
+
     void executeInterrupt(Interrupt interrupt)
     {
         log.info("Executing interrupt {}", interrupt);
@@ -194,8 +189,8 @@ public class CPU implements Runnable
             programManager.setProgramCounter(programManager.getProgramCounter().increment());
         } else {
             // cycles 1-2: microcode selection
-            clock.nextCycle();
-            clock.nextCycle();
+            clock.awaitNextCycle();
+            clock.awaitNextCycle();
         }
 
         if (RESET == interrupt) {
@@ -575,7 +570,7 @@ public class CPU implements Runnable
             case INY _ -> updateRegister(y, Register::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case JSR(AddressMode mode) -> {
-                clock.nextCycle(); // burn a cycle for internal operation
+                clock.awaitNextCycle(); // burn a cycle for internal operation
                 stack.pushAll(programManager.getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
@@ -609,9 +604,9 @@ public class CPU implements Runnable
                 programManager.setProgramCounter(address);
             }
             case RTS _ -> {
-                clock.nextCycle(); // burn a cycle to increment the stack pointer
+                clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
                 var address = Address.of(stack.pop(), stack.pop());
-                clock.nextCycle(); // burn a cycle to update the PC
+                clock.awaitNextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
             case SBC(AddressMode mode) -> updateRegister(accumulator, r -> subtractWithCarry(r, toValue(mode)));
@@ -652,14 +647,14 @@ public class CPU implements Runnable
         return switch (mode) {
             case Absolute(Address address) -> address;
             case AbsoluteIndexedXIndirect(Address address) -> {
-                clock.nextCycle(); // burn a cycle to fix page boundary bug
+                clock.awaitNextCycle(); // burn a cycle to fix page boundary bug
                 var pointer = address.plusUnsigned(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
             case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, x.value());
             case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, y.value());
             case AbsoluteIndirect(Address address) -> {
-                clock.nextCycle(); // burn a cycle to fix page boundary bug
+                clock.awaitNextCycle(); // burn a cycle to fix page boundary bug
                 yield Address.of(reader.read(address), reader.read(address.increment()));
             }
             case Relative(Value displacement) ->
@@ -745,7 +740,7 @@ public class CPU implements Runnable
 
     private void pullFromStack(Register register)
     {
-        clock.nextCycle(); // burn a cycle to increment the stack pointer
+        clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
         register.store(stack.pop());
     }
 
@@ -819,7 +814,7 @@ public class CPU implements Runnable
     {
         if (condition) {
             Address target = toAddress(mode);
-            clock.nextCycle();
+            clock.awaitNextCycle();
             programManager.setProgramCounter(target);
         }
     }
@@ -830,7 +825,7 @@ public class CPU implements Runnable
 
         // wait one cycle if a page boundary will be crossed
         if (!address.high().equals(target.high())) {
-            clock.nextCycle();
+            clock.awaitNextCycle();
             log.info("Crossed page boundary");
         }
 
@@ -840,7 +835,7 @@ public class CPU implements Runnable
     private boolean isBitSet(Value value, int position)
     {
         // burn a cycle performing the bit test
-        clock.nextCycle();
+        clock.awaitNextCycle();
 
         return value.isSet(position);
     }
@@ -859,7 +854,7 @@ public class CPU implements Runnable
 
         public Value read(Address address)
         {
-            clock.nextCycle();
+            clock.awaitNextCycle();
 
             Value value = reader.read(address);
             log.info("Read {} from {}", value, address);
@@ -876,7 +871,7 @@ public class CPU implements Runnable
 
         public void write(Address address, Value value)
         {
-            clock.nextCycle();
+            clock.awaitNextCycle();
 
             writer.write(address, value);
             log.info("Wrote {} to {}", value, address);

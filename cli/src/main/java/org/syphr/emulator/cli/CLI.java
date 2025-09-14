@@ -16,16 +16,12 @@
 package org.syphr.emulator.cli;
 
 import lombok.RequiredArgsConstructor;
-import org.jline.reader.LineReader;
-import org.jline.reader.LineReaderBuilder;
-import org.jline.reader.UserInterruptException;
 import org.jline.terminal.Terminal;
 import org.jspecify.annotations.Nullable;
 import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.CPU;
-import org.syphr.emulator.cpu.ClockSignal;
 import org.syphr.emulator.cpu.Operation;
 import org.syphr.emulator.cpu.Value;
 
@@ -40,41 +36,37 @@ import static org.syphr.emulator.cpu.Operation.*;
 @RequiredArgsConstructor
 public class CLI
 {
-    private static final String ARG_DESC_BREAK_ON_CYCLE = "Switch to stepping mode when the clock reaches the given cycle count (counter starts at 1)";
-    private static final String ARG_DESC_CLOCK = "Clock frequency when not stepping (hz, khz, or mhz)";
-    private static final String ARG_DESC_CLOCK_MGR = "Disable adjustable clock manager";
+    private static final String ARG_DESC_BREAK_AFTER_CYCLE = "Switch to stepping mode after the clock executes the given cycle count (counter starts at 1)";
+    private static final String ARG_DESC_CLOCK_FREQUENCY = "Frequency at which the clock runs in continuous mode (format: '#unit' where unit is hz, khz, or mhz)";
     private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address";
     private static final String ARG_DESC_ROM = "Path to binary program file";
     private static final String ARG_DESC_ROM_START = "Start address when a ROM is provided";
-    private static final String ARG_DESC_STEPPING = "Start clock in single-step mode";
+    private static final String ARG_DESC_STEPPING = "Start clock in single-step mode (default is continuous mode)";
 
     private final Terminal terminal;
 
     @Command(command = "run", description = "Execute a program")
-    public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_ON_CYCLE) long breakOnCycle,
-                    @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK) String clock,
-                    @Option(defaultValue = "false", description = ARG_DESC_CLOCK_MGR) boolean disableClockManager,
+    public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE) long breakAfterCycle,
+                    @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY) String clockFrequency,
                     @Option(description = ARG_DESC_EXECUTION_START) @Nullable Address executionStart,
                     @Option(description = ARG_DESC_ROM) @Nullable Path rom,
                     @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START) Address romStart,
                     @Option(defaultValue = "false", description = ARG_DESC_STEPPING) boolean stepping) throws IOException
     {
-        if (disableClockManager) {
-            System.out.println(
-                    "WARNING: Clock manager is disabled. Dynamic control of the clock or breaking on cycle is not available.");
+        if (Terminal.TYPE_DUMB.equals(terminal.getType())) {
+            System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");
         }
 
-        ClockSignal clockSignal = disableClockManager
-                                  ? simpleClockSignal(clock, stepping)
-                                  : new ClockSignalManager(terminal,
-                                                           ClockSignal.Frequency.of(clock),
-                                                           stepping,
-                                                           breakOnCycle);
         var cpu = CPU.builder()
-                     .clockSignal(clockSignal)
                      .addressable(createMemoryMap(romStart, rom))
                      .start(executionStart)
                      .build();
+
+        var clockSignal = new ClockSignal(ClockPeriod.of(clockFrequency), stepping, breakAfterCycle, cpu);
+        var clockThread = new Thread(clockSignal, "Clock");
+
+        var inputManager = new InputManager(terminal, clockSignal, new Interrupter(cpu));
+        var inputThread = new Thread(inputManager, "Input");
 
         System.out.println("CPU initial state: " + cpu.getState());
         var cpuThread = new Thread(cpu, "CPU");
@@ -84,27 +76,17 @@ public class CLI
             }
 
             cpuThread.start();
+            clockThread.start();
+            inputThread.start();
+
             cpuThread.join();
         } catch (InterruptedException e) {
             // exit gracefully
         } finally {
+            inputThread.interrupt();
+            clockThread.interrupt();
             cpuThread.interrupt();
             System.out.println("CPU final state: " + cpu.getState());
-        }
-    }
-
-    private ClockSignal simpleClockSignal(String clock, boolean stepping)
-    {
-        return stepping ? this::readLine : ClockSignal.Frequency.of(clock);
-    }
-
-    private void readLine(long cycle) throws InterruptedException
-    {
-        LineReader reader = LineReaderBuilder.builder().terminal(terminal).build();
-        try {
-            reader.readLine();
-        } catch (UserInterruptException e) {
-            throw new InterruptedException("User cancelled execution");
         }
     }
 

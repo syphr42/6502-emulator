@@ -139,7 +139,7 @@ class CPUTest
         cpu.executeInterrupt(type);
 
         // then
-        assertAll(() -> verify(clock, times(7)).nextCycle(),
+        assertAll(() -> verify(clock, times(7)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -169,7 +169,7 @@ class CPUTest
         cpu.executeInterrupt(Interrupt.HarwareInterrupt.RESET);
 
         // then
-        assertAll(() -> verify(clock, times(7)).nextCycle(),
+        assertAll(() -> verify(clock, times(7)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -239,7 +239,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(expectedAccumulator),
                                     state.x(),
                                     state.y(),
@@ -301,7 +301,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(expectedAccumulator),
                                     state.x(),
                                     state.y(),
@@ -355,7 +355,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -399,7 +399,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -435,7 +435,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -471,7 +471,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -507,7 +507,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -543,7 +543,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -579,7 +579,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -615,7 +615,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -651,7 +651,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -687,7 +687,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -723,7 +723,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -759,7 +759,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -795,7 +795,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -831,7 +831,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -867,7 +867,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -903,7 +903,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -939,7 +939,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -969,7 +969,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -999,7 +999,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1029,7 +1029,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1080,7 +1080,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(), () -> {
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(), () -> {
             var expectedFlags = state.flags().toBuilder().zero(expectedZero);
             if (!(mode instanceof Immediate)) {
                 expectedFlags = expectedFlags.negative(inputBit7).overflow(inputBit6);
@@ -1115,7 +1115,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1145,7 +1145,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1175,7 +1175,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1203,7 +1203,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1255,7 +1255,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(7)).nextCycle(),
+        assertAll(() -> verify(clock, times(7)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1288,7 +1288,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1318,7 +1318,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1342,7 +1342,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1366,7 +1366,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1390,7 +1390,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1414,7 +1414,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1470,7 +1470,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1522,7 +1522,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1574,7 +1574,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1626,7 +1626,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -1657,7 +1657,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     Value.ofHex(expected),
                                     state.y(),
@@ -1681,7 +1681,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     Value.ofHex(expected),
@@ -1737,7 +1737,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(expectedAccumulator),
                                     state.x(),
                                     state.y(),
@@ -1788,7 +1788,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -1819,7 +1819,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     Value.ofHex(expected),
                                     state.y(),
@@ -1843,7 +1843,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     Value.ofHex(expected),
@@ -1894,7 +1894,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -1919,7 +1919,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(6)).nextCycle(),
+        assertAll(() -> verify(clock, times(6)).awaitNextCycle(),
                   () -> verify(writer).write(state.stackPointer(), Value.of(0x12)),
                   () -> verify(writer).write(offsetLow(state.stackPointer(), -1), Value.of(0x36)),
                   () -> assertState(state.accumulator(),
@@ -1971,7 +1971,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(input),
                                     state.x(),
                                     state.y(),
@@ -2019,7 +2019,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     Value.of(input),
                                     state.y(),
@@ -2067,7 +2067,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     Value.of(input),
@@ -2120,7 +2120,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -2148,7 +2148,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).nextCycle();
+        verify(clock, times(2)).awaitNextCycle();
         assertState(state.accumulator(),
                     state.x(),
                     state.y(),
@@ -2204,7 +2204,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(expectedAccumulator),
                                     state.x(),
                                     state.y(),
@@ -2232,7 +2232,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(3)).nextCycle(),
+        assertAll(() -> verify(clock, times(3)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2278,7 +2278,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(3)).nextCycle(),
+        assertAll(() -> verify(clock, times(3)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2302,7 +2302,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(3)).nextCycle(),
+        assertAll(() -> verify(clock, times(3)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2326,7 +2326,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(3)).nextCycle(),
+        assertAll(() -> verify(clock, times(3)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2353,7 +2353,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(4)).nextCycle(),
+        assertAll(() -> verify(clock, times(4)).awaitNextCycle(),
                   () -> assertState(value,
                                     state.x(),
                                     state.y(),
@@ -2396,7 +2396,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(4)).nextCycle(),
+        assertAll(() -> verify(clock, times(4)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2430,7 +2430,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(4)).nextCycle(),
+        assertAll(() -> verify(clock, times(4)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     value,
                                     state.y(),
@@ -2457,7 +2457,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(4)).nextCycle(),
+        assertAll(() -> verify(clock, times(4)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     value,
@@ -2486,7 +2486,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2516,7 +2516,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2546,7 +2546,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2576,7 +2576,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2606,7 +2606,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2636,7 +2636,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2666,7 +2666,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2696,7 +2696,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -2749,7 +2749,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -2809,7 +2809,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> modeOutput.target().ifPresent(target -> verify(writer).write(target, Value.of(expectedOutput))),
                   () -> assertState(modeOutput.mode() instanceof Accumulator
                                     ? Value.of(expectedOutput)
@@ -2860,7 +2860,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(6)).nextCycle(),
+        assertAll(() -> verify(clock, times(6)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2892,7 +2892,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(6)).nextCycle(),
+        assertAll(() -> verify(clock, times(6)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -2954,7 +2954,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> assertState(Value.of(expectedAccumulator),
                                     state.x(),
                                     state.y(),
@@ -2984,7 +2984,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -3008,7 +3008,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -3032,7 +3032,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -3061,7 +3061,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3091,7 +3091,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3121,7 +3121,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3151,7 +3151,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3181,7 +3181,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3211,7 +3211,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3241,7 +3241,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3271,7 +3271,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(5)).nextCycle(),
+        assertAll(() -> verify(clock, times(5)).awaitNextCycle(),
                   () -> verify(writer).write(Address.zeroPage(offset), Value.ofBits(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3323,7 +3323,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3367,7 +3367,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3411,7 +3411,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), value),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3449,7 +3449,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.ZERO),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3474,7 +3474,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     Value.ofHex(expected),
                                     state.y(),
@@ -3498,7 +3498,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     Value.ofHex(expected),
@@ -3541,7 +3541,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.of(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3585,7 +3585,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(expectedCycles)).nextCycle(),
+        assertAll(() -> verify(clock, times(expectedCycles)).awaitNextCycle(),
                   () -> verify(writer).write(modeOutput.target().orElseThrow(), Value.of(expectedOutput)),
                   () -> assertState(state.accumulator(),
                                     state.x(),
@@ -3610,7 +3610,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     Value.ofHex(expected),
                                     state.y(),
@@ -3634,7 +3634,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(Value.ofHex(expected),
                                     state.x(),
                                     state.y(),
@@ -3657,7 +3657,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(state.accumulator(),
                                     state.x(),
                                     state.y(),
@@ -3681,7 +3681,7 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        assertAll(() -> verify(clock, times(2)).nextCycle(),
+        assertAll(() -> verify(clock, times(2)).awaitNextCycle(),
                   () -> assertState(Value.ofHex(expected),
                                     state.x(),
                                     state.y(),
@@ -3718,7 +3718,7 @@ class CPUTest
                               currentExecution.getFileName(),
                               currentExecution.getLineNumber());
             return null;
-        }).when(clock).nextCycle();
+        }).when(clock).awaitNextCycle();
     }
 
     private Address offsetLow(Address address, int offset)
