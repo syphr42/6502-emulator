@@ -90,11 +90,11 @@ class CPUTest
 
     static Stream<Arguments> executeInterrupt_IRQ_NMI()
     {
-        return Stream.of(interruptInputs(CPU.InterruptType.IRQ, Address.IRQ),
-                         interruptInputs(CPU.InterruptType.NMI, Address.NMI)).flatMap(i -> i);
+        return Stream.of(interruptInputs(Interrupt.HarwareInterrupt.IRQ, Address.IRQ),
+                         interruptInputs(Interrupt.HarwareInterrupt.NMI, Address.NMI)).flatMap(i -> i);
     }
 
-    static Stream<Arguments> interruptInputs(CPU.InterruptType type, Address vector)
+    static Stream<Arguments> interruptInputs(Interrupt.HarwareInterrupt type, Address vector)
     {
         return Stream.of(Arguments.of(type, vector, true, true, true, true, true, true, true, true),
                          Arguments.of(type, vector, false, true, true, true, true, true, true, true),
@@ -109,7 +109,7 @@ class CPUTest
 
     @ParameterizedTest
     @MethodSource
-    void executeInterrupt_IRQ_NMI(CPU.InterruptType type,
+    void executeInterrupt_IRQ_NMI(Interrupt.HarwareInterrupt type,
                                   Address vector,
                                   boolean isNegative,
                                   boolean isOverflow,
@@ -166,7 +166,7 @@ class CPUTest
 
         // when
         CPUState state = cpu.getState();
-        cpu.executeInterrupt(CPU.InterruptType.RESET);
+        cpu.executeInterrupt(Interrupt.HarwareInterrupt.RESET);
 
         // then
         assertAll(() -> verify(clock, times(7)).nextCycle(),
