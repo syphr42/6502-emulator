@@ -72,7 +72,7 @@ public class CLI
                                                            breakOnCycle);
         var cpu = CPU.builder()
                      .clockSignal(clockSignal)
-                     .addressHandler(createMemoryMap(romStart, rom))
+                     .addressable(createMemoryMap(romStart, rom))
                      .start(executionStart)
                      .build();
 

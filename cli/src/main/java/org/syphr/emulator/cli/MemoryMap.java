@@ -16,7 +16,7 @@
 package org.syphr.emulator.cli;
 
 import org.syphr.emulator.cpu.Address;
-import org.syphr.emulator.cpu.AddressHandler;
+import org.syphr.emulator.cpu.Addressable;
 import org.syphr.emulator.cpu.Operation;
 import org.syphr.emulator.cpu.Value;
 
@@ -27,7 +27,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
-public class MemoryMap implements AddressHandler
+public class MemoryMap implements Addressable
 {
     private final Map<Address, Value> map;
 

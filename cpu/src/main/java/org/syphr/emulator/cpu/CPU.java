@@ -79,9 +79,9 @@ public class CPU implements Runnable
             return this;
         }
 
-        public Builder addressHandler(AddressHandler addressHandler)
+        public Builder addressable(Addressable addressable)
         {
-            return reader(addressHandler).writer(addressHandler);
+            return reader(addressable).writer(addressable);
         }
 
         public Builder reader(Reader reader)

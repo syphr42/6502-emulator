@@ -17,15 +17,15 @@ package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
 
-public interface AddressHandler extends Reader, Writer
+public interface Addressable extends Reader, Writer
 {
-    static AddressHandler of(Reader reader, Writer writer)
+    static Addressable of(Reader reader, Writer writer)
     {
-        return new AddressHandlerImpl(reader, writer);
+        return new DelegatingAddressable(reader, writer);
     }
 
     @RequiredArgsConstructor
-    class AddressHandlerImpl implements AddressHandler
+    class DelegatingAddressable implements Addressable
     {
         private final Reader reader;
         private final Writer writer;
