@@ -15,62 +15,47 @@
  */
 package org.syphr.emulator.cpu;
 
+import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
-import java.util.Objects;
-import java.util.concurrent.atomic.AtomicReference;
-
 @Slf4j
 @RequiredArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode
 class Register
 {
     @ToString.Include
-    private final AtomicReference<Value> value = new AtomicReference<>(Value.ZERO);
+    private Value value = Value.ZERO;
 
     public void decrement()
     {
-        value.getAndUpdate(Value::decrement);
+        value = value.decrement();
     }
 
     public void increment()
     {
-        value.getAndUpdate(Value::increment);
+        value = value.increment();
     }
 
     public boolean isNegative()
     {
-        return value.get().isNegative();
+        return value.isNegative();
     }
 
     public boolean isZero()
     {
-        return value.get().isZero();
+        return value.isZero();
     }
 
     public void store(Value value)
     {
-        this.value.set(value);
+        this.value = value;
     }
 
     public Value value()
     {
-        return value.get();
-    }
-
-    @Override
-    public boolean equals(Object o)
-    {
-        if (o == null || getClass() != o.getClass()) { return false; }
-        Register register = (Register) o;
-        return Objects.equals(value.get(), register.value.get());
-    }
-
-    @Override
-    public int hashCode()
-    {
-        return value.get().hashCode();
+        return value;
     }
 }
