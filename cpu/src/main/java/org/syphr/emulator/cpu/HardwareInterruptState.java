@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * Thread-safe representation of the state of the interrupt inputs.
  */
-public class HardwareInterruptState
+class HardwareInterruptState
 {
     private final AtomicBoolean nmi = new AtomicBoolean();
     private final AtomicBoolean reset = new AtomicBoolean();
