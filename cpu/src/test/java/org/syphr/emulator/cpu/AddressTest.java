@@ -222,6 +222,20 @@ class AddressTest
         assertThat(result).containsExactly(Value.of(0x34), Value.of(0x12));
     }
 
+    @ParameterizedTest
+    @CsvSource({"0000,0", "1234,4660", "8000,32768", "FFFF,65535"})
+    void toUnsignedInt(String given, int expected)
+    {
+        // given
+        var address = Address.ofHex(given);
+
+        // when
+        int result = address.toUnsignedInt();
+
+        // then
+        assertThat(result).isEqualTo(expected);
+    }
+
     @Test
     void toStringTest()
     {

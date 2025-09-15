@@ -88,6 +88,11 @@ public record Address(short data) implements Comparable<Address>
         return List.of(low(), high());
     }
 
+    public int toUnsignedInt()
+    {
+        return Short.toUnsignedInt(data);
+    }
+
     @Override
     public int compareTo(Address o)
     {

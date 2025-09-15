@@ -29,7 +29,12 @@ import java.util.TreeMap;
 
 public class MemoryMap implements Addressable
 {
-    private final Map<Address, Value> map;
+    private final List<Segment> segments;
+
+    public static MemoryMap of(Segment... segments)
+    {
+        return new MemoryMap(List.of(segments));
+    }
 
     public static MemoryMap of(Address start, Path rom) throws IOException
     {
@@ -42,7 +47,7 @@ public class MemoryMap implements Addressable
             address = address.increment();
         }
 
-        return new MemoryMap(map);
+        return of(new RAM(Address.of(0x0000), Address.of(0xFFFF), map));
     }
 
     public static MemoryMap of(Address start, List<Operation> operations)
@@ -61,23 +66,31 @@ public class MemoryMap implements Addressable
         map.put(Address.RESET, start.low());
         map.put(Address.RESET.increment(), start.high());
 
-        return new MemoryMap(map);
+        return of(new RAM(Address.of(0x0000), Address.of(0xFFFF), map));
     }
 
-    public MemoryMap(Map<Address, Value> map)
+    public MemoryMap(List<Segment> segments)
     {
-        this.map = new TreeMap<>(map);
+        this.segments = List.copyOf(segments);
     }
 
     @Override
     public Value read(Address address)
     {
-        return map.getOrDefault(address, Value.ZERO);
+        return segments.stream()
+                       .filter(s -> s.contains(address))
+                       .findFirst()
+                       .orElseThrow(() -> new IllegalArgumentException("No memory segment contains address " + address))
+                       .read(address);
     }
 
     @Override
     public void write(Address address, Value value)
     {
-        map.put(address, value);
+        segments.stream()
+                .filter(s -> s.contains(address))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException("No memory segment contains address " + address))
+                .write(address, value);
     }
 }
