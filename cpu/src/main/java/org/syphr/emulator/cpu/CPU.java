@@ -508,7 +508,7 @@ public class CPU implements Runnable
 
         // a throwaway read occurs on all single-byte addressing modes
         switch (op.mode()) {
-            case Accumulator _, Implied _, AddressMode.Stack _ -> dummyRead();
+            case Accumulator _, Implied _, AddressMode.Stack _ -> throwawayRead(programManager.getProgramCounter());
             default -> {}
         }
 
@@ -661,16 +661,16 @@ public class CPU implements Runnable
                     waitToCrossPageBoundary(programManager.getProgramCounter(), displacement);
             case ZeroPage(Value offset) -> Address.zeroPage(offset);
             case ZeroPageIndexedXIndirect(Value offset) -> {
-                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                throwawayRead(Address.zeroPage(offset));
                 var pointer = Address.zeroPage(offset.plus(x.value()));
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
             case ZeroPageIndexedX(Value offset) -> {
-                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                throwawayRead(Address.zeroPage(offset));
                 yield Address.zeroPage(offset.plus(x.value()));
             }
             case ZeroPageIndexedY(Value offset) -> {
-                reader.read(Address.zeroPage(offset)); // throwaway read before index is applied
+                throwawayRead(Address.zeroPage(offset));
                 yield Address.zeroPage(offset.plus(y.value()));
             }
             case ZeroPageIndirect(Value offset) -> {
@@ -695,10 +695,10 @@ public class CPU implements Runnable
         };
     }
 
-    private void dummyRead()
+    private void throwawayRead(Address address)
     {
-        log.info("Performing dummy read");
-        reader.read(programManager.getProgramCounter());
+        log.info("Performing throwaway read");
+        reader.read(address);
     }
 
     private void readModifyWriteWithFlags(AddressMode mode, Function<Value, Value> function)
@@ -717,7 +717,7 @@ public class CPU implements Runnable
         } else {
             Address address = toAddress(mode);
 
-            reader.read(address); // throw-away read burns a cycle
+            throwawayRead(address);
             Value input = reader.read(address);
 
             Value output = function.apply(input);
