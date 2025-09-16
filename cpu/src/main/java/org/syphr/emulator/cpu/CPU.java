@@ -235,11 +235,11 @@ public class CPU implements Runnable
     {
         log.info("Reading next operation");
         Operation op = nextOp();
-        log.info("Executing op {}", op);
         try (MDC.MDCCloseable _ = MDC.putCloseable("op", op.getClass().getSimpleName())) {
+            log.info("Executing op {}", op);
             execute(op);
+            log.info("Completed op {}", op);
         }
-        log.info("Completed op {}", op);
         log.info(getState().toString());
     }
 

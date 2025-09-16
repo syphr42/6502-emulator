@@ -6,7 +6,7 @@ logging:
           cli:
             Application: warn
   pattern:
-    level: "%5level op:%4mdc{op}"
+    level: "%5level clock:%6mdc{clock} op:%4mdc{op}"
 
 spring:
   main:

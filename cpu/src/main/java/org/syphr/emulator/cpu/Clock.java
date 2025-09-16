@@ -17,6 +17,7 @@ package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -40,6 +41,7 @@ class Clock
         lock.lock();
         try {
             cycleCount++;
+            updateLoggingContext();
             log.info("Clock cycle {}", cycleCount);
             newCycle = true;
             cycle.signal();
@@ -57,11 +59,17 @@ class Clock
             while (!newCycle) {
                 cycle.await();
             }
+            updateLoggingContext();
             newCycle = false;
         } catch (InterruptedException e) {
             throw new HaltException("Program interrupted", e);
         } finally {
             lock.unlock();
         }
+    }
+
+    private void updateLoggingContext()
+    {
+        MDC.put("clock", String.valueOf(cycleCount));
     }
 }
