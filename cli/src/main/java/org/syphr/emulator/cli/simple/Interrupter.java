@@ -13,19 +13,30 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.syphr.emulator.cli;
+package org.syphr.emulator.cli.simple;
 
-import org.springframework.core.convert.converter.Converter;
-import org.springframework.stereotype.Component;
+import lombok.RequiredArgsConstructor;
+import org.syphr.emulator.cpu.CPU;
 
-import java.nio.file.Path;
-
-@Component
-public class PathConverter implements Converter<String, Path>
+@RequiredArgsConstructor
+public class Interrupter
 {
-    @Override
-    public Path convert(String source)
+    private final CPU cpu;
+
+    private boolean irq;
+
+    public void reset()
     {
-        return Path.of(source);
+        cpu.reset();
+    }
+
+    public void nmi()
+    {
+        cpu.nonMaskableInterrupt();
+    }
+
+    public void irq()
+    {
+        cpu.interrupt(irq = !irq);
     }
 }

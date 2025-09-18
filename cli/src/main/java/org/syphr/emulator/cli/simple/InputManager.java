@@ -13,13 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.syphr.emulator.cli;
+package org.syphr.emulator.cli.simple;
 
 import org.jline.keymap.BindingReader;
 import org.jline.keymap.KeyMap;
 import org.jline.terminal.Attributes;
 import org.jline.terminal.Terminal;
 import org.jline.utils.InfoCmp;
+import org.syphr.emulator.cli.clock.ClockSignal;
 
 import java.io.IOError;
 import java.time.Duration;

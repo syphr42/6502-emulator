@@ -20,17 +20,14 @@ import org.jline.terminal.Terminal;
 import org.jspecify.annotations.Nullable;
 import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
+import org.syphr.emulator.cli.clock.ClockPeriod;
+import org.syphr.emulator.cli.demo.Programs;
+import org.syphr.emulator.cli.memory.MemoryMap;
+import org.syphr.emulator.cli.simple.ProgramRunner;
 import org.syphr.emulator.cpu.Address;
-import org.syphr.emulator.cpu.CPU;
-import org.syphr.emulator.cpu.Operation;
-import org.syphr.emulator.cpu.Value;
 
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.List;
-
-import static org.syphr.emulator.cpu.AddressMode.*;
-import static org.syphr.emulator.cpu.Operation.*;
 
 @Command
 @RequiredArgsConstructor
@@ -57,63 +54,12 @@ public class CLI
             System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");
         }
 
-        var cpu = CPU.builder()
-                     .addressable(createMemoryMap(romStart, rom))
-                     .start(executionStart)
-                     .build();
-
-        var clockSignal = new ClockSignal(ClockPeriod.of(clockFrequency), stepping, breakAfterCycle, cpu);
-        var clockThread = new Thread(clockSignal, "Clock");
-
-        var inputManager = new InputManager(terminal, clockSignal, new Interrupter(cpu));
-        var inputThread = new Thread(inputManager, "Input");
-
-        System.out.println("CPU initial state: " + cpu.getState());
-        var cpuThread = new Thread(cpu, "CPU");
-        try {
-            if (executionStart == null) {
-                cpu.reset();
-            }
-
-            cpuThread.start();
-            clockThread.start();
-            inputThread.start();
-
-            cpuThread.join();
-        } catch (InterruptedException e) {
-            // exit gracefully
-        } finally {
-            inputThread.interrupt();
-            clockThread.interrupt();
-            cpuThread.interrupt();
-            System.out.println("CPU final state: " + cpu.getState());
-        }
-    }
-
-    private MemoryMap createMemoryMap(Address romStart, @Nullable Path rom) throws IOException
-    {
-        if (rom == null) {
-            return hardCodedMemoryMap();
-        }
-
-        return MemoryMap.of(romStart, rom);
-    }
-
-    private MemoryMap hardCodedMemoryMap()
-    {
-        var programStart = Address.of(0x02FB);
-        List<Operation> operations = List.of(lda(immediate(Value.ZERO)),
-                                             beq(relative(Value.of(2))),
-                                             inc(accumulator()),
-                                             inc(accumulator()),
-                                             nop(),
-                                             jsr(absolute(Address.of(0x030A))),
-                                             jmp(absolute(programStart)),
-                                             nop(),
-                                             nop(),
-                                             inc(accumulator()),
-                                             rts());
-
-        return MemoryMap.of(programStart, operations);
+        MemoryMap memoryMap = rom == null ? Programs.simpleLoopWithSubRoutine() : MemoryMap.of(romStart, rom);
+        new ProgramRunner(terminal,
+                          memoryMap,
+                          ClockPeriod.of(clockFrequency),
+                          stepping,
+                          breakAfterCycle,
+                          executionStart).run();
     }
 }
