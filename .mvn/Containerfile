@@ -1,4 +1,4 @@
-FROM ghcr.io/graalvm/native-image-community:24
+FROM ghcr.io/graalvm/native-image-community:25
 
 ENV MAVEN_VERSION=3.9.11
 ENV MAVEN_HOME="/opt/apache-maven-$MAVEN_VERSION"
