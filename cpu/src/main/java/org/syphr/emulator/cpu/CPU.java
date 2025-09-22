@@ -55,6 +55,8 @@ public class CPU implements Runnable
     private final Writer writer;
 
     private final Clock clock;
+    private final ALU alu;
+
     private final ProgramManager programManager;
 
     public static Builder builder()
@@ -119,6 +121,7 @@ public class CPU implements Runnable
 
         stack = new Stack(this.reader, this.writer);
         programManager = new ProgramManager(this.reader);
+        alu = new ALU(status);
 
         if (start != null) {
             programManager.setProgramCounter(start);
@@ -518,9 +521,9 @@ public class CPU implements Runnable
     void execute(Operation operation)
     {
         switch (operation) {
-            case ADC(AddressMode mode) -> updateRegister(accumulator, r -> addWithCarry(r, toValue(mode)));
-            case AND(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().and(toValue(mode))));
-            case ASL(AddressMode mode) -> readModifyWriteWithFlags(mode, this::shiftLeft);
+            case ADC(AddressMode mode) -> alu.addWithCarry(accumulator, toValue(mode));
+            case AND(AddressMode mode) -> alu.and(accumulator, toValue(mode));
+            case ASL(AddressMode mode) -> readModifyWrite(mode, alu::shiftLeft);
             case BBR0(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 0), mode.relative());
             case BBR1(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 1), mode.relative());
             case BBR2(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 2), mode.relative());
@@ -558,14 +561,14 @@ public class CPU implements Runnable
             case CLD _ -> status.setDecimal(false);
             case CLI _ -> status.setIrqDisable(false);
             case CLV _ -> status.setOverflow(false);
-            case CMP(AddressMode mode) -> compare(accumulator, toValue(mode));
-            case CPX(AddressMode mode) -> compare(x, toValue(mode));
-            case CPY(AddressMode mode) -> compare(y, toValue(mode));
-            case DEC(AddressMode mode) -> readModifyWriteWithFlags(mode, Value::decrement);
+            case CMP(AddressMode mode) -> alu.compare(accumulator, toValue(mode));
+            case CPX(AddressMode mode) -> alu.compare(x, toValue(mode));
+            case CPY(AddressMode mode) -> alu.compare(y, toValue(mode));
+            case DEC(AddressMode mode) -> readModifyWrite(mode, alu::decrement);
             case DEX _ -> updateRegister(x, Register::decrement);
             case DEY _ -> updateRegister(y, Register::decrement);
             case EOR(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().xor(toValue(mode))));
-            case INC(AddressMode mode) -> readModifyWriteWithFlags(mode, Value::increment);
+            case INC(AddressMode mode) -> readModifyWrite(mode, alu::increment);
             case INX _ -> updateRegister(x, Register::increment);
             case INY _ -> updateRegister(y, Register::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
@@ -577,7 +580,7 @@ public class CPU implements Runnable
             case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
             case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
             case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
-            case LSR(AddressMode mode) -> readModifyWriteWithFlags(mode, this::shiftRight);
+            case LSR(AddressMode mode) -> readModifyWrite(mode, alu::shiftRight);
             case NOP _ -> {}
             case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
             case PHA _ -> pushToStack(accumulator);
@@ -596,8 +599,8 @@ public class CPU implements Runnable
             case RMB5(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(5));
             case RMB6(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(6));
             case RMB7(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(7));
-            case ROL(AddressMode mode) -> readModifyWriteWithFlags(mode, this::rotateLeft);
-            case ROR(AddressMode mode) -> readModifyWriteWithFlags(mode, this::rotateRight);
+            case ROL(AddressMode mode) -> readModifyWrite(mode, alu::rotateLeft);
+            case ROR(AddressMode mode) -> readModifyWrite(mode, alu::rotateRight);
             case RTI _ -> {
                 pullFromStack(status);
                 var address = Address.of(stack.pop(), stack.pop());
@@ -609,7 +612,7 @@ public class CPU implements Runnable
                 clock.awaitNextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
-            case SBC(AddressMode mode) -> updateRegister(accumulator, r -> subtractWithCarry(r, toValue(mode)));
+            case SBC(AddressMode mode) -> alu.subtractWithCarry(accumulator, toValue(mode));
             case SEC _ -> status.setCarry(true);
             case SED _ -> status.setDecimal(true);
             case SEI _ -> status.setIrqDisable(true);
@@ -701,19 +704,11 @@ public class CPU implements Runnable
         reader.read(address);
     }
 
-    private void readModifyWriteWithFlags(AddressMode mode, Function<Value, Value> function)
-    {
-        Value result = readModifyWrite(mode, function);
-        status.setNegative(result.isNegative()).setZero(result.isZero());
-    }
-
-    private Value readModifyWrite(AddressMode mode, Function<Value, Value> function)
+    private void readModifyWrite(AddressMode mode, Function<Value, Value> function)
     {
         if (mode instanceof Accumulator) {
             Value output = function.apply(accumulator.value());
             accumulator.store(output);
-
-            return output;
         } else {
             Address address = toAddress(mode);
 
@@ -722,8 +717,6 @@ public class CPU implements Runnable
 
             Value output = function.apply(input);
             writer.write(address, output);
-
-            return output;
         }
     }
 
@@ -742,72 +735,6 @@ public class CPU implements Runnable
     {
         clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
         register.store(stack.pop());
-    }
-
-    private void addWithCarry(Register register, Value value)
-    {
-        byte r = register.value().data();
-        byte v = value.data();
-        byte c = (byte) (status.carry() ? 0x01 : 0x00);
-
-        int signedResult = r + v + c;
-        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
-
-        int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(v) + c;
-        boolean carry = unsignedResult > 255;
-
-        register.store(Value.of(unsignedResult));
-        status.setOverflow(overflow).setCarry(carry);
-    }
-
-    private void subtractWithCarry(Register register, Value value)
-    {
-        byte r = register.value().data();
-        byte v = value.data();
-        byte c = (byte) (status.carry() ? 0x00 : 0x01);
-
-        int signedResult = r - v - c;
-        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
-
-        int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(v) - Byte.toUnsignedInt(c);
-        boolean carry = unsignedResult >= 0;
-
-        register.store(Value.of(unsignedResult));
-        status.setOverflow(overflow).setCarry(carry);
-    }
-
-    private Value shiftLeft(Value value)
-    {
-        byte r = value.data();
-        status.setCarry((r & 0x80) != 0);
-
-        return Value.of(r << 1);
-    }
-
-    private Value shiftRight(Value value)
-    {
-        byte r = value.data();
-        status.setCarry((r & 0x01) != 0);
-
-        return Value.of(Byte.toUnsignedInt(r) >> 1);
-    }
-
-    private Value rotateLeft(Value value)
-    {
-        byte r = value.data();
-        byte c = (byte) (status.carry() ? 0x01 : 0x00);
-        status.setCarry((r & 0x80) != 0);
-
-        return Value.of(c | (r << 1));
-    }
-
-    private Value rotateRight(Value value)
-    {
-        byte r = value.data();
-        byte c = (byte) (status.carry() ? 0x80 : 0x00);
-        status.setCarry((r & 0x01) != 0);
-
-        return Value.of(c | (Byte.toUnsignedInt(r) >> 1));
     }
 
     private void branchIf(boolean condition, AddressMode mode)
@@ -838,12 +765,6 @@ public class CPU implements Runnable
         clock.awaitNextCycle();
 
         return value.isSet(position);
-    }
-
-    private void compare(Register register, Value value)
-    {
-        int compare = Byte.compareUnsigned(register.value().data(), value.data());
-        status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
     }
 
     @RequiredArgsConstructor
