@@ -28,6 +28,12 @@ class ProgramManager
     @Getter
     private Address programCounter = Address.of(0x00FF);
 
+    public void read()
+    {
+        log.info("Performing throwaway read at program counter");
+        reader.read(programCounter);
+    }
+
     public Value nextValue()
     {
         Value value = reader.read(programCounter);
