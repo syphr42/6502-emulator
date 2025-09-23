@@ -16,28 +16,16 @@
 package org.syphr.emulator.cpu;
 
 import lombok.EqualsAndHashCode;
-import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
-@RequiredArgsConstructor
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode
 class Register
 {
     @ToString.Include
     private Value value = Value.ZERO;
-
-    public boolean isNegative()
-    {
-        return value.isNegative();
-    }
-
-    public boolean isZero()
-    {
-        return value.isZero();
-    }
 
     public void load(Value value)
     {

@@ -22,8 +22,9 @@ class ALU
         int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(m) + c;
         boolean carry = unsignedResult > 255;
 
-        register.load(Value.of(unsignedResult));
-        status.setNegative(register.isNegative()).setOverflow(overflow).setZero(register.isZero()).setCarry(carry);
+        Value result = Value.of(unsignedResult);
+        register.load(result);
+        status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
     }
 
     public void subtractWithCarry(Register register, Value value)
@@ -38,8 +39,9 @@ class ALU
         int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(v) - Byte.toUnsignedInt(c);
         boolean carry = unsignedResult >= 0;
 
-        register.load(Value.of(unsignedResult));
-        status.setNegative(register.isNegative()).setOverflow(overflow).setZero(register.isZero()).setCarry(carry);
+        Value result = Value.of(unsignedResult);
+        register.load(result);
+        status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
     }
 
     public Value shiftLeft(Value value)
@@ -123,6 +125,6 @@ class ALU
     public void update(Register register, Consumer<Register> action)
     {
         action.accept(register);
-        status.setNegative(register.isNegative()).setZero(register.isZero());
+        status.setNegative(register.value().isNegative()).setZero(register.value().isZero());
     }
 }
