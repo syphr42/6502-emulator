@@ -59,6 +59,28 @@ class ALU
         status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
     }
 
+    public void compare(Register register, Value value)
+    {
+        int compare = Byte.compareUnsigned(register.value().data(), value.data());
+        status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
+    }
+
+    public void load(Register register, Value value)
+    {
+        calculate(register, _ -> value);
+    }
+
+    public void calculate(Register register, Function<Value, Value> function)
+    {
+        update(register, r -> r.load(function.apply(r.value())));
+    }
+
+    public void update(Register register, Consumer<Register> action)
+    {
+        action.accept(register);
+        status.setNegative(register.value().isNegative()).setZero(register.value().isZero());
+    }
+
     public Value shiftLeft(Value value)
     {
         byte r = value.data();
@@ -119,27 +141,5 @@ class ALU
         status.setNegative(result.isNegative()).setZero(result.isZero());
 
         return result;
-    }
-
-    public void compare(Register register, Value value)
-    {
-        int compare = Byte.compareUnsigned(register.value().data(), value.data());
-        status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
-    }
-
-    public void load(Register register, Value value)
-    {
-        calculate(register, _ -> value);
-    }
-
-    public void calculate(Register register, Function<Value, Value> function)
-    {
-        update(register, r -> r.load(function.apply(r.value())));
-    }
-
-    public void update(Register register, Consumer<Register> action)
-    {
-        action.accept(register);
-        status.setNegative(register.value().isNegative()).setZero(register.value().isZero());
     }
 }
