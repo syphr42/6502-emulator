@@ -24,7 +24,6 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 
 import java.util.Objects;
-import java.util.function.Consumer;
 import java.util.function.Function;
 
 import static org.syphr.emulator.cpu.AddressMode.*;
@@ -252,7 +251,7 @@ public class CPU implements Runnable
     {
         switch (operation) {
             case ADC(AddressMode mode) -> alu.addWithCarry(accumulator, toValue(mode));
-            case AND(AddressMode mode) -> alu.and(accumulator, toValue(mode));
+            case AND(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.and(toValue(mode)));
             case ASL(AddressMode mode) -> readModifyWrite(mode, alu::shiftLeft);
             case BBR0(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 0), mode.relative());
             case BBR1(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 1), mode.relative());
@@ -295,32 +294,32 @@ public class CPU implements Runnable
             case CPX(AddressMode mode) -> alu.compare(x, toValue(mode));
             case CPY(AddressMode mode) -> alu.compare(y, toValue(mode));
             case DEC(AddressMode mode) -> readModifyWrite(mode, alu::decrement);
-            case DEX _ -> updateRegister(x, Register::decrement);
-            case DEY _ -> updateRegister(y, Register::decrement);
-            case EOR(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().xor(toValue(mode))));
+            case DEX _ -> alu.calculate(x, Value::decrement);
+            case DEY _ -> alu.calculate(y, Value::decrement);
+            case EOR(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.xor(toValue(mode)));
             case INC(AddressMode mode) -> readModifyWrite(mode, alu::increment);
-            case INX _ -> updateRegister(x, Register::increment);
-            case INY _ -> updateRegister(y, Register::increment);
+            case INX _ -> alu.calculate(x, Value::increment);
+            case INY _ -> alu.calculate(y, Value::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case JSR(AddressMode mode) -> {
                 clock.awaitNextCycle(); // burn a cycle for internal operation
                 stack.pushAll(programManager.getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
-            case LDA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(toValue(mode)));
-            case LDX(AddressMode mode) -> updateRegister(x, r -> r.store(toValue(mode)));
-            case LDY(AddressMode mode) -> updateRegister(y, r -> r.store(toValue(mode)));
+            case LDA(AddressMode mode) -> alu.load(accumulator, toValue(mode));
+            case LDX(AddressMode mode) -> alu.load(x, toValue(mode));
+            case LDY(AddressMode mode) -> alu.load(y, toValue(mode));
             case LSR(AddressMode mode) -> readModifyWrite(mode, alu::shiftRight);
             case NOP _ -> {}
-            case ORA(AddressMode mode) -> updateRegister(accumulator, r -> r.store(r.value().or(toValue(mode))));
+            case ORA(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.or(toValue(mode)));
             case PHA _ -> pushToStack(accumulator);
             case PHP _ -> pushToStack(status);
             case PHX _ -> pushToStack(x);
             case PHY _ -> pushToStack(y);
-            case PLA _ -> updateRegister(accumulator, this::pullFromStack);
+            case PLA _ -> alu.update(accumulator, this::pullFromStack);
             case PLP _ -> pullFromStack(status);
-            case PLX _ -> updateRegister(x, this::pullFromStack);
-            case PLY _ -> updateRegister(y, this::pullFromStack);
+            case PLX _ -> alu.update(x, this::pullFromStack);
+            case PLY _ -> alu.update(y, this::pullFromStack);
             case RMB0(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(0));
             case RMB1(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(1));
             case RMB2(AddressMode mode) -> readModifyWrite(mode, v -> v.clear(2));
@@ -358,8 +357,8 @@ public class CPU implements Runnable
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
             case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
             case STZ(AddressMode mode) -> writer.write(toAddress(mode), Value.ZERO);
-            case TAX _ -> updateRegister(x, r -> r.store(accumulator.value()));
-            case TAY _ -> updateRegister(y, r -> r.store(accumulator.value()));
+            case TAX _ -> alu.load(x, accumulator.value());
+            case TAY _ -> alu.load(y, accumulator.value());
             case TRB(AddressMode mode) -> readModifyWrite(mode, v -> {
                 status.setZero(accumulator.value().and(v).isZero());
                 return accumulator.value().not().and(v);
@@ -368,10 +367,10 @@ public class CPU implements Runnable
                 status.setZero(accumulator.value().and(v).isZero());
                 return accumulator.value().or(v);
             });
-            case TSX _ -> updateRegister(x, r -> r.store(stack.getPointer().low()));
-            case TXA _ -> updateRegister(accumulator, r -> r.store(x.value()));
+            case TSX _ -> alu.load(x, stack.getPointer().low());
+            case TXA _ -> alu.load(accumulator, x.value());
             case TXS _ -> stack.setPointer(x.value());
-            case TYA _ -> updateRegister(accumulator, r -> r.store(y.value()));
+            case TYA _ -> alu.load(accumulator, y.value());
         }
     }
 
@@ -448,12 +447,6 @@ public class CPU implements Runnable
             Value output = function.apply(input);
             writer.write(address, output);
         }
-    }
-
-    private void updateRegister(Register register, Consumer<Register> action)
-    {
-        action.accept(register);
-        status.setNegative(register.isNegative()).setZero(register.isZero());
     }
 
     private void pushToStack(Register register)

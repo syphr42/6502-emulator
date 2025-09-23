@@ -30,36 +30,6 @@ class RegisterTest
     Register register;
 
     @ParameterizedTest
-    @CsvSource({"00, FF",
-                "01, 00"})
-    void decrement(String initReg, String expected)
-    {
-        // given
-        register.store(Value.ofHex(initReg));
-
-        // when
-        register.decrement();
-
-        // then
-        assertThat(register.value()).isEqualTo(Value.ofHex(expected));
-    }
-
-    @ParameterizedTest
-    @CsvSource({"00, 01",
-                "FF, 00"})
-    void increment(String initReg, String expected)
-    {
-        // given
-        register.store(Value.ofHex(initReg));
-
-        // when
-        register.increment();
-
-        // then
-        assertThat(register.value()).isEqualTo(Value.ofHex(expected));
-    }
-
-    @ParameterizedTest
     @CsvSource({"00, false",
                 "01, false",
                 "FF, true"})

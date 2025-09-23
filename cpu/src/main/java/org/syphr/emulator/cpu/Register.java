@@ -29,16 +29,6 @@ class Register
     @ToString.Include
     private Value value = Value.ZERO;
 
-    public void decrement()
-    {
-        value = value.decrement();
-    }
-
-    public void increment()
-    {
-        value = value.increment();
-    }
-
     public boolean isNegative()
     {
         return value.isNegative();

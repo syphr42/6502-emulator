@@ -2,6 +2,9 @@ package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
 
+import java.util.function.Consumer;
+import java.util.function.Function;
+
 @RequiredArgsConstructor
 class ALU
 {
@@ -37,12 +40,6 @@ class ALU
 
         register.store(Value.of(unsignedResult));
         status.setNegative(register.isNegative()).setOverflow(overflow).setZero(register.isZero()).setCarry(carry);
-    }
-
-    public void and(Register register, Value value)
-    {
-        register.store(register.value().and(value));
-        status.setNegative(register.isNegative()).setZero(register.isZero());
     }
 
     public Value shiftLeft(Value value)
@@ -107,9 +104,25 @@ class ALU
         return result;
     }
 
-    void compare(Register register, Value value)
+    public void compare(Register register, Value value)
     {
         int compare = Byte.compareUnsigned(register.value().data(), value.data());
         status.setNegative((compare & 0x80) != 0).setZero(compare == 0).setCarry(compare >= 0);
+    }
+
+    public void load(Register register, Value value)
+    {
+        calculate(register, _ -> value);
+    }
+
+    public void calculate(Register register, Function<Value, Value> function)
+    {
+        update(register, r -> r.store(function.apply(r.value())));
+    }
+
+    public void update(Register register, Consumer<Register> action)
+    {
+        action.accept(register);
+        status.setNegative(register.isNegative()).setZero(register.isZero());
     }
 }
