@@ -437,7 +437,7 @@ public class CPU implements Runnable
     {
         if (mode instanceof Accumulator) {
             Value output = function.apply(accumulator.value());
-            accumulator.store(output);
+            accumulator.load(output);
         } else {
             Address address = toAddress(mode);
 
@@ -457,7 +457,7 @@ public class CPU implements Runnable
     private void pullFromStack(Register register)
     {
         clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
-        register.store(stack.pop());
+        register.load(stack.pop());
     }
 
     private void branchIf(boolean condition, AddressMode mode)

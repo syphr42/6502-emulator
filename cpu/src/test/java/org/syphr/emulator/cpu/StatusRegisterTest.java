@@ -66,7 +66,7 @@ class StatusRegisterTest
         StatusRegister result = StatusRegister.of(flags);
 
         // then
-        status.store(Value.ofBits(bits));
+        status.load(Value.ofBits(bits));
         assertThat(result).isEqualTo(status);
     }
 
@@ -91,7 +91,7 @@ class StatusRegisterTest
                boolean isCarry)
     {
         // given
-        status.store(Value.ofBits(bits));
+        status.load(Value.ofBits(bits));
 
         // when
         Flags result = status.flags();
@@ -208,7 +208,7 @@ class StatusRegisterTest
     void copy(int value)
     {
         // given
-        status.store(Value.of(value));
+        status.load(Value.of(value));
 
         // when
         StatusRegister result = status.copy();

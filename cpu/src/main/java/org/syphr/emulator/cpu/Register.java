@@ -39,7 +39,7 @@ class Register
         return value.isZero();
     }
 
-    public void store(Value value)
+    public void load(Value value)
     {
         this.value = value;
     }

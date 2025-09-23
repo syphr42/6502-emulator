@@ -36,7 +36,7 @@ class RegisterTest
     void isNegative(String initReg, boolean expected)
     {
         // given
-        register.store(Value.ofHex(initReg));
+        register.load(Value.ofHex(initReg));
 
         // when
         boolean result = register.isNegative();
@@ -52,7 +52,7 @@ class RegisterTest
     void isZero(String initReg, boolean expected)
     {
         // given
-        register.store(Value.ofHex(initReg));
+        register.load(Value.ofHex(initReg));
 
         // when
         boolean result = register.isZero();

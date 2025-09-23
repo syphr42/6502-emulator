@@ -22,7 +22,7 @@ class ALU
         int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(m) + c;
         boolean carry = unsignedResult > 255;
 
-        register.store(Value.of(unsignedResult));
+        register.load(Value.of(unsignedResult));
         status.setNegative(register.isNegative()).setOverflow(overflow).setZero(register.isZero()).setCarry(carry);
     }
 
@@ -38,7 +38,7 @@ class ALU
         int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(v) - Byte.toUnsignedInt(c);
         boolean carry = unsignedResult >= 0;
 
-        register.store(Value.of(unsignedResult));
+        register.load(Value.of(unsignedResult));
         status.setNegative(register.isNegative()).setOverflow(overflow).setZero(register.isZero()).setCarry(carry);
     }
 
@@ -117,7 +117,7 @@ class ALU
 
     public void calculate(Register register, Function<Value, Value> function)
     {
-        update(register, r -> r.store(function.apply(r.value())));
+        update(register, r -> r.load(function.apply(r.value())));
     }
 
     public void update(Register register, Consumer<Register> action)

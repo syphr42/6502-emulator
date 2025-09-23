@@ -155,7 +155,7 @@ class StatusRegister extends Register
     public StatusRegister copy()
     {
         var copy = new StatusRegister();
-        copy.store(value());
+        copy.load(value());
 
         return copy;
     }
@@ -171,12 +171,12 @@ class StatusRegister extends Register
 
     private void set(int position)
     {
-        store(Value.of((byte) (value().data() | (0x01 << position))));
+        load(Value.of((byte) (value().data() | (0x01 << position))));
     }
 
     private void clear(int position)
     {
-        store(Value.of((byte) (value().data() & ~(0x01 << position))));
+        load(Value.of((byte) (value().data() & ~(0x01 << position))));
     }
 
     private boolean state(int position)

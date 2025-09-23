@@ -229,7 +229,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
         setNextOp(adc(modeGen.apply(modeInput(input)).mode()));
@@ -292,7 +292,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         setNextOp(and(modeGen.apply(modeInput(input)).mode()));
 
@@ -1070,7 +1070,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         AddressMode mode = modeGen.apply(modeInput(input)).mode();
         setNextOp(bit(mode));
@@ -1461,7 +1461,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         setNextOp(cmp(modeGen.apply(modeInput(input)).mode()));
 
@@ -1513,7 +1513,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        x.store(Value.of(givenX));
+        x.load(Value.of(givenX));
 
         setNextOp(cpx(modeGen.apply(modeInput(input)).mode()));
 
@@ -1565,7 +1565,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        y.store(Value.of(givenY));
+        y.load(Value.of(givenY));
 
         setNextOp(cpy(modeGen.apply(modeInput(input)).mode()));
 
@@ -1648,7 +1648,7 @@ class CPUTest
     void execute_DEX_Implied(String xVal, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        x.store(Value.ofHex(xVal));
+        x.load(Value.ofHex(xVal));
 
         setNextOp(dex());
 
@@ -1672,7 +1672,7 @@ class CPUTest
     void execute_DEY_Implied(String yVal, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        y.store(Value.ofHex(yVal));
+        y.load(Value.ofHex(yVal));
 
         setNextOp(dey());
 
@@ -1728,7 +1728,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         setNextOp(eor(modeGen.apply(modeInput(input)).mode()));
 
@@ -1810,7 +1810,7 @@ class CPUTest
     void execute_INX_Implied(String xVal, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        x.store(Value.ofHex(xVal));
+        x.load(Value.ofHex(xVal));
 
         setNextOp(inx());
 
@@ -1834,7 +1834,7 @@ class CPUTest
     void execute_INY_Implied(String yVal, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        y.store(Value.ofHex(yVal));
+        y.load(Value.ofHex(yVal));
 
         setNextOp(iny());
 
@@ -1862,7 +1862,7 @@ class CPUTest
             Address intermediate = Address.of(0x4321);
 
             Value offset = Value.of(0xFF);
-            input.x().store(offset);
+            input.x().load(offset);
 
             Address pointer = intermediate.plusUnsigned(offset);
             Address target = Address.of(0x1234);
@@ -2195,7 +2195,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         setNextOp(ora(modeGen.apply(modeInput(input)).mode()));
 
@@ -2223,7 +2223,7 @@ class CPUTest
     void execute_PHA_Stack(String acc)
     {
         // given
-        accumulator.store(Value.ofHex(acc));
+        accumulator.load(Value.ofHex(acc));
 
         setNextOp(pha());
 
@@ -2293,7 +2293,7 @@ class CPUTest
     void execute_PHX_Stack(String xVal)
     {
         // given
-        x.store(Value.ofHex(xVal));
+        x.load(Value.ofHex(xVal));
 
         setNextOp(phx());
 
@@ -2317,7 +2317,7 @@ class CPUTest
     void execute_PHY_Stack(String yVal)
     {
         // given
-        y.store(Value.ofHex(yVal));
+        y.load(Value.ofHex(yVal));
 
         setNextOp(phy());
 
@@ -2944,7 +2944,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
         setNextOp(sbc(modeGen.apply(modeInput(input)).mode()));
@@ -3313,7 +3313,7 @@ class CPUTest
     {
         // given
         var value = Value.of(input);
-        accumulator.store(value);
+        accumulator.load(value);
 
         ModeOutput modeOutput = modeGen.apply(modeInput());
         setNextOp(sta(modeOutput.mode()));
@@ -3357,7 +3357,7 @@ class CPUTest
     {
         // given
         var value = Value.of(input);
-        x.store(value);
+        x.load(value);
 
         ModeOutput modeOutput = modeGen.apply(modeInput());
         setNextOp(stx(modeOutput.mode()));
@@ -3401,7 +3401,7 @@ class CPUTest
     {
         // given
         var value = Value.of(input);
-        y.store(value);
+        y.load(value);
 
         ModeOutput modeOutput = modeGen.apply(modeInput());
         setNextOp(sty(modeOutput.mode()));
@@ -3465,7 +3465,7 @@ class CPUTest
     void execute_TAX_Implied(String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(input));
+        accumulator.load(Value.ofHex(input));
 
         setNextOp(tax());
 
@@ -3489,7 +3489,7 @@ class CPUTest
     void execute_TAY_Implied(String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        accumulator.store(Value.ofHex(input));
+        accumulator.load(Value.ofHex(input));
 
         setNextOp(tay());
 
@@ -3531,7 +3531,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         ModeOutput modeOutput = modeGen.apply(modeInput(input));
         setNextOp(trb(modeOutput.mode()));
@@ -3575,7 +3575,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
-        accumulator.store(Value.of(givenAccumulator));
+        accumulator.load(Value.of(givenAccumulator));
 
         ModeOutput modeOutput = modeGen.apply(modeInput(input));
         setNextOp(tsb(modeOutput.mode()));
@@ -3625,7 +3625,7 @@ class CPUTest
     void execute_TXA_Implied(String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        x.store(Value.ofHex(input));
+        x.load(Value.ofHex(input));
 
         setNextOp(txa());
 
@@ -3648,7 +3648,7 @@ class CPUTest
     void execute_TXS_Implied()
     {
         // given
-        x.store(Value.of(0x12));
+        x.load(Value.of(0x12));
 
         setNextOp(txs());
 
@@ -3672,7 +3672,7 @@ class CPUTest
     void execute_TYA_Implied(String input, String expected, boolean isNegative, boolean isZero)
     {
         // given
-        y.store(Value.ofHex(input));
+        y.load(Value.ofHex(input));
 
         setNextOp(tya());
 
@@ -3776,7 +3776,7 @@ class CPUTest
             Address intermediate = Address.of(0x1234);
 
             Value offset = Value.of(0xFF);
-            input.x().store(offset);
+            input.x().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
@@ -3793,7 +3793,7 @@ class CPUTest
             Address intermediate = Address.of(0x12FE);
 
             Value offset = Value.of(0x02);
-            input.x().store(offset);
+            input.x().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
@@ -3810,7 +3810,7 @@ class CPUTest
             Address intermediate = Address.of(0x1234);
 
             Value offset = Value.of(0xFF);
-            input.y().store(offset);
+            input.y().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
@@ -3827,7 +3827,7 @@ class CPUTest
             Address intermediate = Address.of(0x12FE);
 
             Value offset = Value.of(0x02);
-            input.y().store(offset);
+            input.y().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
@@ -3842,7 +3842,7 @@ class CPUTest
     {
         return (ModeInput input) -> {
             if (input.value() != null) {
-                input.accumulator().store(input.value());
+                input.accumulator().load(input.value());
             }
             return new ModeOutput(accumulator(), Optional.empty());
         };
@@ -3878,7 +3878,7 @@ class CPUTest
             Value intermediateOffset = Value.of(0x12);
 
             Value offset = Value.of(0x02);
-            input.x().store(offset);
+            input.x().load(offset);
 
             Address intermediate = Address.zeroPage(intermediateOffset.plus(offset));
             Address target = Address.of(0x1234);
@@ -3900,7 +3900,7 @@ class CPUTest
             Value intermediateOffset = Value.of(0x12);
 
             Value offset = Value.of(0x02);
-            input.x().store(offset);
+            input.x().load(offset);
 
             Address target = Address.zeroPage(intermediateOffset.plus(offset));
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
@@ -3918,7 +3918,7 @@ class CPUTest
             Value intermediateOffset = Value.of(0x12);
 
             Value offset = Value.of(0x02);
-            input.y().store(offset);
+            input.y().load(offset);
 
             Address target = Address.zeroPage(intermediateOffset.plus(offset));
             when(input.reader().read(Address.zeroPage(intermediateOffset))).thenReturn(Value.ZERO); // throwaway read
@@ -3960,7 +3960,7 @@ class CPUTest
             when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
 
             Value offset = Value.of(0xFF);
-            input.y().store(offset);
+            input.y().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
@@ -3983,7 +3983,7 @@ class CPUTest
             when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
 
             Value offset = Value.of(0x02);
-            input.y().store(offset);
+            input.y().load(offset);
 
             Address target = intermediate.plus(offset);
             if (input.value() != null) {
