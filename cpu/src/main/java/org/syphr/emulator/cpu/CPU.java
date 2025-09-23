@@ -275,7 +275,10 @@ public class CPU implements Runnable
             case BIT(AddressMode mode) -> {
                 Value value = toValue(mode);
                 if (!(mode instanceof Immediate)) {
-                    status.setNegative((value.data() & 0x80) != 0).setOverflow((value.data() & 0x40) != 0);
+                    // negative flag = bit 7
+                    status.setNegative((value.data() & 0x80) != 0);
+                    // overflow flag = bit 6
+                    status.setOverflow((value.data() & 0x40) != 0);
                 }
                 status.setZero(accumulator.value().and(value).isZero());
             }
