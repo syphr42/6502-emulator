@@ -30,7 +30,7 @@
     <artifactId>cpu</artifactId>
 
     <name>CPU</name>
-    <description>Emulator module that represents the CPU</description>
+    <description>W65C02 8-bit Microprocessor</description>
 
     <dependencies>
         <dependency>
