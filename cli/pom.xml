@@ -39,6 +39,7 @@
         <spring-shell.version>3.4.1</spring-shell.version>
 
         <!-- Plugins -->
+        <plugin.native.version>0.11.1</plugin.native.version>
         <plugin.spring-boot.version>${spring-boot.version}</plugin.spring-boot.version>
     </properties>
 
@@ -127,6 +128,7 @@
                     <plugin>
                         <groupId>org.graalvm.buildtools</groupId>
                         <artifactId>native-maven-plugin</artifactId>
+                        <version>${plugin.native.version}</version>
                         <extensions>true</extensions>
 
                         <configuration>
