@@ -24,9 +24,8 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
 
 public class MemoryMap implements Addressable
 {
@@ -37,7 +36,15 @@ public class MemoryMap implements Addressable
         return new MemoryMap(List.of(segments));
     }
 
-    public static MemoryMap fillRam(Address start, Path rom) throws IOException
+    /**
+     * Build a memory map using the given ROM file and fill any remaining address space with RAM.
+     *
+     * @param start ROM start address
+     * @param rom   pointer to ROM file
+     * @return complete 64k memory map with unused address space represented as RAM
+     * @throws IOException if the ROM file cannot be read
+     */
+    public static MemoryMap of(Address start, Path rom) throws IOException
     {
         byte[] bytes = Files.readAllBytes(rom);
         if (bytes.length == 0) {
@@ -54,35 +61,48 @@ public class MemoryMap implements Addressable
             values.add(Value.of(b));
         }
 
-        List<Segment> segments = new ArrayList<>();
-        if (!Address.MIN.equals(start)) {
-            segments.add(new RAM(Address.MIN, start.decrement()));
-        }
-        segments.add(new ROM(start, values));
-        if (!Address.MAX.equals(end)) {
-            segments.add(new RAM(end.increment(), Address.MAX));
-        }
-
-        return new MemoryMap(segments);
+        return fillRam(new ROM(start, values));
     }
 
+    /**
+     * Build a memory map using the given list of operations as ROM and fill any remaining address space with RAM.
+     *
+     * @param start      ROM start address
+     * @param operations list of operations that will represent the ROM
+     * @return complete 64k memory map with unused address space represented as RAM
+     */
     public static MemoryMap of(Address start, List<Operation> operations)
     {
-        Map<Address, Value> map = new TreeMap<>();
+        List<Value> values = operations.stream().map(Operation::toValues).flatMap(Collection::stream).toList();
+        return fillRam(new ROM(start, values), new Vectors(Address.MIN, start, Address.MIN));
+    }
 
-        var address = start;
-        for (Operation op : operations) {
-            List<Value> values = Operation.toValues(op);
-            for (Value value : values) {
-                map.put(address, value);
-                address = address.increment();
+    /**
+     * Build a 64k memory map filling all unused space with RAM.
+     *
+     * @param segments non-overlapping memory segments in ascending address order
+     * @return a new memory map containing the given segments and all other addresses acting as RAM
+     */
+    private static MemoryMap fillRam(Segment... segments)
+    {
+        List<Segment> contiguous = new ArrayList<>();
+        var next = Address.MIN;
+
+        for (Segment segment : segments) {
+            if (!next.equals(segment.getStart())) {
+                contiguous.add(new RAM(next, segment.getStart().decrement()));
             }
+
+            contiguous.add(segment);
+            next = segment.getEnd().increment();
         }
 
-        map.put(Address.RESET, start.low());
-        map.put(Address.RESET.increment(), start.high());
+        // if the space is all used, next should have wrapped around to the beginning
+        if (!Address.MIN.equals(next)) {
+            contiguous.add(new RAM(next, Address.MAX));
+        }
 
-        return of(new RAM(Address.MIN, Address.MAX, map));
+        return new MemoryMap(contiguous);
     }
 
     public MemoryMap(List<Segment> segments)
