@@ -152,13 +152,35 @@ class AddressTest
                 "FFFF, 01, 0000",
                 "FFF0, 10, 0000",
                 "FFF8, FD, FFF5"})
-    void plus(String input, String displacement, String expected)
+    void plus_Value(String input, String displacement, String expected)
     {
         // given
         var start = Address.ofHex(input);
 
         // when
         Address result = start.plus(Value.ofHex(displacement));
+
+        // then
+        assertThat(result).isEqualTo(Address.ofHex(expected));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"0000, 01, 0001",
+                "0000, FF, 00FF",
+                "00F0, 0F, 00FF",
+                "FFFF, 01, 0000",
+                "FFF0, 10, 0000",
+                "FFF8, FD, 00F5",
+                "0000, 8000, 8000",
+                "0000, FFFF, FFFF",
+                "FFFF, 8000, 7FFF"})
+    void plus_int(String input, String displacement, String expected)
+    {
+        // given
+        var start = Address.ofHex(input);
+
+        // when
+        Address result = start.plus(Integer.parseInt(displacement, 16));
 
         // then
         assertThat(result).isEqualTo(Address.ofHex(expected));

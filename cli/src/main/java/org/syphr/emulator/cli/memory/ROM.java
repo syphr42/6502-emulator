@@ -26,7 +26,7 @@ public class ROM extends Segment
 
     public ROM(Address start, List<Value> values)
     {
-        super(start, start.plusUnsigned(Value.of(values.size() - 1)));
+        super(start, start.plus(values.size() - 1));
         this.values = List.copyOf(values);
     }
 

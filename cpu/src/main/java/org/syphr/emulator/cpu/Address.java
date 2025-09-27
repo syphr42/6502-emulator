@@ -19,6 +19,9 @@ import java.util.List;
 
 public record Address(short data) implements Comparable<Address>
 {
+    public static final Address MIN = Address.of(0x0000);
+    public static final Address MAX = Address.of(0xFFFF);
+
     public static final Address NMI = Address.of(0xFFFA);
     public static final Address RESET = Address.of(0xFFFC);
     public static final Address IRQ = Address.of(0xFFFE);
@@ -66,6 +69,11 @@ public record Address(short data) implements Comparable<Address>
     public Address plus(Value offset)
     {
         return Address.of(data + offset.data());
+    }
+
+    public Address plus(int offset)
+    {
+        return Address.of(data + offset);
     }
 
     public Address plusUnsigned(Value offset)

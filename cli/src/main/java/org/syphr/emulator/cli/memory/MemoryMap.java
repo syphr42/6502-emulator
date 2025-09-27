@@ -23,6 +23,7 @@ import org.syphr.emulator.cpu.Value;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
@@ -36,18 +37,33 @@ public class MemoryMap implements Addressable
         return new MemoryMap(List.of(segments));
     }
 
-    public static MemoryMap of(Address start, Path rom) throws IOException
+    public static MemoryMap fillRam(Address start, Path rom) throws IOException
     {
-        Map<Address, Value> map = new TreeMap<>();
         byte[] bytes = Files.readAllBytes(rom);
-
-        var address = start;
-        for (byte b : bytes) {
-            map.put(address, Value.of(b));
-            address = address.increment();
+        if (bytes.length == 0) {
+            throw new IllegalArgumentException("ROM is empty");
         }
 
-        return of(new RAM(Address.of(0x0000), Address.of(0xFFFF), map));
+        Address end = start.plus(bytes.length - 1);
+        if (start.compareTo(end) > 0) {
+            throw new IllegalArgumentException("ROM is too large to fit in addressable memory");
+        }
+
+        List<Value> values = new ArrayList<>();
+        for (byte b : bytes) {
+            values.add(Value.of(b));
+        }
+
+        List<Segment> segments = new ArrayList<>();
+        if (!Address.MIN.equals(start)) {
+            segments.add(new RAM(Address.MIN, start.decrement()));
+        }
+        segments.add(new ROM(start, values));
+        if (!Address.MAX.equals(end)) {
+            segments.add(new RAM(end.increment(), Address.MAX));
+        }
+
+        return new MemoryMap(segments);
     }
 
     public static MemoryMap of(Address start, List<Operation> operations)
@@ -66,7 +82,7 @@ public class MemoryMap implements Addressable
         map.put(Address.RESET, start.low());
         map.put(Address.RESET.increment(), start.high());
 
-        return of(new RAM(Address.of(0x0000), Address.of(0xFFFF), map));
+        return of(new RAM(Address.MIN, Address.MAX, map));
     }
 
     public MemoryMap(List<Segment> segments)

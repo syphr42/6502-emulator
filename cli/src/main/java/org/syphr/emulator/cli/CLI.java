@@ -54,7 +54,7 @@ public class CLI
             System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");
         }
 
-        MemoryMap memoryMap = rom == null ? Programs.simpleLoopWithSubRoutine() : MemoryMap.of(romStart, rom);
+        MemoryMap memoryMap = rom == null ? Programs.simpleLoopWithSubRoutine() : MemoryMap.fillRam(romStart, rom);
         new ProgramRunner(terminal,
                           memoryMap,
                           ClockPeriod.of(clockFrequency),
