@@ -17,9 +17,7 @@ package org.syphr.emulator.common;
 
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-import lombok.extern.slf4j.Slf4j;
 
-@Slf4j
 @ToString(onlyExplicitlyIncluded = true)
 @EqualsAndHashCode
 public class Register
