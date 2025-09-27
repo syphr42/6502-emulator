@@ -16,6 +16,8 @@
 package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
+import org.syphr.emulator.common.Register;
+import org.syphr.emulator.common.Value;
 
 import java.util.function.Consumer;
 import java.util.function.Function;

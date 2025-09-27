@@ -15,6 +15,8 @@
  */
 package org.syphr.emulator.cpu;
 
+import org.syphr.emulator.common.Value;
+
 public interface Writer
 {
     void write(Address address, Value value);

@@ -15,8 +15,8 @@
  */
 package org.syphr.emulator.cli.memory;
 
+import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
-import org.syphr.emulator.cpu.Value;
 
 import java.util.List;
 

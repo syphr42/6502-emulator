@@ -16,6 +16,8 @@
 package org.syphr.emulator.cpu;
 
 import lombok.ToString;
+import org.syphr.emulator.common.Register;
+import org.syphr.emulator.common.Value;
 
 @ToString(onlyExplicitlyIncluded = true)
 class StatusRegister extends Register

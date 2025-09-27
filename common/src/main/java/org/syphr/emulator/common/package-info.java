@@ -13,17 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.syphr.emulator.cpu;
+@NullMarked
+package org.syphr.emulator.common;
 
-import org.syphr.emulator.common.Value;
-
-import java.util.List;
-
-public record CPUState(Address programCounter,
-                       Value accumulator,
-                       Value x,
-                       Value y,
-                       Address stackPointer,
-                       List<Value> stackData,
-                       Flags flags)
-{}
+import org.jspecify.annotations.NullMarked;

@@ -22,6 +22,8 @@ import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
+import org.syphr.emulator.common.Register;
+import org.syphr.emulator.common.Value;
 
 import java.util.Objects;
 import java.util.function.Function;

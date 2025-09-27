@@ -56,8 +56,9 @@
     </licenses>
 
     <modules>
-        <module>cpu</module>
         <module>cli</module>
+        <module>common</module>
+        <module>cpu</module>
     </modules>
 
     <properties>

@@ -18,6 +18,7 @@ package org.syphr.emulator.cpu;
 import lombok.Setter;
 import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
+import org.syphr.emulator.common.Value;
 
 import java.util.ArrayDeque;
 import java.util.Deque;

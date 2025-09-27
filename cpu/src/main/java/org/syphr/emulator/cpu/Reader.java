@@ -15,6 +15,8 @@
  */
 package org.syphr.emulator.cpu;
 
+import org.syphr.emulator.common.Value;
+
 public interface Reader
 {
     Value read(Address address);

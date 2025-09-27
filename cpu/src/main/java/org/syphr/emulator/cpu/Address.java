@@ -15,6 +15,8 @@
  */
 package org.syphr.emulator.cpu;
 
+import org.syphr.emulator.common.Value;
+
 import java.util.List;
 
 public record Address(short data) implements Comparable<Address>

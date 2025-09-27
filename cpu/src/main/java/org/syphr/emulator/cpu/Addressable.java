@@ -16,6 +16,7 @@
 package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
+import org.syphr.emulator.common.Value;
 
 public interface Addressable extends Reader, Writer
 {

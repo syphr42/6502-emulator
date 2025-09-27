@@ -15,10 +15,10 @@
  */
 package org.syphr.emulator.cli.memory;
 
+import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.Addressable;
 import org.syphr.emulator.cpu.Operation;
-import org.syphr.emulator.cpu.Value;
 
 import java.io.IOException;
 import java.nio.file.Files;

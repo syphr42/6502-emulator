@@ -46,6 +46,11 @@
         <!-- Modules -->
         <dependency>
             <groupId>org.syphr.emulator</groupId>
+            <artifactId>common</artifactId>
+            <version>${project.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.syphr.emulator</groupId>
             <artifactId>cpu</artifactId>
             <version>${project.version}</version>
         </dependency>

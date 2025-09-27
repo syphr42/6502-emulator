@@ -15,6 +15,8 @@
  */
 package org.syphr.emulator.cpu;
 
+import org.syphr.emulator.common.Value;
+
 public sealed interface AddressMode
 {
     // @formatter:off

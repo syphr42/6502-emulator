@@ -17,9 +17,7 @@ package org.syphr.emulator.cpu;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.syphr.emulator.cpu.Operation.ADC;
-import org.syphr.emulator.cpu.Operation.AND;
-import org.syphr.emulator.cpu.Operation.ASL;
+import org.syphr.emulator.common.Value;
 
 import static org.syphr.emulator.cpu.AddressMode.*;
 import static org.syphr.emulator.cpu.Operation.*;
