@@ -59,6 +59,7 @@
         <module>cli</module>
         <module>common</module>
         <module>cpu</module>
+        <module>via</module>
     </modules>
 
     <properties>
