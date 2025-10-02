@@ -22,10 +22,12 @@ import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
 import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.demo.Programs;
+import org.syphr.emulator.cli.gui.GUI;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cli.simple.ProgramRunner;
 import org.syphr.emulator.cpu.Address;
 
+import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
@@ -61,5 +63,13 @@ public class CLI
                           stepping,
                           breakAfterCycle,
                           executionStart).run();
+    }
+
+    @Command(command = "gui", description = "Start the graphical interface")
+    public void gui()
+    {
+        System.setProperty("java.awt.headless", "false");
+        var gui = new GUI();
+        SwingUtilities.invokeLater(gui::show);
     }
 }
