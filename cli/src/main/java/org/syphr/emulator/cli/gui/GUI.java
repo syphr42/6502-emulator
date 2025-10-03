@@ -15,6 +15,9 @@ public class GUI
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         var menuBar = new JMenuBar();
+        var addressingMenu = new JMenu("Addressing");
+        addressingMenu.add(new JMenuItem("Load ROM"));
+        menuBar.add(addressingMenu);
         var cpuMenu = new JMenu("CPU");
         cpuMenu.add(new JMenuItem("Start"));
         menuBar.add(cpuMenu);
