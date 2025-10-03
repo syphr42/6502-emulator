@@ -11,6 +11,7 @@ public class GUI
     {
         frame = new JFrame("6502 Emulator");
         frame.setPreferredSize(new Dimension(640, 480));
+        frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
         var cpuMon = new CPUMonitor();
