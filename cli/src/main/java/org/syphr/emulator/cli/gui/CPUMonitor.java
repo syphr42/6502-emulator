@@ -82,6 +82,9 @@ class CPUMonitor
 
         var addressData = new AddressTableModel();
         addressTable.setModel(addressData);
+
+        var opLogData = new OpLogTableModel();
+        opLogTable.setModel(opLogData);
     }
 
     public void updateState(CPUState state)
