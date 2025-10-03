@@ -56,9 +56,19 @@ public class AddressTableModel extends AbstractTableModel
 
         if (value instanceof Value v) {
             map.put(toAddress(rowIndex, columnIndex), v);
+            fireTableCellUpdated(rowIndex, columnIndex);
         }
 
         throw new IllegalArgumentException("Invalid object type: " + value.getClass());
+    }
+
+    public void updateAddress(Address address, Value value)
+    {
+        map.put(address, value);
+
+        int rowIndex = address.data() / 16;
+        int columnIndex = (address.data() % 16) + 1;
+        fireTableCellUpdated(rowIndex, columnIndex);
     }
 
     private Address toAddress(int rowIndex, int columnIndex)
