@@ -14,6 +14,12 @@ public class GUI
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
+        var menuBar = new JMenuBar();
+        var cpuMenu = new JMenu("CPU");
+        cpuMenu.add(new JMenuItem("Start"));
+        menuBar.add(cpuMenu);
+        frame.setJMenuBar(menuBar);
+
         var cpuMon = new CPUMonitor();
         frame.getContentPane().add(cpuMon.$$$getRootComponent$$$());
     }
