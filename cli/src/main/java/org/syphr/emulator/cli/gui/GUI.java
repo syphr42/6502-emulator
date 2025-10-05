@@ -2,6 +2,7 @@ package org.syphr.emulator.cli.gui;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
 
 public class GUI
 {
@@ -12,9 +13,19 @@ public class GUI
         frame = new JFrame("6502 Emulator");
         frame.setPreferredSize(new Dimension(640, 480));
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
-        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 
         var menuBar = new JMenuBar();
+        var fileMenu = new JMenu("File");
+        fileMenu.add(new AbstractAction("Exit")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                frame.dispose();
+            }
+        });
+        menuBar.add(fileMenu);
         var addressingMenu = new JMenu("Addressing");
         addressingMenu.add(new JMenuItem("Load ROM"));
         menuBar.add(addressingMenu);
