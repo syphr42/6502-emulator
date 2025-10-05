@@ -1,5 +1,7 @@
 package org.syphr.emulator.cli.gui;
 
+import org.syphr.emulator.cli.demo.Programs;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -7,6 +9,7 @@ import java.awt.event.ActionEvent;
 public class GUI
 {
     private final JFrame frame;
+    private final AddressTableModel addressData;
 
     public GUI()
     {
@@ -28,14 +31,23 @@ public class GUI
         menuBar.add(fileMenu);
         var addressingMenu = new JMenu("Addressing");
         addressingMenu.add(new JMenuItem("Load ROM"));
+        addressingMenu.add(new AbstractAction("Load Demo Program")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                addressData.loadMemoryMap(Programs.simpleLoopWithSubRoutine());
+            }
+        });
         menuBar.add(addressingMenu);
         var cpuMenu = new JMenu("CPU");
         cpuMenu.add(new JMenuItem("Start"));
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 
-        var cpuMon = new CPUMonitor();
-        frame.getContentPane().add(cpuMon.$$$getRootComponent$$$());
+        addressData = new AddressTableModel();
+        var cpuMon = new CPUMonitor(addressData);
+        frame.getContentPane().add(cpuMon.getRoot());
     }
 
     public void show()

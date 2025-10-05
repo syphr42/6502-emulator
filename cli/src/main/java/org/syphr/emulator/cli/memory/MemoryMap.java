@@ -129,4 +129,9 @@ public class MemoryMap implements Addressable
                 .orElseThrow(() -> new IllegalArgumentException("No memory segment contains address " + address))
                 .write(address, value);
     }
+
+    public List<Segment> getSegments()
+    {
+        return List.copyOf(segments);
+    }
 }

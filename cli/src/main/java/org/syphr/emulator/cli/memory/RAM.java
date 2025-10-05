@@ -27,13 +27,8 @@ public class RAM extends Segment
 
     public RAM(Address start, Address end)
     {
-        this(start, end, Map.of());
-    }
-
-    public RAM(Address start, Address end, Map<Address, Value> data)
-    {
         super(start, end);
-        this.data = new TreeMap<>(data);
+        this.data = new TreeMap<>();
     }
 
     @Override
