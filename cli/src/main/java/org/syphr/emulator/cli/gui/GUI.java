@@ -27,6 +27,7 @@ public class GUI
     private final CPUManager cpuManager;
     private final JFrame frame;
     private final AddressTableModel addressData;
+    private final OpLogTableModel opLogData;
 
     public GUI()
     {
@@ -70,7 +71,7 @@ public class GUI
                     @Override
                     protected @Nullable Object doInBackground() throws Exception
                     {
-                        cpuManager.start(addressData.getMemoryMap());
+                        cpuManager.start(addressData.getMemoryMap(), opLogData);
                         return null;
                     }
                 }.execute();
@@ -96,7 +97,8 @@ public class GUI
         frame.setJMenuBar(menuBar);
 
         addressData = new AddressTableModel();
-        var cpuMon = new CPUMonitor(addressData);
+        opLogData = new OpLogTableModel();
+        var cpuMon = new CPUMonitor(addressData, opLogData);
         frame.getContentPane().add(cpuMon.getRoot());
     }
 

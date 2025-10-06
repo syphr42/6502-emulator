@@ -18,7 +18,6 @@ package org.syphr.emulator.cli.gui;
 import lombok.Getter;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
-import org.syphr.emulator.cpu.CPUState;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -29,7 +28,7 @@ class CPUMonitor
     @Getter
     private final JPanel root;
 
-    public CPUMonitor(AddressTableModel addressData)
+    public CPUMonitor(AddressTableModel addressData, OpLogTableModel opLogData)
     {
         root = new JPanel();
         root.setLayout(new GridBagLayout());
@@ -70,12 +69,6 @@ class CPUMonitor
         mainSplit.setRightComponent(opLogScroll);
         JTable opLogTable = new JTable();
         opLogScroll.setViewportView(opLogTable);
-        var opLogData = new OpLogTableModel();
         opLogTable.setModel(opLogData);
-    }
-
-    public void updateState(CPUState state)
-    {
-        // TODO
     }
 }

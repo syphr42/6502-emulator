@@ -24,7 +24,9 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 import org.syphr.emulator.common.Register;
 import org.syphr.emulator.common.Value;
+import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 
+import javax.swing.event.EventListenerList;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -39,6 +41,7 @@ import static org.syphr.emulator.cpu.Operation.*;
 public class CPU implements Runnable
 {
     private final HardwareInterruptState interrupts = new HardwareInterruptState();
+    private final EventListenerList listeners = new EventListenerList();
 
     @ToString.Include
     private final Register accumulator;
@@ -154,6 +157,16 @@ public class CPU implements Runnable
                             status.flags());
     }
 
+    public void addListener(OperationListener listener)
+    {
+        listeners.add(OperationListener.class, listener);
+    }
+
+    public void removeListener(OperationListener listener)
+    {
+        listeners.remove(OperationListener.class, listener);
+    }
+
     // --------------- Start External Inputs ------------------
 
     public long advanceClock()
@@ -245,8 +258,10 @@ public class CPU implements Runnable
             log.info("Executing op {}", op);
             execute(op);
             log.info("Completed op {}", op);
+            log.info(getState().toString());
         }
-        log.info(getState().toString());
+
+        fireOperationCompleted(new OperationEvent(getState(), op));
     }
 
     void execute(Operation operation)
@@ -493,6 +508,13 @@ public class CPU implements Runnable
         clock.awaitNextCycle();
 
         return value.isSet(position);
+    }
+
+    private void fireOperationCompleted(OperationEvent event)
+    {
+        for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
+            listener.operationCompleted(event);
+        }
     }
 
     @RequiredArgsConstructor

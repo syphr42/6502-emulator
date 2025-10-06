@@ -17,9 +17,11 @@ package org.syphr.emulator.cli.gui;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.syphr.emulator.cpu.CPUState;
+import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 import org.syphr.emulator.cpu.Flags;
+import org.syphr.emulator.cpu.OperationListener;
 
+import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -27,13 +29,13 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class OpLogTableModel extends AbstractTableModel
+public class OpLogTableModel extends AbstractTableModel implements OperationListener
 {
     @RequiredArgsConstructor
     @Getter
     enum Column
     {
-        PROGRAM_COUNTER("PC"), STATUS("NV-BDIZC"), ACCUMULATOR("A"), X("X"), Y("Y"), STACK_POINTER("SP");
+        PROGRAM_COUNTER("PC"), OP("OP"), STATUS("NV-BDIZC"), ACCUMULATOR("A"), X("X"), Y("Y"), STACK_POINTER("SP");
 
         private final String displayName;
 
@@ -48,12 +50,12 @@ public class OpLogTableModel extends AbstractTableModel
         }
     }
 
-    private final List<CPUState> states = new ArrayList<>();
+    private final List<OperationEvent> opEvents = new ArrayList<>();
 
     @Override
     public int getRowCount()
     {
-        return states.size();
+        return opEvents.size();
     }
 
     @Override
@@ -71,28 +73,39 @@ public class OpLogTableModel extends AbstractTableModel
     @Override
     public Object getValueAt(int rowIndex, int columnIndex)
     {
-        CPUState state = states.get(rowIndex);
+        OperationEvent event = opEvents.get(rowIndex);
 
         return switch (Column.fromIndex(columnIndex)) {
-            case PROGRAM_COUNTER -> state.programCounter();
-            case STATUS -> flagsAsBits(state.flags());
-            case ACCUMULATOR -> state.accumulator();
-            case X -> state.x();
-            case Y -> state.y();
-            case STACK_POINTER -> state.stackPointer();
+            case PROGRAM_COUNTER -> event.state().programCounter();
+            case OP -> event.op();
+            case STATUS -> flagsAsBits(event.state().flags());
+            case ACCUMULATOR -> event.state().accumulator();
+            case X -> event.state().x();
+            case Y -> event.state().y();
+            case STACK_POINTER -> event.state().stackPointer();
         };
     }
 
-    public void addState(CPUState state)
+    @Override
+    public void operationCompleted(OperationEvent event)
     {
-        states.add(state);
-        int newRow = states.size() - 1;
-        fireTableRowsInserted(newRow, newRow);
+        SwingUtilities.invokeLater(() -> {
+            opEvents.add(event);
+            int newRow = opEvents.size() - 1;
+            fireTableRowsInserted(newRow, newRow);
+        });
     }
 
     private String flagsAsBits(Flags flags)
     {
-        return Stream.<Supplier<Boolean>>of(flags::negative, flags::overflow)
+        return Stream.<Supplier<Boolean>>of(flags::negative,
+                                            flags::overflow,
+                                            flags::user,
+                                            flags::breakCommand,
+                                            flags::decimal,
+                                            flags::irqDisable,
+                                            flags::zero,
+                                            flags::carry)
                      .map(Supplier::get)
                      .map(this::booleanToBit)
                      .collect(Collectors.joining());
