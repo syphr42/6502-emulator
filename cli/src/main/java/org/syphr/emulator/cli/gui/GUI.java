@@ -21,6 +21,8 @@ import org.syphr.emulator.cli.demo.Programs;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 
 public class GUI
 {
@@ -33,10 +35,35 @@ public class GUI
     {
         cpuManager = new CPUManager();
 
+        var stopCpuAction = new AbstractAction("Stop")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                new SwingWorker<>()
+                {
+                    @Override
+                    protected @Nullable Object doInBackground() throws Exception
+                    {
+                        cpuManager.stop();
+                        return null;
+                    }
+                }.execute();
+            }
+        };
+
         frame = new JFrame("6502 Emulator");
         frame.setPreferredSize(new Dimension(640, 480));
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.addWindowListener(new WindowAdapter()
+        {
+            @Override
+            public void windowClosed(WindowEvent e)
+            {
+                stopCpuAction.actionPerformed(new ActionEvent(frame, ActionEvent.ACTION_PERFORMED, "window closed"));
+            }
+        });
 
         var menuBar = new JMenuBar();
         var fileMenu = new JMenu("File");
@@ -77,22 +104,7 @@ public class GUI
                 }.execute();
             }
         });
-        cpuMenu.add(new AbstractAction("Stop")
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                new SwingWorker<Object, Object>()
-                {
-                    @Override
-                    protected @Nullable Object doInBackground() throws Exception
-                    {
-                        cpuManager.stop();
-                        return null;
-                    }
-                }.execute();
-            }
-        });
+        cpuMenu.add(stopCpuAction);
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 
