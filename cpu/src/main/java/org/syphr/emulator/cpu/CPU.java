@@ -24,6 +24,7 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 import org.syphr.emulator.common.Register;
 import org.syphr.emulator.common.Value;
+import org.syphr.emulator.common.clock.ClockGenerator;
 import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 
 import javax.swing.event.EventListenerList;
@@ -72,11 +73,19 @@ public class CPU implements Runnable
     public static class Builder
     {
         @Nullable
+        private ClockGenerator clockGenerator;
+        @Nullable
         private Reader reader;
         @Nullable
         private Writer writer;
         @Nullable
         private Address start;
+
+        public Builder clockGenerator(ClockGenerator clockGenerator)
+        {
+            this.clockGenerator = clockGenerator;
+            return this;
+        }
 
         public Builder addressable(Addressable addressable)
         {
@@ -103,15 +112,14 @@ public class CPU implements Runnable
 
         public CPU build()
         {
-            return new CPU(Objects.requireNonNull(reader),
+            var clock = new Clock();
+            Objects.requireNonNull(clockGenerator).addListener(clock);
+
+            return new CPU(clock,
+                           Objects.requireNonNull(reader),
                            Objects.requireNonNull(writer),
                            start);
         }
-    }
-
-    public CPU(Reader reader, Writer writer, @Nullable Address start)
-    {
-        this(new Clock(), reader, writer, start);
     }
 
     CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start)
@@ -157,6 +165,8 @@ public class CPU implements Runnable
                             status.flags());
     }
 
+    // --------------- Start Listener Management ------------------
+
     public void addListener(OperationListener listener)
     {
         listeners.add(OperationListener.class, listener);
@@ -167,12 +177,9 @@ public class CPU implements Runnable
         listeners.remove(OperationListener.class, listener);
     }
 
-    // --------------- Start External Inputs ------------------
+    // --------------- End Listener Management ------------------
 
-    public long advanceClock()
-    {
-        return clock.startNextCycle();
-    }
+    // --------------- Start External Inputs ------------------
 
     public void reset()
     {

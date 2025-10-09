@@ -31,13 +31,13 @@ public class CPUManager
     {
         stop();
 
-        var cpu = CPU.builder().addressable(memoryMap).build();
+        var clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
+        clockThread = new Thread(clockSignal, "Clock");
+
+        var cpu = CPU.builder().clockGenerator(clockSignal).addressable(memoryMap).build();
         cpu.addListener(listener);
         cpu.reset();
         cpuThread = new Thread(cpu, "CPU");
-
-        var clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0, cpu);
-        clockThread = new Thread(clockSignal, "Clock");
 
         cpuThread.start();
         clockThread.start();

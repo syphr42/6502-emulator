@@ -18,6 +18,8 @@ package org.syphr.emulator.cpu;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
+import org.syphr.emulator.common.clock.ClockEvent;
+import org.syphr.emulator.common.clock.ClockListener;
 
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -25,7 +27,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
 @RequiredArgsConstructor
-class Clock
+class Clock implements ClockListener
 {
     private final Lock lock = new ReentrantLock();
     private final Condition cycle = lock.newCondition();
@@ -36,11 +38,12 @@ class Clock
     // mutated while locked
     private long cycleCount;
 
-    public long startNextCycle()
+    @Override
+    public void tick(ClockEvent event)
     {
         lock.lock();
         try {
-            cycleCount++;
+            cycleCount = event.cycle();
             updateLoggingContext();
             log.info("Clock cycle {}", cycleCount);
             newCycle = true;
@@ -48,8 +51,6 @@ class Clock
         } finally {
             lock.unlock();
         }
-
-        return cycleCount;
     }
 
     public void awaitNextCycle()
