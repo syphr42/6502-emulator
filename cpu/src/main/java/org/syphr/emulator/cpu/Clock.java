@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cpu;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -35,8 +36,8 @@ class Clock implements ClockListener
     // used only while locked
     private boolean newCycle;
 
-    // mutated while locked
-    private long cycleCount;
+    @Getter
+    private volatile long cycleCount;
 
     @Override
     public void tick(ClockEvent event)

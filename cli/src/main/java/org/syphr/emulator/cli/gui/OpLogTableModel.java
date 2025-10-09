@@ -35,7 +35,14 @@ public class OpLogTableModel extends AbstractTableModel implements OperationList
     @Getter
     enum Column
     {
-        PROGRAM_COUNTER("PC"), OP("OP"), STATUS("NV-BDIZC"), ACCUMULATOR("A"), X("X"), Y("Y"), STACK_POINTER("SP");
+        CLOCK_CYCLE("Clock"),
+        PROGRAM_COUNTER("PC"),
+        OP("OP"),
+        STATUS("NV-BDIZC"),
+        ACCUMULATOR("A"),
+        X("X"),
+        Y("Y"),
+        STACK_POINTER("SP");
 
         private final String displayName;
 
@@ -76,6 +83,7 @@ public class OpLogTableModel extends AbstractTableModel implements OperationList
         OperationEvent event = opEvents.get(rowIndex);
 
         return switch (Column.fromIndex(columnIndex)) {
+            case CLOCK_CYCLE -> event.clockCycle();
             case PROGRAM_COUNTER -> event.state().programCounter();
             case OP -> event.op();
             case STATUS -> flagsAsBits(event.state().flags());

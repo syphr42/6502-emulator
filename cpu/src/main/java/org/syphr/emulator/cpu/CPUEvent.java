@@ -17,5 +17,5 @@ package org.syphr.emulator.cpu;
 
 public sealed interface CPUEvent
 {
-    record OperationEvent(CPUState state, Operation op) implements CPUEvent {}
+    record OperationEvent(CPUState state, Operation op, long clockCycle) implements CPUEvent {}
 }

@@ -268,7 +268,7 @@ public class CPU implements Runnable
             log.info(getState().toString());
         }
 
-        fireOperationCompleted(new OperationEvent(getState(), op));
+        fireOperationCompleted(new OperationEvent(getState(), op, clock.getCycleCount()));
     }
 
     void execute(Operation operation)
