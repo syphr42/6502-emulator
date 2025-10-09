@@ -54,6 +54,8 @@ public class GUI
             }
         };
 
+        setLookAndFeel();
+
         var frame = new JFrame("6502 Emulator");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
@@ -114,5 +116,16 @@ public class GUI
 
         frame.pack();
         frame.setVisible(true);
+    }
+
+    private void setLookAndFeel()
+    {
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (ClassNotFoundException | InstantiationException | IllegalAccessException |
+                 UnsupportedLookAndFeelException e) {
+            // this should not be possible
+            throw new RuntimeException(e);
+        }
     }
 }
