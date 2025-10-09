@@ -33,7 +33,7 @@ public class OpLogTableModel extends AbstractTableModel implements OperationList
 {
     @RequiredArgsConstructor
     @Getter
-    enum Column
+    public enum Column
     {
         CLOCK_CYCLE("Clock"),
         PROGRAM_COUNTER("PC"),

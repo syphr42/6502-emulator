@@ -52,7 +52,7 @@ public class AddressTableModel extends AbstractTableModel
     @Override
     public String getColumnName(int columnIndex)
     {
-        return "";
+        return columnIndex == 0 ? "" : "%01X".formatted(columnIndex - 1);
     }
 
     @Override

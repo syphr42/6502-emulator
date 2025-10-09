@@ -19,7 +19,6 @@ import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.demo.Programs;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -27,13 +26,16 @@ import java.awt.event.WindowEvent;
 public class GUI
 {
     private final CPUManager cpuManager;
-    private final JFrame frame;
-    private final AddressTableModel addressData;
-    private final OpLogTableModel opLogData;
 
     public GUI()
     {
         cpuManager = new CPUManager();
+    }
+
+    public void show()
+    {
+        var addressData = new AddressTableModel();
+        var opLogData = new OpLogTableModel();
 
         var stopCpuAction = new AbstractAction("Stop")
         {
@@ -52,8 +54,7 @@ public class GUI
             }
         };
 
-        frame = new JFrame("6502 Emulator");
-        frame.setPreferredSize(new Dimension(640, 480));
+        var frame = new JFrame("6502 Emulator");
         frame.setExtendedState(JFrame.MAXIMIZED_BOTH);
         frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
         frame.addWindowListener(new WindowAdapter()
@@ -93,7 +94,7 @@ public class GUI
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                new SwingWorker<Object, Object>()
+                new SwingWorker<>()
                 {
                     @Override
                     protected @Nullable Object doInBackground() throws Exception
@@ -108,14 +109,9 @@ public class GUI
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 
-        addressData = new AddressTableModel();
-        opLogData = new OpLogTableModel();
         var cpuMon = new CPUMonitor(addressData, opLogData);
         frame.getContentPane().add(cpuMon.getRoot());
-    }
 
-    public void show()
-    {
         frame.pack();
         frame.setVisible(true);
     }

@@ -16,6 +16,7 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.Getter;
+import org.syphr.emulator.cli.gui.OpLogTableModel.Column;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
 
@@ -32,8 +33,8 @@ class CPUMonitor
     {
         root = new JPanel();
         root.setLayout(new GridBagLayout());
-        GridBagConstraints gbc;
-        gbc = new GridBagConstraints();
+
+        GridBagConstraints gbc = new GridBagConstraints();
         gbc.gridx = 0;
         gbc.gridy = 0;
         gbc.weightx = 1.0;
@@ -41,12 +42,16 @@ class CPUMonitor
         gbc.fill = GridBagConstraints.BOTH;
 
         JSplitPane mainSplit = new JSplitPane();
+        mainSplit.setLeftComponent(createAddressTableScrollPane(addressData));
+        mainSplit.setRightComponent(createOpLogTableScrollPane(opLogData));
         root.add(mainSplit, gbc);
+    }
 
-        JScrollPane addressScroll = new JScrollPane();
-        mainSplit.setLeftComponent(addressScroll);
+    private static JScrollPane createAddressTableScrollPane(AddressTableModel addressData)
+    {
         JTable addressTable = new JTable();
-        addressScroll.setViewportView(addressTable);
+        addressTable.setModel(addressData);
+        addressTable.getColumnModel().getColumn(0).setPreferredWidth(200);
         addressTable.setDefaultRenderer(Address.class, new DefaultTableCellRenderer()
         {
             @Override
@@ -63,12 +68,29 @@ class CPUMonitor
                 setText("%02X".formatted(((Value) value).data()));
             }
         });
-        addressTable.setModel(addressData);
+
+        JScrollPane addressScroll = new JScrollPane();
+        addressScroll.setViewportView(addressTable);
+
+        return addressScroll;
+    }
+
+    private static JScrollPane createOpLogTableScrollPane(OpLogTableModel opLogData)
+    {
+        JTable opLogTable = new JTable();
+        opLogTable.setModel(opLogData);
+        opLogTable.getColumn(Column.CLOCK_CYCLE.getDisplayName()).setPreferredWidth(300);
+        opLogTable.getColumn(Column.PROGRAM_COUNTER.getDisplayName()).setPreferredWidth(250);
+        opLogTable.getColumn(Column.OP.getDisplayName()).setPreferredWidth(600);
+        opLogTable.getColumn(Column.STATUS.getDisplayName()).setPreferredWidth(400);
+        opLogTable.getColumn(Column.ACCUMULATOR.getDisplayName()).setPreferredWidth(250);
+        opLogTable.getColumn(Column.X.getDisplayName()).setPreferredWidth(250);
+        opLogTable.getColumn(Column.Y.getDisplayName()).setPreferredWidth(250);
+        opLogTable.getColumn(Column.STACK_POINTER.getDisplayName()).setPreferredWidth(250);
 
         JScrollPane opLogScroll = new JScrollPane();
-        mainSplit.setRightComponent(opLogScroll);
-        JTable opLogTable = new JTable();
         opLogScroll.setViewportView(opLogTable);
-        opLogTable.setModel(opLogData);
+
+        return opLogScroll;
     }
 }
