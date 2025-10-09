@@ -268,7 +268,7 @@ public class CPU implements Runnable
             log.info(getState().toString());
         }
 
-        fireOperationCompleted(new OperationEvent(getState(), op, clock.getCycleCount()));
+        fireOperationCompleted(getState(), op, clock.getCycleCount());
     }
 
     void execute(Operation operation)
@@ -517,9 +517,13 @@ public class CPU implements Runnable
         return value.isSet(position);
     }
 
-    private void fireOperationCompleted(OperationEvent event)
+    private void fireOperationCompleted(CPUState state, Operation op, long cycleCount)
     {
+        OperationEvent event = null;
         for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
+            if (event == null) {
+                event = new OperationEvent(state, op, cycleCount);
+            }
             listener.operationCompleted(event);
         }
     }
