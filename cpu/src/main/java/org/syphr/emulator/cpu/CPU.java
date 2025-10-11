@@ -182,7 +182,6 @@ public class CPU implements Runnable, ClockListener
 
     // --------------- Start External Inputs ------------------
 
-
     @Override
     public void cycleStarted(ClockEvent event)
     {

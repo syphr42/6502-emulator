@@ -89,6 +89,7 @@ class CPUMonitor
 
         var scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
+        setAutoScroll(scrollPane);
 
         return scrollPane;
     }
@@ -106,7 +107,14 @@ class CPUMonitor
 
         var scrollPane = new JScrollPane();
         scrollPane.setViewportView(table);
+        setAutoScroll(scrollPane);
 
         return scrollPane;
+    }
+
+    private static void setAutoScroll(JScrollPane scrollPane)
+    {
+        scrollPane.getVerticalScrollBar()
+                  .addAdjustmentListener(event -> event.getAdjustable().setValue(event.getAdjustable().getMaximum()));
     }
 }
