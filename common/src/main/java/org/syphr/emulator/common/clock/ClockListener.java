@@ -19,5 +19,7 @@ import java.util.EventListener;
 
 public interface ClockListener extends EventListener
 {
-    void tick(ClockEvent event);
+    void cycleStarted(ClockEvent event);
+
+    void cycleEnded(ClockEvent event);
 }

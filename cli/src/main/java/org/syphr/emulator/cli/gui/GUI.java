@@ -36,6 +36,7 @@ public class GUI
     {
         var addressData = new AddressTableModel();
         var opLogData = new OpLogTableModel();
+        var cycleLogData = new CycleLogTableModel();
 
         var stopCpuAction = new AbstractAction("Stop")
         {
@@ -101,7 +102,7 @@ public class GUI
                     @Override
                     protected @Nullable Object doInBackground() throws Exception
                     {
-                        cpuManager.start(addressData.getMemoryMap(), opLogData);
+                        cpuManager.start(addressData.getMemoryMap(), opLogData, cycleLogData);
                         return null;
                     }
                 }.execute();
@@ -111,7 +112,7 @@ public class GUI
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 
-        var cpuMon = new CPUMonitor(addressData, opLogData);
+        var cpuMon = new CPUMonitor(addressData, opLogData, cycleLogData);
         frame.getContentPane().add(cpuMon.getRoot());
 
         frame.pack();

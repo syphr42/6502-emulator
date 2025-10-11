@@ -63,7 +63,7 @@ public class ClockSignal implements Runnable, ClockGenerator
     {
         while (!Thread.interrupted()) {
             long cycle = ++cycleCount;
-            fireClockTick(new ClockEvent(cycle));
+            fireCycleStarted();
 
             if (cycle == breakAfterCycle) {
                 stepping.set(true);
@@ -78,6 +78,8 @@ public class ClockSignal implements Runnable, ClockGenerator
             } catch (InterruptedException e) {
                 break;
             }
+
+            fireCycleEnded();
         }
     }
 
@@ -122,10 +124,25 @@ public class ClockSignal implements Runnable, ClockGenerator
         }
     }
 
-    private void fireClockTick(ClockEvent event)
+    private void fireCycleStarted()
     {
+        ClockEvent event = null;
         for (ClockListener listener : listeners) {
-            listener.tick(event);
+            if (event == null) {
+                event = new ClockEvent(cycleCount);
+            }
+            listener.cycleStarted(event);
+        }
+    }
+
+    private void fireCycleEnded()
+    {
+        ClockEvent event = null;
+        for (ClockListener listener : listeners) {
+            if (event == null) {
+                event = new ClockEvent(cycleCount);
+            }
+            listener.cycleEnded(event);
         }
     }
 }

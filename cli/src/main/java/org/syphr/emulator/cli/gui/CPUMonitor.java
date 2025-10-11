@@ -16,7 +16,6 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.Getter;
-import org.syphr.emulator.cli.gui.OpLogTableModel.Column;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
 
@@ -29,7 +28,7 @@ class CPUMonitor
     @Getter
     private final JPanel root;
 
-    public CPUMonitor(AddressTableModel addressData, OpLogTableModel opLogData)
+    public CPUMonitor(AddressTableModel addressData, OpLogTableModel opLogData, CycleLogTableModel cycleLogData)
     {
         root = new JPanel();
         root.setLayout(new GridBagLayout());
@@ -41,9 +40,9 @@ class CPUMonitor
         gbc.weighty = 1.0;
         gbc.fill = GridBagConstraints.BOTH;
 
-        JSplitPane mainSplit = new JSplitPane();
+        var mainSplit = new JSplitPane();
         mainSplit.setLeftComponent(createAddressTableScrollPane(addressData));
-        mainSplit.setRightComponent(createOpLogTableScrollPane(opLogData));
+        mainSplit.setRightComponent(createLogSplitPane(opLogData, cycleLogData));
         root.add(mainSplit, gbc);
     }
 
@@ -75,22 +74,39 @@ class CPUMonitor
         return addressScroll;
     }
 
-    private static JScrollPane createOpLogTableScrollPane(OpLogTableModel opLogData)
+    private static JSplitPane createLogSplitPane(OpLogTableModel opLogData, CycleLogTableModel cycleLogData)
     {
-        JTable opLogTable = new JTable();
-        opLogTable.setModel(opLogData);
-        opLogTable.getColumn(Column.CLOCK_CYCLE.getDisplayName()).setPreferredWidth(300);
-        opLogTable.getColumn(Column.PROGRAM_COUNTER.getDisplayName()).setPreferredWidth(250);
-        opLogTable.getColumn(Column.OP.getDisplayName()).setPreferredWidth(600);
-        opLogTable.getColumn(Column.STATUS.getDisplayName()).setPreferredWidth(400);
-        opLogTable.getColumn(Column.ACCUMULATOR.getDisplayName()).setPreferredWidth(250);
-        opLogTable.getColumn(Column.X.getDisplayName()).setPreferredWidth(250);
-        opLogTable.getColumn(Column.Y.getDisplayName()).setPreferredWidth(250);
-        opLogTable.getColumn(Column.STACK_POINTER.getDisplayName()).setPreferredWidth(250);
+        var logSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
+        logSplit.setTopComponent(createOpLogTableScrollPane(opLogData));
+        logSplit.setBottomComponent(createCycleLogTableScrollPane(cycleLogData));
 
-        JScrollPane opLogScroll = new JScrollPane();
-        opLogScroll.setViewportView(opLogTable);
+        return logSplit;
+    }
 
-        return opLogScroll;
+    private static JScrollPane createOpLogTableScrollPane(OpLogTableModel model)
+    {
+        var table = new JTable(model);
+
+        var scrollPane = new JScrollPane();
+        scrollPane.setViewportView(table);
+
+        return scrollPane;
+    }
+
+    private static JScrollPane createCycleLogTableScrollPane(CycleLogTableModel model)
+    {
+        var table = new JTable(model);
+        table.getColumn(CycleLogTableModel.Column.CLOCK_CYCLE.getDisplayName()).setPreferredWidth(300);
+        table.getColumn(CycleLogTableModel.Column.PROGRAM_COUNTER.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.STATUS.getDisplayName()).setPreferredWidth(400);
+        table.getColumn(CycleLogTableModel.Column.ACCUMULATOR.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.X.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.Y.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.STACK_POINTER.getDisplayName()).setPreferredWidth(250);
+
+        var scrollPane = new JScrollPane();
+        scrollPane.setViewportView(table);
+
+        return scrollPane;
     }
 }

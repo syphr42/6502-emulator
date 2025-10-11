@@ -39,11 +39,7 @@ public class ProgramRunner
                          long breakAfterCycle,
                          @Nullable Address executionStart)
     {
-        var clockSignal = new ClockSignal(clockPeriod, stepping, breakAfterCycle);
-        clockThread = new Thread(clockSignal, "Clock");
-
         cpu = CPU.builder()
-                 .clockGenerator(clockSignal)
                  .addressable(memoryMap)
                  .start(executionStart)
                  .build();
@@ -51,6 +47,10 @@ public class ProgramRunner
             cpu.reset();
         }
         cpuThread = new Thread(cpu, "CPU");
+
+        var clockSignal = new ClockSignal(clockPeriod, stepping, breakAfterCycle);
+        clockSignal.addListener(cpu);
+        clockThread = new Thread(clockSignal, "Clock");
 
         var inputManager = new InputManager(terminal, clockSignal, new Interrupter(cpu));
         inputThread = new Thread(inputManager, "Input");

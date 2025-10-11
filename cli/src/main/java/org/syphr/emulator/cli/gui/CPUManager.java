@@ -20,6 +20,7 @@ import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.clock.ClockSignal;
 import org.syphr.emulator.cpu.Addressable;
 import org.syphr.emulator.cpu.CPU;
+import org.syphr.emulator.cpu.ClockCycleListener;
 import org.syphr.emulator.cpu.OperationListener;
 
 public class CPUManager
@@ -27,17 +28,19 @@ public class CPUManager
     private @Nullable Thread clockThread;
     private @Nullable Thread cpuThread;
 
-    public void start(Addressable memoryMap, OperationListener listener)
+    public void start(Addressable memoryMap, OperationListener opListener, ClockCycleListener cycleListener)
     {
         stop();
 
-        var clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
-        clockThread = new Thread(clockSignal, "Clock");
-
-        var cpu = CPU.builder().clockGenerator(clockSignal).addressable(memoryMap).build();
-        cpu.addListener(listener);
+        var cpu = CPU.builder().addressable(memoryMap).build();
+        cpu.addListener(opListener);
+        cpu.addListener(cycleListener);
         cpu.reset();
         cpuThread = new Thread(cpu, "CPU");
+
+        var clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
+        clockSignal.addListener(cpu);
+        clockThread = new Thread(clockSignal, "Clock");
 
         cpuThread.start();
         clockThread.start();

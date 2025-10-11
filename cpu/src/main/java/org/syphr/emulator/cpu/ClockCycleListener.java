@@ -15,9 +15,11 @@
  */
 package org.syphr.emulator.cpu;
 
-public sealed interface CPUEvent
-{
-    record OperationEvent(CPUState state, Operation op, long startCycle, long endCycle) implements CPUEvent {}
+import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
 
-    record ClockCycleEvent(CPUState state, long clockCycle) implements CPUEvent {}
+import java.util.EventListener;
+
+public interface ClockCycleListener extends EventListener
+{
+    void clockCycleCompleted(ClockCycleEvent event);
 }
