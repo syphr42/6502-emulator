@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cli.gui;
 
+import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.demo.Programs;
 
@@ -23,14 +24,10 @@ import java.awt.event.ActionEvent;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
+@RequiredArgsConstructor
 public class GUI
 {
     private final CPUManager cpuManager;
-
-    public GUI()
-    {
-        cpuManager = new CPUManager();
-    }
 
     public void show()
     {

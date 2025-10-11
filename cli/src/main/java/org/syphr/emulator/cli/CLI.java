@@ -22,6 +22,7 @@ import org.springframework.shell.command.annotation.Command;
 import org.springframework.shell.command.annotation.Option;
 import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.demo.Programs;
+import org.syphr.emulator.cli.gui.CPUManager;
 import org.syphr.emulator.cli.gui.GUI;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cli.simple.ProgramRunner;
@@ -69,7 +70,8 @@ public class CLI
     public void gui()
     {
         System.setProperty("java.awt.headless", "false");
-        var gui = new GUI();
+        var cpuManager = new CPUManager();
+        var gui = new GUI(cpuManager);
         SwingUtilities.invokeLater(gui::show);
     }
 }
