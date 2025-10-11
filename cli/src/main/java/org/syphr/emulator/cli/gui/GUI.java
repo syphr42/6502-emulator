@@ -18,6 +18,7 @@ package org.syphr.emulator.cli.gui;
 import lombok.RequiredArgsConstructor;
 import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.demo.Programs;
+import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
 import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 import org.syphr.emulator.cpu.ClockCycleListener;
@@ -33,12 +34,12 @@ public class GUI
 {
     private final CPUManager cpuManager;
 
+    private final AddressTableModel addressData = new AddressTableModel();
+    private final OpLogTableModel opLogData = new OpLogTableModel();
+    private final CycleLogTableModel cycleLogData = new CycleLogTableModel();
+
     public void show()
     {
-        var addressData = new AddressTableModel();
-        var opLogData = new OpLogTableModel();
-        var cycleLogData = new CycleLogTableModel();
-
         var stopCpuAction = new AbstractAction("Stop")
         {
             @Override
@@ -82,13 +83,21 @@ public class GUI
         });
         menuBar.add(fileMenu);
         var addressingMenu = new JMenu("Addressing");
-        addressingMenu.add(new JMenuItem("Load ROM"));
+        addressingMenu.add(new AbstractAction("Load ROM")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                var dialog = new ROMSelectionDialog(frame, GUI.this::changeMemoryMap);
+                dialog.setVisible(true);
+            }
+        });
         addressingMenu.add(new AbstractAction("Load Demo Program")
         {
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                addressData.loadMemoryMap(Programs.simpleLoopWithSubRoutine());
+                changeMemoryMap(Programs.simpleLoopWithSubRoutine());
             }
         });
         menuBar.add(addressingMenu);
@@ -148,5 +157,13 @@ public class GUI
             // this should not be possible
             throw new RuntimeException(e);
         }
+    }
+
+    private void changeMemoryMap(MemoryMap memoryMap)
+    {
+        cpuManager.stop();
+        opLogData.clear();
+        cycleLogData.clear();
+        addressData.loadMemoryMap(memoryMap);
     }
 }

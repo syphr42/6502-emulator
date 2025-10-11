@@ -99,6 +99,8 @@ public class AddressTableModel extends AbstractTableModel
 
     public void loadMemoryMap(MemoryMap memoryMap)
     {
+        clear();
+
         for (Segment segment : memoryMap.getSegments()) {
             if (segment instanceof ROM rom) {
                 for (Address address = rom.getStart(); !address.equals(rom.getEnd()); address = address.increment()) {
@@ -134,5 +136,11 @@ public class AddressTableModel extends AbstractTableModel
         }
 
         return baseAddress.plus(columnIndex - 1);
+    }
+
+    private void clear()
+    {
+        map.clear();
+        fireTableDataChanged();
     }
 }
