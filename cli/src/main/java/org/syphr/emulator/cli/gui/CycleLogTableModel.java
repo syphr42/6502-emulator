@@ -18,10 +18,8 @@ package org.syphr.emulator.cli.gui;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
-import org.syphr.emulator.cpu.ClockCycleListener;
 import org.syphr.emulator.cpu.Flags;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
@@ -29,7 +27,7 @@ import java.util.function.Supplier;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
-public class CycleLogTableModel extends AbstractTableModel implements ClockCycleListener
+public class CycleLogTableModel extends AbstractTableModel
 {
     @RequiredArgsConstructor
     @Getter
@@ -92,14 +90,23 @@ public class CycleLogTableModel extends AbstractTableModel implements ClockCycle
         };
     }
 
-    @Override
-    public void clockCycleCompleted(ClockCycleEvent event)
+    public void addEvent(ClockCycleEvent event)
     {
-        SwingUtilities.invokeLater(() -> {
-            events.add(event);
-            int newRow = events.size() - 1;
-            fireTableRowsInserted(newRow, newRow);
-        });
+        int newRowIndex = getRowCount();
+        events.add(event);
+        fireTableRowsInserted(newRowIndex, newRowIndex);
+    }
+
+    public void clear()
+    {
+        int rowCount = getRowCount();
+        if (rowCount == 0) {
+            return;
+        }
+
+        int lastRowIndex = rowCount - 1;
+        events.clear();
+        fireTableRowsDeleted(0, lastRowIndex);
     }
 
     private String flagsAsBits(Flags flags)

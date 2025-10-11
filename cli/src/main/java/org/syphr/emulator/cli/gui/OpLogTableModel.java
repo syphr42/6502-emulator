@@ -18,14 +18,12 @@ package org.syphr.emulator.cli.gui;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
-import org.syphr.emulator.cpu.OperationListener;
 
-import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
 import java.util.ArrayList;
 import java.util.List;
 
-public class OpLogTableModel extends AbstractTableModel implements OperationListener
+public class OpLogTableModel extends AbstractTableModel
 {
     @RequiredArgsConstructor
     @Getter
@@ -80,13 +78,22 @@ public class OpLogTableModel extends AbstractTableModel implements OperationList
         };
     }
 
-    @Override
-    public void operationCompleted(OperationEvent event)
+    public void addEvent(OperationEvent event)
     {
-        SwingUtilities.invokeLater(() -> {
-            events.add(event);
-            int newRow = events.size() - 1;
-            fireTableRowsInserted(newRow, newRow);
-        });
+        int newRowIndex = getRowCount();
+        events.add(event);
+        fireTableRowsInserted(newRowIndex, newRowIndex);
+    }
+
+    public void clear()
+    {
+        int rowCount = getRowCount();
+        if (rowCount == 0) {
+            return;
+        }
+
+        int lastRowIndex = rowCount - 1;
+        events.clear();
+        fireTableRowsDeleted(0, lastRowIndex);
     }
 }
