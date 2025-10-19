@@ -32,6 +32,10 @@ import java.util.Map;
 
 public class AddressTableModel extends AbstractTableModel
 {
+    private static final int MAX_ADDRESS = Address.MAX.toUnsignedInt();
+    private static final int ADDRESSES_PER_ROW = 16;
+    private static final int ROW_COUNT = (MAX_ADDRESS + ADDRESSES_PER_ROW) / ADDRESSES_PER_ROW;
+
     private final Map<Address, Value> map = new HashMap<>();
 
     @Getter
@@ -40,13 +44,13 @@ public class AddressTableModel extends AbstractTableModel
     @Override
     public int getRowCount()
     {
-        return 4096;
+        return ROW_COUNT;
     }
 
     @Override
     public int getColumnCount()
     {
-        return 17;
+        return ADDRESSES_PER_ROW + 1;
     }
 
     @Override
@@ -92,8 +96,8 @@ public class AddressTableModel extends AbstractTableModel
     {
         map.put(address, value);
 
-        int rowIndex = address.data() / 16;
-        int columnIndex = (address.data() % 16) + 1;
+        int rowIndex = address.data() / ADDRESSES_PER_ROW;
+        int columnIndex = (address.data() % ADDRESSES_PER_ROW) + 1;
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
@@ -130,7 +134,7 @@ public class AddressTableModel extends AbstractTableModel
 
     private Address toAddress(int rowIndex, int columnIndex)
     {
-        var baseAddress = Address.of(16 * rowIndex);
+        var baseAddress = Address.of(ADDRESSES_PER_ROW * rowIndex);
         if (columnIndex == 0) {
             return baseAddress;
         }
