@@ -37,7 +37,7 @@ public class ROMSelectionDialog extends JDialog
     private final JButton okButton = new JButton("OK");
 
     private boolean fileValid = false;
-    private boolean addressValid = false;
+    private boolean addressValid = true; // default value is valid
 
     public ROMSelectionDialog(Frame owner, Consumer<MemoryMap> memoryMapConsumer)
     {
