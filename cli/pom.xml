@@ -135,6 +135,8 @@
                             <classesDirectory>${project.build.outputDirectory}</classesDirectory>
                             <mainClass>${main-class}</mainClass>
                             <imageName>6502</imageName>
+                            <!-- TODO not sure if this is really needed -->
+                            <buildArgs>-Djava.awt.headless=false</buildArgs>
                         </configuration>
 
                         <executions>
