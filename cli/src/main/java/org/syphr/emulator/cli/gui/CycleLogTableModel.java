@@ -1,0 +1,131 @@
+/*
+ * Copyright © 2025 Gregory P. Moyer
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.syphr.emulator.cli.gui;
+
+import lombok.Getter;
+import lombok.RequiredArgsConstructor;
+import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
+import org.syphr.emulator.cpu.Flags;
+
+import javax.swing.table.AbstractTableModel;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.function.Supplier;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
+
+public class CycleLogTableModel extends AbstractTableModel
+{
+    @RequiredArgsConstructor
+    @Getter
+    public enum Column
+    {
+        CLOCK_CYCLE("Clock Cycle"),
+        PROGRAM_COUNTER("Program Counter"),
+        STATUS("Processor Status (NV-BDIZC)"),
+        ACCUMULATOR("Accumulator"),
+        X("X Register"),
+        Y("Y Register"),
+        STACK_POINTER("Stack Pointer");
+
+        private final String displayName;
+
+        static Column fromIndex(int index)
+        {
+            Column[] values = values();
+            if (index < 0 || index >= values.length) {
+                throw new IllegalArgumentException("Invalid column index: " + index);
+            }
+
+            return values[index];
+        }
+    }
+
+    private final List<ClockCycleEvent> events = new ArrayList<>();
+
+    @Override
+    public int getRowCount()
+    {
+        return events.size();
+    }
+
+    @Override
+    public int getColumnCount()
+    {
+        return Column.values().length;
+    }
+
+    @Override
+    public String getColumnName(int column)
+    {
+        return Column.fromIndex(column).getDisplayName();
+    }
+
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex)
+    {
+        ClockCycleEvent event = events.get(rowIndex);
+
+        return switch (Column.fromIndex(columnIndex)) {
+            case CLOCK_CYCLE -> event.clockCycle();
+            case PROGRAM_COUNTER -> event.state().programCounter();
+            case STATUS -> flagsAsBits(event.state().flags());
+            case ACCUMULATOR -> event.state().accumulator();
+            case X -> event.state().x();
+            case Y -> event.state().y();
+            case STACK_POINTER -> event.state().stackPointer();
+        };
+    }
+
+    public void addEvent(ClockCycleEvent event)
+    {
+        int newRowIndex = getRowCount();
+        events.add(event);
+        fireTableRowsInserted(newRowIndex, newRowIndex);
+    }
+
+    public void clear()
+    {
+        int rowCount = getRowCount();
+        if (rowCount == 0) {
+            return;
+        }
+
+        int lastRowIndex = rowCount - 1;
+        events.clear();
+        fireTableRowsDeleted(0, lastRowIndex);
+    }
+
+    private String flagsAsBits(Flags flags)
+    {
+        return Stream.<Supplier<Boolean>>of(flags::negative,
+                                            flags::overflow,
+                                            flags::user,
+                                            flags::breakCommand,
+                                            flags::decimal,
+                                            flags::irqDisable,
+                                            flags::zero,
+                                            flags::carry)
+                     .map(Supplier::get)
+                     .map(this::booleanToBit)
+                     .collect(Collectors.joining());
+    }
+
+    private String booleanToBit(boolean b)
+    {
+        return b ? "1" : "0";
+    }
+}

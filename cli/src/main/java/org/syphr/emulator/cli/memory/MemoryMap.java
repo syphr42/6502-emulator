@@ -53,7 +53,7 @@ public class MemoryMap implements Addressable
 
         Address end = start.plus(bytes.length - 1);
         if (start.compareTo(end) > 0) {
-            throw new IllegalArgumentException("ROM is too large to fit in addressable memory");
+            throw new IllegalArgumentException("ROM is too large to fit in addressable memory starting at " + start);
         }
 
         List<Value> values = new ArrayList<>();
@@ -128,5 +128,10 @@ public class MemoryMap implements Addressable
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No memory segment contains address " + address))
                 .write(address, value);
+    }
+
+    public List<Segment> getSegments()
+    {
+        return List.copyOf(segments);
     }
 }

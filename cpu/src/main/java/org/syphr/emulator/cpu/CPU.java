@@ -24,7 +24,12 @@ import org.jspecify.annotations.Nullable;
 import org.slf4j.MDC;
 import org.syphr.emulator.common.Register;
 import org.syphr.emulator.common.Value;
+import org.syphr.emulator.common.clock.ClockEvent;
+import org.syphr.emulator.common.clock.ClockListener;
+import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
+import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 
+import javax.swing.event.EventListenerList;
 import java.util.Objects;
 import java.util.function.Function;
 
@@ -36,9 +41,10 @@ import static org.syphr.emulator.cpu.Operation.*;
 @Slf4j
 @ToString(onlyExplicitlyIncluded = true)
 @Getter(AccessLevel.PACKAGE)
-public class CPU implements Runnable
+public class CPU implements Runnable, ClockListener
 {
     private final HardwareInterruptState interrupts = new HardwareInterruptState();
+    private final EventListenerList listeners = new EventListenerList();
 
     @ToString.Include
     private final Register accumulator;
@@ -100,15 +106,11 @@ public class CPU implements Runnable
 
         public CPU build()
         {
-            return new CPU(Objects.requireNonNull(reader),
+            return new CPU(new Clock(),
+                           Objects.requireNonNull(reader),
                            Objects.requireNonNull(writer),
                            start);
         }
-    }
-
-    public CPU(Reader reader, Writer writer, @Nullable Address start)
-    {
-        this(new Clock(), reader, writer, start);
     }
 
     CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start)
@@ -154,11 +156,42 @@ public class CPU implements Runnable
                             status.flags());
     }
 
+    // --------------- Start Listener Management ------------------
+
+    public void addListener(OperationListener listener)
+    {
+        listeners.add(OperationListener.class, listener);
+    }
+
+    public void removeListener(OperationListener listener)
+    {
+        listeners.remove(OperationListener.class, listener);
+    }
+
+    public void addListener(ClockCycleListener listener)
+    {
+        listeners.add(ClockCycleListener.class, listener);
+    }
+
+    public void removeListener(ClockCycleListener listener)
+    {
+        listeners.remove(ClockCycleListener.class, listener);
+    }
+
+    // --------------- End Listener Management ------------------
+
     // --------------- Start External Inputs ------------------
 
-    public long advanceClock()
+    @Override
+    public void cycleStarted(ClockEvent event)
     {
-        return clock.startNextCycle();
+        clock.cycleStarted(event.cycle());
+    }
+
+    @Override
+    public void cycleEnded(ClockEvent event)
+    {
+        fireClockCycleCompleted(event.cycle());
     }
 
     public void reset()
@@ -241,12 +274,15 @@ public class CPU implements Runnable
     {
         log.info("Reading next operation");
         Operation op = decoder.nextOp(programManager);
+        long startCycle = clock.getCycleCount();
         try (MDC.MDCCloseable _ = MDC.putCloseable("op", op.getClass().getSimpleName())) {
             log.info("Executing op {}", op);
             execute(op);
             log.info("Completed op {}", op);
+            log.info(getState().toString());
         }
-        log.info(getState().toString());
+
+        fireOperationCompleted(getState(), op, startCycle, clock.getCycleCount());
     }
 
     void execute(Operation operation)
@@ -493,6 +529,28 @@ public class CPU implements Runnable
         clock.awaitNextCycle();
 
         return value.isSet(position);
+    }
+
+    private void fireClockCycleCompleted(long cycleCount)
+    {
+        ClockCycleEvent event = null;
+        for (ClockCycleListener listener : listeners.getListeners(ClockCycleListener.class)) {
+            if (event == null) {
+                event = new ClockCycleEvent(getState(), cycleCount);
+            }
+            listener.clockCycleCompleted(event);
+        }
+    }
+
+    private void fireOperationCompleted(CPUState state, Operation op, long startCycle, long endCycle)
+    {
+        OperationEvent event = null;
+        for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
+            if (event == null) {
+                event = new OperationEvent(state, op, startCycle, endCycle);
+            }
+            listener.operationCompleted(event);
+        }
     }
 
     @RequiredArgsConstructor

@@ -15,40 +15,55 @@
  */
 package org.syphr.emulator.cli.clock;
 
-import org.syphr.emulator.cpu.CPU;
+import org.syphr.emulator.common.clock.ClockEvent;
+import org.syphr.emulator.common.clock.ClockGenerator;
+import org.syphr.emulator.common.clock.ClockListener;
 
 import java.time.Duration;
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class ClockSignal implements Runnable
+public class ClockSignal implements Runnable, ClockGenerator
 {
     private final Lock stepper = new ReentrantLock();
     private final Condition step = stepper.newCondition();
-    boolean takeStep = false;
+    private boolean takeStep = false;
 
     private final AtomicReference<Duration> period;
     private final AtomicReference<Boolean> stepping;
-
     private final long breakAfterCycle;
 
-    private final CPU cpu;
+    private final List<ClockListener> listeners = new CopyOnWriteArrayList<>();
 
-    public ClockSignal(Duration period, boolean stepping, long breakAfterCycle, CPU cpu)
+    private long cycleCount = 0;
+
+    public ClockSignal(Duration period, boolean stepping, long breakAfterCycle)
     {
         this.period = new AtomicReference<>(period);
         this.stepping = new AtomicReference<>(stepping);
         this.breakAfterCycle = breakAfterCycle;
-        this.cpu = cpu;
+    }
+
+    public void addListener(ClockListener listener)
+    {
+        listeners.add(listener);
+    }
+
+    public void removeListener(ClockListener listener)
+    {
+        listeners.remove(listener);
     }
 
     @Override
     public void run()
     {
         while (!Thread.interrupted()) {
-            long cycle = cpu.advanceClock();
+            long cycle = ++cycleCount;
+            fireCycleStarted();
 
             if (cycle == breakAfterCycle) {
                 stepping.set(true);
@@ -63,6 +78,8 @@ public class ClockSignal implements Runnable
             } catch (InterruptedException e) {
                 break;
             }
+
+            fireCycleEnded();
         }
     }
 
@@ -104,6 +121,28 @@ public class ClockSignal implements Runnable
             takeStep = false;
         } finally {
             stepper.unlock();
+        }
+    }
+
+    private void fireCycleStarted()
+    {
+        ClockEvent event = null;
+        for (ClockListener listener : listeners) {
+            if (event == null) {
+                event = new ClockEvent(cycleCount);
+            }
+            listener.cycleStarted(event);
+        }
+    }
+
+    private void fireCycleEnded()
+    {
+        ClockEvent event = null;
+        for (ClockListener listener : listeners) {
+            if (event == null) {
+                event = new ClockEvent(cycleCount);
+            }
+            listener.cycleEnded(event);
         }
     }
 }

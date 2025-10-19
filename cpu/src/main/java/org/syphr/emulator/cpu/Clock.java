@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cpu;
 
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.slf4j.MDC;
@@ -33,14 +34,14 @@ class Clock
     // used only while locked
     private boolean newCycle;
 
-    // mutated while locked
-    private long cycleCount;
+    @Getter
+    private volatile long cycleCount;
 
-    public long startNextCycle()
+    public void cycleStarted(long cycleCount)
     {
         lock.lock();
         try {
-            cycleCount++;
+            this.cycleCount = cycleCount;
             updateLoggingContext();
             log.info("Clock cycle {}", cycleCount);
             newCycle = true;
@@ -48,8 +49,6 @@ class Clock
         } finally {
             lock.unlock();
         }
-
-        return cycleCount;
     }
 
     public void awaitNextCycle()

@@ -48,7 +48,8 @@ public class ProgramRunner
         }
         cpuThread = new Thread(cpu, "CPU");
 
-        var clockSignal = new ClockSignal(clockPeriod, stepping, breakAfterCycle, cpu);
+        var clockSignal = new ClockSignal(clockPeriod, stepping, breakAfterCycle);
+        clockSignal.addListener(cpu);
         clockThread = new Thread(clockSignal, "Clock");
 
         var inputManager = new InputManager(terminal, clockSignal, new Interrupter(cpu));

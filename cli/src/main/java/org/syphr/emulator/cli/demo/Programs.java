@@ -30,7 +30,7 @@ public interface Programs
     static MemoryMap simpleLoopWithSubRoutine()
     {
         var programStart = Address.of(0x02FB);
-        List<Operation> operations = List.of(lda(immediate(Value.ZERO)),
+        List<Operation> operations = List.of(lda(immediate(Value.of(1))),
                                              beq(relative(Value.of(2))),
                                              inc(accumulator()),
                                              inc(accumulator()),
