@@ -16,7 +16,6 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.RequiredArgsConstructor;
-import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.demo.Programs;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
@@ -45,15 +44,7 @@ public class GUI
             @Override
             public void actionPerformed(ActionEvent e)
             {
-                new SwingWorker<>()
-                {
-                    @Override
-                    protected @Nullable Object doInBackground()
-                    {
-                        cpuManager.stop();
-                        return null;
-                    }
-                }.execute();
+                cpuManager.stop();
             }
         };
 
@@ -110,31 +101,23 @@ public class GUI
                 opLogData.clear();
                 cycleLogData.clear();
 
-                new SwingWorker<>()
+                var opListener = new OperationListener()
                 {
                     @Override
-                    protected @Nullable Object doInBackground()
+                    public void operationCompleted(OperationEvent event)
                     {
-                        var opListener = new OperationListener()
-                        {
-                            @Override
-                            public void operationCompleted(OperationEvent event)
-                            {
-                                SwingUtilities.invokeLater(() -> opLogData.addEvent(event));
-                            }
-                        };
-                        var cycleListener = new ClockCycleListener()
-                        {
-                            @Override
-                            public void clockCycleCompleted(ClockCycleEvent event)
-                            {
-                                SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
-                            }
-                        };
-                        cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
-                        return null;
+                        SwingUtilities.invokeLater(() -> opLogData.addEvent(event));
                     }
-                }.execute();
+                };
+                var cycleListener = new ClockCycleListener()
+                {
+                    @Override
+                    public void clockCycleCompleted(ClockCycleEvent event)
+                    {
+                        SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
+                    }
+                };
+                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
             }
         });
         cpuMenu.add(stopCpuAction);

@@ -70,8 +70,9 @@ public class CLI
     public void gui()
     {
         System.setProperty("java.awt.headless", "false");
-        var cpuManager = new CPUManager();
-        var gui = new GUI(cpuManager);
-        SwingUtilities.invokeLater(gui::show);
+        SwingUtilities.invokeLater(() -> {
+            var gui = new GUI(new CPUManager());
+            gui.show();
+        });
     }
 }
