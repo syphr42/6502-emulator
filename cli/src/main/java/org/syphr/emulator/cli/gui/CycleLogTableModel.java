@@ -34,12 +34,12 @@ public class CycleLogTableModel extends AbstractTableModel
     public enum Column
     {
         CLOCK_CYCLE("Clock"),
-        PROGRAM_COUNTER("PC"),
-        STATUS("NV-BDIZC"),
-        ACCUMULATOR("A"),
-        X("X"),
-        Y("Y"),
-        STACK_POINTER("SP");
+        PROGRAM_COUNTER("Program Counter"),
+        STATUS("Processor Status (NV-BDIZC)"),
+        ACCUMULATOR("Accumlator"),
+        X("X Register"),
+        Y("Y Register"),
+        STACK_POINTER("Stack Pointer");
 
         private final String displayName;
 

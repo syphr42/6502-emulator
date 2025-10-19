@@ -29,9 +29,9 @@ public class OpLogTableModel extends AbstractTableModel
     @Getter
     public enum Column
     {
+        OP("Operation"),
         START_CYCLE("Clock Start"),
-        END_CYCLE("Clock End"),
-        OP("OP");
+        END_CYCLE("Clock End");
 
         private final String displayName;
 

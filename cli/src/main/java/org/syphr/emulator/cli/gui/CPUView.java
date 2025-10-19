@@ -23,12 +23,12 @@ import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
 import java.awt.*;
 
-class CPUMonitor
+class CPUView
 {
     @Getter
     private final JPanel root;
 
-    public CPUMonitor(AddressTableModel addressData, OpLogTableModel opLogData, CycleLogTableModel cycleLogData)
+    public CPUView(AddressTableModel addressData, OpLogTableModel opLogData, CycleLogTableModel cycleLogData)
     {
         root = new JPanel();
         root.setLayout(new GridBagLayout());
@@ -68,27 +68,19 @@ class CPUMonitor
             }
         });
 
-        JScrollPane addressScroll = new JScrollPane();
-        addressScroll.setViewportView(addressTable);
-
-        return addressScroll;
+        return new JScrollPane(addressTable);
     }
 
     private static JSplitPane createLogSplitPane(OpLogTableModel opLogData, CycleLogTableModel cycleLogData)
     {
-        var logSplit = new JSplitPane(JSplitPane.VERTICAL_SPLIT);
-        logSplit.setTopComponent(createOpLogTableScrollPane(opLogData));
-        logSplit.setBottomComponent(createCycleLogTableScrollPane(cycleLogData));
-
-        return logSplit;
+        return new JSplitPane(JSplitPane.VERTICAL_SPLIT,
+                              createOpLogTableScrollPane(opLogData),
+                              createCycleLogTableScrollPane(cycleLogData));
     }
 
     private static JScrollPane createOpLogTableScrollPane(OpLogTableModel model)
     {
-        var table = new JTable(model);
-
-        var scrollPane = new JScrollPane();
-        scrollPane.setViewportView(table);
+        var scrollPane = new JScrollPane(new JTable(model));
         setAutoScroll(scrollPane);
 
         return scrollPane;
@@ -105,8 +97,7 @@ class CPUMonitor
         table.getColumn(CycleLogTableModel.Column.Y.getDisplayName()).setPreferredWidth(250);
         table.getColumn(CycleLogTableModel.Column.STACK_POINTER.getDisplayName()).setPreferredWidth(250);
 
-        var scrollPane = new JScrollPane();
-        scrollPane.setViewportView(table);
+        var scrollPane = new JScrollPane(table);
         setAutoScroll(scrollPane);
 
         return scrollPane;

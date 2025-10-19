@@ -124,7 +124,7 @@ public class GUI
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 
-        var cpuMon = new CPUMonitor(addressData, opLogData, cycleLogData);
+        var cpuMon = new CPUView(addressData, opLogData, cycleLogData);
         frame.getContentPane().add(cpuMon.getRoot());
 
         frame.pack();
