@@ -32,7 +32,7 @@ public class ROMSelectionDialog extends JDialog
 {
     private final JTextField filePathField = new JTextField(30);
     private final JLabel fileValidationLabel = new JLabel();
-    private final JTextField addressField = new JTextField(6);
+    private final JTextField addressField = new JTextField("8000", 6);
     private final JLabel addressValidationLabel = new JLabel();
     private final JButton okButton = new JButton("OK");
 
