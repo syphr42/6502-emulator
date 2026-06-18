@@ -21,8 +21,11 @@ jobs:
           distribution: 'temurin'
           cache: maven
 
+      - name: Verify License Headers
+        run: mvn --batch-mode --file pom.xml license:check
+
       - name: Build and Test
-        run: mvn -B verify --file pom.xml
+        run: mvn --batch-mode --file pom.xml verify
 
       # Improve the quality of Dependabot alerts this repository can receive
       - name: Update dependency graph
