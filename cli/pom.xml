@@ -36,7 +36,7 @@
         <main-class>org.syphr.emulator.cli.Application</main-class>
 
         <!-- Dependencies -->
-        <spring-shell.version>3.4.1</spring-shell.version>
+        <spring-shell.version>4.0.2</spring-shell.version>
 
         <!-- Plugins -->
         <plugin.native.version>0.11.1</plugin.native.version>
