@@ -13,11 +13,15 @@ spring:
     banner-mode: "off"
   shell:
     command:
+      clear:
+        enabled: false
       history:
         enabled: false
       script:
         enabled: false
     history:
+      enabled: false
+    interactive:
       enabled: false
     option:
       naming:

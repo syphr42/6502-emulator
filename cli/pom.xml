@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!--
 
-    Copyright © 2025 Gregory P. Moyer
+    Copyright © 2025-2026 Gregory P. Moyer
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -36,11 +36,10 @@
         <main-class>org.syphr.emulator.cli.Application</main-class>
 
         <!-- Dependencies -->
-        <spring-shell.version>3.4.1</spring-shell.version>
+        <spring-shell.version>4.0.3</spring-shell.version>
 
         <!-- Plugins -->
         <plugin.native.version>0.11.1</plugin.native.version>
-        <plugin.spring-boot.version>${spring-boot.version}</plugin.spring-boot.version>
     </properties>
 
     <dependencies>
@@ -59,7 +58,7 @@
         <!-- Spring -->
         <dependency>
             <groupId>org.springframework.shell</groupId>
-            <artifactId>spring-shell-starter</artifactId>
+            <artifactId>spring-shell-starter-jansi</artifactId>
         </dependency>
 
         <!-- Other -->
@@ -83,8 +82,8 @@
 
         <!-- Test -->
         <dependency>
-            <groupId>org.springframework.boot</groupId>
-            <artifactId>spring-boot-starter-test</artifactId>
+            <groupId>org.springframework.shell</groupId>
+            <artifactId>spring-shell-starter-test</artifactId>
         </dependency>
     </dependencies>
 
@@ -93,7 +92,7 @@
             <plugin>
                 <groupId>org.springframework.boot</groupId>
                 <artifactId>spring-boot-maven-plugin</artifactId>
-                <version>${plugin.spring-boot.version}</version>
+                <version>${spring-boot.version}</version>
 
                 <configuration>
                     <excludes>
@@ -158,7 +157,7 @@
                     <plugin>
                         <groupId>org.springframework.boot</groupId>
                         <artifactId>spring-boot-maven-plugin</artifactId>
-                        <version>${plugin.spring-boot.version}</version>
+                        <version>${spring-boot.version}</version>
 
                         <executions>
                             <execution>

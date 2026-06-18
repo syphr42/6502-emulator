@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,8 +18,9 @@ package org.syphr.emulator.cli;
 import lombok.RequiredArgsConstructor;
 import org.jline.terminal.Terminal;
 import org.jspecify.annotations.Nullable;
-import org.springframework.shell.command.annotation.Command;
-import org.springframework.shell.command.annotation.Option;
+import org.springframework.shell.core.command.annotation.Command;
+import org.springframework.shell.core.command.annotation.Option;
+import org.springframework.stereotype.Component;
 import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.demo.Programs;
 import org.syphr.emulator.cli.gui.CPUManager;
@@ -32,7 +33,7 @@ import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
 
-@Command
+@Component
 @RequiredArgsConstructor
 public class CLI
 {
@@ -45,7 +46,7 @@ public class CLI
 
     private final Terminal terminal;
 
-    @Command(command = "run", description = "Execute a program")
+    @Command(name = "run", description = "Execute a program")
     public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE) long breakAfterCycle,
                     @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY) String clockFrequency,
                     @Option(description = ARG_DESC_EXECUTION_START) @Nullable Address executionStart,
@@ -66,7 +67,7 @@ public class CLI
                           executionStart).run();
     }
 
-    @Command(command = "gui", description = "Start the graphical interface")
+    @Command(name = "gui", description = "Start the graphical interface")
     public void gui()
     {
         System.setProperty("java.awt.headless", "false");
