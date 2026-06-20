@@ -20,28 +20,38 @@ import com.tngtech.archunit.junit.ArchTest;
 import com.tngtech.archunit.lang.ArchRule;
 
 import static com.tngtech.archunit.lang.syntax.ArchRuleDefinition.noClasses;
+import static com.tngtech.archunit.library.dependencies.SlicesRuleDefinition.slices;
 
 @AnalyzeClasses(packages = "org.syphr.emulator.cli")
 public class ArchitectureTest
 {
     @ArchTest
+    static final ArchRule noCyclesAllowed = slices().matching("org.syphr.emulator.cli.(**)")
+                                                    .should()
+                                                    .beFreeOfCycles();
+
+    @ArchTest
     static final ArchRule noPackagesDependOnGuiPackage = noClasses().that()
-                                                                    .resideOutsideOfPackages("..cli", "..gui..")
+                                                                    .resideOutsideOfPackages("org.syphr.emulator.cli",
+                                                                                             "org.syphr.emulator.cli.gui..")
                                                                     .should()
                                                                     .dependOnClassesThat()
-                                                                    .resideInAPackage("..gui..");
+                                                                    .resideInAPackage("org.syphr.emulator.cli.gui..");
 
     @ArchTest
     static final ArchRule noPackagesDependOnShellPackage = noClasses().that()
-                                                                      .resideOutsideOfPackages("..cli", "..shell..")
+                                                                      .resideOutsideOfPackages("org.syphr.emulator.cli",
+                                                                                               "org.syphr.emulator.cli.shell..")
                                                                       .should()
                                                                       .dependOnClassesThat()
-                                                                      .resideInAPackage("..shell..");
+                                                                      .resideInAPackage("org.syphr.emulator.cli.shell..");
 
     @ArchTest
     static final ArchRule noPackagesDependOnSimplePackage = noClasses().that()
-                                                                       .resideOutsideOfPackages("..cli", "..simple..")
+                                                                       .resideOutsideOfPackages("org.syphr.emulator.cli",
+                                                                                                "org.syphr.emulator.cli.simple..")
                                                                        .should()
                                                                        .dependOnClassesThat()
-                                                                       .resideInAPackage("..simple..");
+                                                                       .resideInAPackage(
+                                                                               "org.syphr.emulator.cli.simple..");
 }
