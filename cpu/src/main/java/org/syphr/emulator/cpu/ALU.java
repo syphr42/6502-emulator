@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,8 +27,48 @@ class ALU
 {
     private final StatusRegister status;
 
+    private byte minValue()
+    {
+        return status.decimal() ? 0 : Byte.MIN_VALUE;
+    }
+
+    private byte maxValue()
+    {
+        return status.decimal() ? 99 : Byte.MAX_VALUE;
+    }
+
+    private byte resolveNumberMode(byte b)
+    {
+        return status.decimal() ? toDecimalModeValue(b) : b;
+    }
+
+    private byte toDecimalModeValue(byte b)
+    {
+        return (byte) (((b >> 4) * 10) + (b & 0x0F));
+    }
+
+    private void altAddWithCarry(Register register, Value value)
+    {
+        int a = register.value().data();
+        int b = value.data();
+        int c = status.carry() ? 0x01 : 0x00;
+
+        int al = (a & 0x0F) + (b & 0x0F) + c;
+        al = al >= 0x0A ? ((al + 0x06) & 0x0F) + 0x10 : al;
+        a = (a & 0xF0) + (b & 0xF0) + al;
+        a = a >= 0xA0 ? a + 0x60 : a;
+
+        register.load(Value.of(a));
+        status.setNegative(register.value().isNegative()).setZero(register.value().isZero()).setCarry(a >= 0x100);
+    }
+
     public void addWithCarry(Register register, Value value)
     {
+        if (status.decimal()) {
+            altAddWithCarry(register, value);
+            return;
+        }
+
         byte r = register.value().data();
         byte m = value.data();
         byte c = (byte) (status.carry() ? 0x01 : 0x00);
