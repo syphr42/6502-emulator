@@ -39,7 +39,7 @@
         <spring-shell.version>4.0.3</spring-shell.version>
 
         <!-- Plugins -->
-        <plugin.native.version>0.11.1</plugin.native.version>
+        <plugin.native.version>1.1.2</plugin.native.version>
     </properties>
 
     <dependencies>
