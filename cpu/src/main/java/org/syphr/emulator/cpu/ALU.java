@@ -47,25 +47,10 @@ class ALU
         return (byte) (((b >> 4) * 10) + (b & 0x0F));
     }
 
-    private void altAddWithCarry(Register register, Value value)
-    {
-        int a = register.value().data();
-        int b = value.data();
-        int c = status.carry() ? 0x01 : 0x00;
-
-        int al = (a & 0x0F) + (b & 0x0F) + c;
-        al = al >= 0x0A ? ((al + 0x06) & 0x0F) + 0x10 : al;
-        a = (a & 0xF0) + (b & 0xF0) + al;
-        a = a >= 0xA0 ? a + 0x60 : a;
-
-        register.load(Value.of(a));
-        status.setNegative(register.value().isNegative()).setZero(register.value().isZero()).setCarry(a >= 0x100);
-    }
-
     public void addWithCarry(Register register, Value value)
     {
         if (status.decimal()) {
-            altAddWithCarry(register, value);
+            addWithCarryDecimalMode(register, value);
             return;
         }
 
@@ -73,11 +58,36 @@ class ALU
         byte m = value.data();
         byte c = (byte) (status.carry() ? 0x01 : 0x00);
 
+        int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(m) + c;
+        boolean carry = unsignedResult > 255;
+
         int signedResult = r + m + c;
         boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
 
-        int unsignedResult = Byte.toUnsignedInt(r) + Byte.toUnsignedInt(m) + c;
-        boolean carry = unsignedResult > 255;
+        Value result = Value.of(unsignedResult);
+        register.load(result);
+        status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
+    }
+
+    private void addWithCarryDecimalMode(Register register, Value value)
+    {
+        byte r = register.value().data();
+        byte m = value.data();
+        byte c = (byte) (status.carry() ? 0x01 : 0x00);
+
+        int a = Byte.toUnsignedInt(r);
+        int b = Byte.toUnsignedInt(m);
+        int al = (a & 0x0F) + (b & 0x0F) + c;
+        al = al >= 0x0A ? ((al + 0x06) & 0x0F) + 0x10 : al;
+
+        int unsignedResult = (a & 0xF0) + (b & 0xF0) + al;
+        unsignedResult = unsignedResult >= 0xA0 ? unsignedResult + 0x60 : unsignedResult;
+        boolean carry = unsignedResult >= 0x100;
+
+        int lowBits = (a & 0x0F) + (b & 0x0F) + c;
+        int internalCarry = lowBits > 9 ? 1 : 0;
+        int highBits = (a >> 4) + (b >> 4) + internalCarry;
+        boolean overflow = highBits > 0xF;
 
         Value result = Value.of(unsignedResult);
         register.load(result);
@@ -86,15 +96,44 @@ class ALU
 
     public void subtractWithCarry(Register register, Value value)
     {
+        if (status.decimal()) {
+            subtractWithCarryDecimalMode(register, value);
+            return;
+        }
+
         byte r = register.value().data();
-        byte v = value.data();
+        byte m = value.data();
         byte c = (byte) (status.carry() ? 0x00 : 0x01);
 
-        int signedResult = r - v - c;
+        int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(m) - Byte.toUnsignedInt(c);
+        boolean carry = unsignedResult >= 0;
+
+        int signedResult = r - m - c;
         boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
 
-        int unsignedResult = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(v) - Byte.toUnsignedInt(c);
-        boolean carry = unsignedResult >= 0;
+        Value result = Value.of(unsignedResult);
+        register.load(result);
+        status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
+    }
+
+    public void subtractWithCarryDecimalMode(Register register, Value value)
+    {
+        byte r = register.value().data();
+        byte m = value.data();
+        byte c = (byte) (status.carry() ? 0x00 : 0x01);
+
+        int a = Byte.toUnsignedInt(r);
+        int b = Byte.toUnsignedInt(m);
+        int al = (a & 0x0F) + (b & 0x0F) - c;
+
+        int unsignedResult = a - b - c;
+        unsignedResult = unsignedResult < 0x00 ? unsignedResult - 0x60 : unsignedResult;
+        unsignedResult = al < 0x00 ? unsignedResult - 0x06 : unsignedResult;
+
+        int signedResult = r - m - c;
+        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
+
+        boolean carry = Byte.toUnsignedInt(r) - Byte.toUnsignedInt(m) - Byte.toUnsignedInt(c) >= 0;
 
         Value result = Value.of(unsignedResult);
         register.load(result);
