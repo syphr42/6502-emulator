@@ -206,19 +206,29 @@ class CPUTest
 
     static Stream<Arguments> adcInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
     {
-        return Stream.of(Arguments.of(0x01, 0, 0x01, mode, cycles, 0x02, false, false, false, false, length),
-                         Arguments.of(0xF0, 0, 0x01, mode, cycles, 0xF1, true, false, false, false, length),
-                         Arguments.of(0x01, 0, 0xFF, mode, cycles, 0x00, false, false, true, true, length),
-                         Arguments.of(0x02, 0, 0xFF, mode, cycles, 0x01, false, false, false, true, length),
-                         Arguments.of(0x7F, 0, 0x01, mode, cycles, 0x80, true, true, false, false, length),
-                         Arguments.of(0xFF, 0, 0xFF, mode, cycles, 0xFE, true, false, false, true, length),
-                         Arguments.of(0x80, 0, 0xFF, mode, cycles, 0x7F, false, true, false, true, length),
-                         Arguments.of(0x3F, 1, 0x40, mode, cycles, 0x80, true, true, false, false, length));
+        return Stream.of(Arguments.of(false, 0x01, 0, 0x01, mode, cycles, 0x02, false, false, false, false, length),
+                         Arguments.of(false, 0xF0, 0, 0x01, mode, cycles, 0xF1, true, false, false, false, length),
+                         Arguments.of(false, 0x01, 0, 0xFF, mode, cycles, 0x00, false, false, true, true, length),
+                         Arguments.of(false, 0x02, 0, 0xFF, mode, cycles, 0x01, false, false, false, true, length),
+                         Arguments.of(false, 0x7F, 0, 0x01, mode, cycles, 0x80, true, true, false, false, length),
+                         Arguments.of(false, 0xFF, 0, 0xFF, mode, cycles, 0xFE, true, false, false, true, length),
+                         Arguments.of(false, 0x80, 0, 0xFF, mode, cycles, 0x7F, false, true, false, true, length),
+                         Arguments.of(false, 0x3F, 1, 0x40, mode, cycles, 0x80, true, true, false, false, length),
+                         Arguments.of(true, 0x00, 0, 0x00, mode, cycles + 1, 0x00, false, false, true, false, length),
+                         Arguments.of(true, 0x01, 0, 0x00, mode, cycles + 1, 0x01, false, false, false, false, length),
+                         Arguments.of(true, 0x01, 1, 0x00, mode, cycles + 1, 0x02, false, false, false, false, length),
+                         Arguments.of(true, 0x01, 1, 0x01, mode, cycles + 1, 0x03, false, false, false, false, length),
+                         Arguments.of(true, 0x09, 1, 0x00, mode, cycles + 1, 0x10, false, false, false, false, length),
+                         Arguments.of(true, 0x09, 0, 0x01, mode, cycles + 1, 0x10, false, false, false, false, length),
+                         Arguments.of(true, 0x99, 1, 0x00, mode, cycles + 1, 0x00, false, false, true, true, length),
+                         Arguments.of(true, 0x99, 0, 0x01, mode, cycles + 1, 0x00, false, false, true, true, length),
+                         Arguments.of(true, 0x99, 0, 0x19, mode, cycles + 1, 0x18, false, false, false, true, length));
     }
 
     @ParameterizedTest
     @MethodSource
-    void execute_ADC(int givenAccumulator,
+    void execute_ADC(boolean givenDecimal,
+                     int givenAccumulator,
                      int givenCarry,
                      int input,
                      Function<ModeInput, ModeOutput> modeGen,
@@ -231,6 +241,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
+        status.setDecimal(givenDecimal);
         accumulator.load(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
@@ -2923,17 +2934,18 @@ class CPUTest
 
     static Stream<Arguments> sbcInputs(Function<ModeInput, ModeOutput> mode, int length, int cycles)
     {
-        return Stream.of(Arguments.of(0x02, 0, 0x03, mode, cycles, 0xFE, true, false, false, false, length),
-                         Arguments.of(0x02, 1, 0x03, mode, cycles, 0xFF, true, false, false, false, length),
-                         Arguments.of(0x08, 1, 0x01, mode, cycles, 0x07, false, false, false, true, length),
-                         Arguments.of(0x01, 1, 0x01, mode, cycles, 0x00, false, false, true, true, length),
-                         Arguments.of(0x80, 1, 0x01, mode, cycles, 0x7F, false, true, false, true, length),
-                         Arguments.of(0x7F, 1, 0xFF, mode, cycles, 0x80, true, true, false, false, length));
+        return Stream.of(Arguments.of(false, 0x02, 0, 0x03, mode, cycles, 0xFE, true, false, false, false, length),
+                         Arguments.of(false, 0x02, 1, 0x03, mode, cycles, 0xFF, true, false, false, false, length),
+                         Arguments.of(false, 0x08, 1, 0x01, mode, cycles, 0x07, false, false, false, true, length),
+                         Arguments.of(false, 0x01, 1, 0x01, mode, cycles, 0x00, false, false, true, true, length),
+                         Arguments.of(false, 0x80, 1, 0x01, mode, cycles, 0x7F, false, true, false, true, length),
+                         Arguments.of(false, 0x7F, 1, 0xFF, mode, cycles, 0x80, true, true, false, false, length));
     }
 
     @ParameterizedTest
     @MethodSource
-    void execute_SBC(int givenAccumulator,
+    void execute_SBC(boolean givenDecimal,
+                     int givenAccumulator,
                      int givenCarry,
                      int input,
                      Function<ModeInput, ModeOutput> modeGen,
@@ -2946,6 +2958,7 @@ class CPUTest
                      int expectedProgramCounterOffset)
     {
         // given
+        status.setDecimal(givenDecimal);
         accumulator.load(Value.of(givenAccumulator));
         status.setCarry(givenCarry != 0);
 
