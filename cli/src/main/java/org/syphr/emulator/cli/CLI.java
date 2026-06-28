@@ -47,12 +47,12 @@ public class CLI
     private final Terminal terminal;
 
     @Command(name = "run", description = "Execute a program")
-    public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE) long breakAfterCycle,
-                    @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY) String clockFrequency,
-                    @Option(description = ARG_DESC_EXECUTION_START) @Nullable Address executionStart,
-                    @Option(description = ARG_DESC_ROM) @Nullable Path rom,
-                    @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START) Address romStart,
-                    @Option(defaultValue = "false", description = ARG_DESC_STEPPING) boolean stepping) throws IOException
+    public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE, longName = "break-after-cycle") long breakAfterCycle,
+                    @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY, longName = "clock-frequency") String clockFrequency,
+                    @Option(description = ARG_DESC_EXECUTION_START, longName = "execution-start") @Nullable Address executionStart,
+                    @Option(description = ARG_DESC_ROM, longName = "rom") @Nullable Path rom,
+                    @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START, longName = "rom-start") Address romStart,
+                    @Option(defaultValue = "false", description = ARG_DESC_STEPPING, longName = "stepping") boolean stepping) throws IOException
     {
         if (Terminal.TYPE_DUMB.equals(terminal.getType())) {
             System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");

@@ -23,6 +23,3 @@ spring:
       enabled: false
     interactive:
       enabled: false
-    option:
-      naming:
-        case-type: kebab
