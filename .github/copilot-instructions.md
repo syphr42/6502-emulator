@@ -36,13 +36,13 @@ mvn test
 ### Run Specific Test Class
 
 ```bash
-mvn test -Dtest=CPUTest
+mvn test -pl cpu -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=CPUTest
 ```
 
 ### Run Specific Test Method
 
 ```bash
-mvn test -Dtest=CPUTest#execute_LDA
+mvn test -pl cpu -am -Dsurefire.failIfNoSpecifiedTests=false -Dtest=CPUTest#execute_LDA
 ```
 
 ### Check License Headers
