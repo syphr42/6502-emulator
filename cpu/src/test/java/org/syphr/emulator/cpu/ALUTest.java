@@ -32,7 +32,7 @@ class ALUTest
     {
         return Stream.of(Arguments.of(false, 0x58, 1, 0x46, 0x9F, true, true, false, false),
                          Arguments.of(true, 0x93, 0, 0x82, 0x75, false, true, false, true),
-                         Arguments.of(true, 0x58, 1, 0x46, 0x05, false, false, false, true),
+                         Arguments.of(true, 0x58, 1, 0x46, 0x05, false, true, false, true),
                          Arguments.of(true, 0x12, 0, 0x34, 0x46, false, false, false, false),
                          Arguments.of(true, 0x15, 0, 0x26, 0x41, false, false, false, false),
                          Arguments.of(true, 0x81, 0, 0x92, 0x73, false, true, false, true),
@@ -41,8 +41,8 @@ class ALUTest
                          Arguments.of(true, 0x24, 0, 0x56, 0x80, true, true, false, false),
                          Arguments.of(true, 0x93, 0, 0x82, 0x75, false, true, false, true),
                          Arguments.of(true, 0x89, 0, 0x76, 0x65, false, false, false, true),
-                         Arguments.of(true, 0x89, 1, 0x76, 0x66, false, false, true, true),
-                         Arguments.of(true, 0x80, 0, 0xf0, 0xd0, false, true, false, true),
+                         Arguments.of(true, 0x89, 1, 0x76, 0x66, false, false, false, true),
+                         Arguments.of(true, 0x80, 0, 0xf0, 0xd0, true, true, false, true),
                          Arguments.of(true, 0x80, 0, 0xfa, 0xe0, true, false, false, true),
                          Arguments.of(true, 0x2f, 0, 0x4f, 0x74, false, false, false, false),
                          Arguments.of(true, 0x6f, 1, 0x00, 0x76, false, false, false, false));
