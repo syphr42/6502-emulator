@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,13 @@ public class Register
 {
     @ToString.Include
     private Value value = Value.ZERO;
+
+    public static Register with(Value value)
+    {
+        var register = new Register();
+        register.load(value);
+        return register;
+    }
 
     public void load(Value value)
     {
