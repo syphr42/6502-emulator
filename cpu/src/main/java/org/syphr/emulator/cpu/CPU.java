@@ -395,6 +395,7 @@ public class CPU implements Runnable, ClockListener
             case SMB6(AddressMode mode) -> readModifyWrite(mode, v -> v.set(6));
             case SMB7(AddressMode mode) -> readModifyWrite(mode, v -> v.set(7));
             case STA(AddressMode mode) -> writer.write(toAddress(mode), accumulator.value());
+            case STP _ -> throw new HaltException("STP"); // TODO this is temporary (not the correct implementation)
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
             case STY(AddressMode mode) -> writer.write(toAddress(mode), y.value());
             case STZ(AddressMode mode) -> writer.write(toAddress(mode), Value.ZERO);

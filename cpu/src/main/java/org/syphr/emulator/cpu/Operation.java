@@ -1263,6 +1263,21 @@ public sealed interface Operation
         }
     }
 
+    record STP() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xDB;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     record STX(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = (byte) 0x8E;
@@ -1522,7 +1537,7 @@ public sealed interface Operation
     static SMB6 smb6(ZeroPage mode) { return new SMB6(mode); }
     static SMB7 smb7(ZeroPage mode) { return new SMB7(mode); }
     static STA sta(AddressMode mode) { return new STA(mode); }
-    // TODO STP
+    static STP stp() { return new STP(); }
     static STX stx(AddressMode mode) { return new STX(mode); }
     static STY sty(AddressMode mode) { return new STY(mode); }
     static STZ stz(AddressMode mode) { return new STZ(mode); }

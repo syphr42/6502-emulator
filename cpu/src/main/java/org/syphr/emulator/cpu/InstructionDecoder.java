@@ -258,6 +258,8 @@ class InstructionDecoder
             case STA.ZP_INDIRECT -> sta(zpIndirect(programManager.nextValue()));
             case STA.ZP_INDIRECT_Y -> sta(zpIndirectY(programManager.nextValue()));
 
+            case STP.IMPLIED -> stp();
+
             case STX.ABSOLUTE -> stx(absolute(programManager.nextAddress()));
             case STX.ZP -> stx(zp(programManager.nextValue()));
             case STX.ZP_Y -> stx(zpY(programManager.nextValue()));
