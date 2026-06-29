@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -288,7 +288,12 @@ public class CPU implements Runnable, ClockListener
     void execute(Operation operation)
     {
         switch (operation) {
-            case ADC(AddressMode mode) -> alu.addWithCarry(accumulator, toValue(mode));
+            case ADC(AddressMode mode) -> {
+                alu.addWithCarry(accumulator, toValue(mode));
+                if (status.decimal()) {
+                    clock.awaitNextCycle(); // burn a cycle to update status flags
+                }
+            }
             case AND(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.and(toValue(mode)));
             case ASL(AddressMode mode) -> readModifyWrite(mode, alu::shiftLeft);
             case BBR0(ZeroPageRelative mode) -> branchIf(!isBitSet(toValue(mode.zp()), 0), mode.relative());
@@ -382,7 +387,12 @@ public class CPU implements Runnable, ClockListener
                 clock.awaitNextCycle(); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
-            case SBC(AddressMode mode) -> alu.subtractWithCarry(accumulator, toValue(mode));
+            case SBC(AddressMode mode) -> {
+                alu.subtractWithCarry(accumulator, toValue(mode));
+                if (status.decimal()) {
+                    clock.awaitNextCycle(); // burn a cycle to update status flags
+                }
+            }
             case SEC _ -> status.setCarry(true);
             case SED _ -> status.setDecimal(true);
             case SEI _ -> status.setIrqDisable(true);

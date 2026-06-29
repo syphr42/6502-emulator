@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CLI | run | Decimal Tests" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.syphr.emulator.cli.Application" />
+    <module name="cli" />
+    <option name="PROGRAM_PARAMETERS" value="run --rom $ProjectFileDir$/src/test/assembly/6502_decimal_test.bin --rom-start 0x8000 --execution-start 0x8000 --clock-frequency 1mhz" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
