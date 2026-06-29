@@ -27,26 +27,6 @@ class ALU
 {
     private final StatusRegister status;
 
-    private byte minValue()
-    {
-        return status.decimal() ? 0 : Byte.MIN_VALUE;
-    }
-
-    private byte maxValue()
-    {
-        return status.decimal() ? 99 : Byte.MAX_VALUE;
-    }
-
-    private byte resolveNumberMode(byte b)
-    {
-        return status.decimal() ? toDecimalModeValue(b) : b;
-    }
-
-    private byte toDecimalModeValue(byte b)
-    {
-        return (byte) (((b >> 4) * 10) + (b & 0x0F));
-    }
-
     public void addWithCarry(Register register, Value value)
     {
         if (status.decimal()) {
@@ -132,7 +112,7 @@ class ALU
         status.setNegative(result.isNegative()).setOverflow(overflow).setZero(result.isZero()).setCarry(carry);
     }
 
-    public void subtractWithCarryDecimalMode(Register register, Value value)
+    private void subtractWithCarryDecimalMode(Register register, Value value)
     {
         byte r = register.value().data();
         byte m = value.data();

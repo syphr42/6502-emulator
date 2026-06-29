@@ -222,7 +222,21 @@ class CPUTest
                          Arguments.of(true, 0x09, 0, 0x01, mode, cycles + 1, 0x10, false, false, false, false, length),
                          Arguments.of(true, 0x99, 1, 0x00, mode, cycles + 1, 0x00, false, false, true, true, length),
                          Arguments.of(true, 0x99, 0, 0x01, mode, cycles + 1, 0x00, false, false, true, true, length),
-                         Arguments.of(true, 0x99, 0, 0x19, mode, cycles + 1, 0x18, false, false, false, true, length));
+                         Arguments.of(true, 0x99, 0, 0x19, mode, cycles + 1, 0x18, false, false, false, true, length),
+                         Arguments.of(true, 0x93, 0, 0x82, mode, cycles + 1, 0x75, false, true, false, true, length),
+                         Arguments.of(true, 0x58, 1, 0x46, mode, cycles + 1, 0x05, false, true, false, true, length),
+                         Arguments.of(true, 0x12, 0, 0x34, mode, cycles + 1, 0x46, false, false, false, false, length),
+                         Arguments.of(true, 0x15, 0, 0x26, mode, cycles + 1, 0x41, false, false, false, false, length),
+                         Arguments.of(true, 0x81, 0, 0x92, mode, cycles + 1, 0x73, false, true, false, true, length),
+                         Arguments.of(true, 0x79, 1, 0x00, mode, cycles + 1, 0x80, true, true, false, false, length),
+                         Arguments.of(true, 0x24, 0, 0x56, mode, cycles + 1, 0x80, true, true, false, false, length),
+                         Arguments.of(true, 0x93, 0, 0x82, mode, cycles + 1, 0x75, false, true, false, true, length),
+                         Arguments.of(true, 0x89, 0, 0x76, mode, cycles + 1, 0x65, false, false, false, true, length),
+                         Arguments.of(true, 0x89, 1, 0x76, mode, cycles + 1, 0x66, false, false, false, true, length),
+                         Arguments.of(true, 0x80, 0, 0xf0, mode, cycles + 1, 0xd0, true, true, false, true, length),
+                         Arguments.of(true, 0x80, 0, 0xfa, mode, cycles + 1, 0xe0, true, false, false, true, length),
+                         Arguments.of(true, 0x2f, 0, 0x4f, mode, cycles + 1, 0x74, false, false, false, false, length),
+                         Arguments.of(true, 0x6f, 1, 0x00, mode, cycles + 1, 0x76, false, false, false, false, length));
     }
 
     @ParameterizedTest
@@ -2939,7 +2953,22 @@ class CPUTest
                          Arguments.of(false, 0x08, 1, 0x01, mode, cycles, 0x07, false, false, false, true, length),
                          Arguments.of(false, 0x01, 1, 0x01, mode, cycles, 0x00, false, false, true, true, length),
                          Arguments.of(false, 0x80, 1, 0x01, mode, cycles, 0x7F, false, true, false, true, length),
-                         Arguments.of(false, 0x7F, 1, 0xFF, mode, cycles, 0x80, true, true, false, false, length));
+                         Arguments.of(false, 0x7F, 1, 0xFF, mode, cycles, 0x80, true, true, false, false, length),
+                         Arguments.of(true, 0x00, 0, 0x00, mode, cycles + 1, 0x99, true, false, false, false, length),
+                         Arguments.of(true, 0x00, 0, 0x01, mode, cycles + 1, 0x98, true, false, false, false, length),
+                         Arguments.of(true, 0x00, 1, 0x01, mode, cycles + 1, 0x99, true, false, false, false, length),
+                         Arguments.of(true, 0x01, 1, 0x01, mode, cycles + 1, 0x00, false, false, true, true, length),
+                         Arguments.of(true, 0x09, 1, 0x00, mode, cycles + 1, 0x09, false, false, false, true, length),
+                         Arguments.of(true, 0x09, 0, 0x01, mode, cycles + 1, 0x07, false, false, false, true, length),
+                         Arguments.of(true, 0x99, 1, 0x00, mode, cycles + 1, 0x99, true, false, false, true, length),
+                         Arguments.of(true, 0x99, 0, 0x01, mode, cycles + 1, 0x97, true, false, false, true, length),
+                         Arguments.of(true, 0x99, 0, 0x19, mode, cycles + 1, 0x79, false, true, false, true, length),
+                         Arguments.of(true, 0x0A, 1, 0x00, mode, cycles + 1, 0x0A, false, false, false, true, length),
+                         Arguments.of(true, 0x0B, 0, 0x00, mode, cycles + 1, 0x0A, false, false, false, true, length),
+                         Arguments.of(true, 0x9A, 1, 0x00, mode, cycles + 1, 0x9A, true, false, false, true, length),
+                         Arguments.of(true, 0x9B, 0, 0x00, mode, cycles + 1, 0x9A, true, false, false, true, length),
+                         Arguments.of(true, 0x12, 1, 0x21, mode, cycles + 1, 0x91, true, false, false, false, length),
+                         Arguments.of(true, 0x21, 1, 0x34, mode, cycles + 1, 0x87, true, false, false, false, length));
     }
 
     @ParameterizedTest

@@ -16,53 +16,34 @@
 package org.syphr.emulator.cpu;
 
 import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.CsvFileSource;
 import org.syphr.emulator.common.Register;
 import org.syphr.emulator.common.Value;
 
-import java.util.stream.Stream;
+import java.io.BufferedWriter;
+import java.io.FileWriter;
+import java.io.IOException;
+import java.util.stream.IntStream;
 
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ALUTest
 {
-    static Stream<Arguments> addWithCarry()
-    {
-        return Stream.of(Arguments.of(false, 0x58, 1, 0x46, 0x9F, true, true, false, false),
-                         Arguments.of(true, 0x93, 0, 0x82, 0x75, false, true, false, true),
-                         Arguments.of(true, 0x58, 1, 0x46, 0x05, false, true, false, true),
-                         Arguments.of(true, 0x12, 0, 0x34, 0x46, false, false, false, false),
-                         Arguments.of(true, 0x15, 0, 0x26, 0x41, false, false, false, false),
-                         Arguments.of(true, 0x81, 0, 0x92, 0x73, false, true, false, true),
-                         Arguments.of(true, 0x00, 0, 0x00, 0x00, false, false, true, false),
-                         Arguments.of(true, 0x79, 1, 0x00, 0x80, true, true, false, false),
-                         Arguments.of(true, 0x24, 0, 0x56, 0x80, true, true, false, false),
-                         Arguments.of(true, 0x93, 0, 0x82, 0x75, false, true, false, true),
-                         Arguments.of(true, 0x89, 0, 0x76, 0x65, false, false, false, true),
-                         Arguments.of(true, 0x89, 1, 0x76, 0x66, false, false, false, true),
-                         Arguments.of(true, 0x80, 0, 0xf0, 0xd0, true, true, false, true),
-                         Arguments.of(true, 0x80, 0, 0xfa, 0xe0, true, false, false, true),
-                         Arguments.of(true, 0x2f, 0, 0x4f, 0x74, false, false, false, false),
-                         Arguments.of(true, 0x6f, 1, 0x00, 0x76, false, false, false, false));
-    }
-
     @ParameterizedTest
-    @MethodSource
-    void addWithCarry(boolean givenDecimal,
-                      int givenAccumulator,
-                      int givenCarry,
-                      int input,
-                      int expectedAccumulator,
-                      boolean expectedNegative,
-                      boolean expectedOverflow,
-                      boolean expectedZero,
-                      boolean expectedCarry)
+    @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_adc_binary.csv", numLinesToSkip = 1)
+    void addWithCarryBinaryMode(int givenAccumulator,
+                                int givenCarry,
+                                int input,
+                                int expectedAccumulator,
+                                boolean expectedNegative,
+                                boolean expectedOverflow,
+                                boolean expectedZero,
+                                boolean expectedCarry)
     {
         // given
         var status = new StatusRegister();
-        status.setDecimal(givenDecimal).setCarry(givenCarry != 0);
+        status.setDecimal(false).setCarry(givenCarry != 0);
         var alu = new ALU(status);
 
         var accumulator = new Register();
@@ -82,5 +63,154 @@ class ALUTest
                                          .carry(expectedCarry)
                                          .build(), status.flags())
         );
+    }
+
+    @ParameterizedTest
+    @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_adc_decimal.csv", numLinesToSkip = 1)
+    void addWithCarryDecimalMode(int givenAccumulator,
+                                 int givenCarry,
+                                 int input,
+                                 int expectedAccumulator,
+                                 boolean expectedNegative,
+                                 boolean expectedOverflow,
+                                 boolean expectedZero,
+                                 boolean expectedCarry)
+    {
+        // given
+        var status = new StatusRegister();
+        status.setDecimal(true).setCarry(givenCarry != 0);
+        var alu = new ALU(status);
+
+        var accumulator = new Register();
+        accumulator.load(Value.of(givenAccumulator));
+
+        var value = Value.of(input);
+
+        // when
+        alu.addWithCarry(accumulator, value);
+
+        // then
+        assertAll(
+                () -> assertEquals(Value.of(expectedAccumulator), accumulator.value()),
+                () -> assertEquals(status.flags().toBuilder().negative(expectedNegative)
+                                         .overflow(expectedOverflow)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(), status.flags())
+        );
+    }
+
+    @ParameterizedTest
+    @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_sbc_binary.csv", numLinesToSkip = 1)
+    void subtractWithCarryBinaryMode(int givenAccumulator,
+                                     int givenCarry,
+                                     int input,
+                                     int expectedAccumulator,
+                                     boolean expectedNegative,
+                                     boolean expectedOverflow,
+                                     boolean expectedZero,
+                                     boolean expectedCarry)
+    {
+        // given
+        var status = new StatusRegister();
+        status.setDecimal(false).setCarry(givenCarry != 0);
+        var alu = new ALU(status);
+
+        var accumulator = new Register();
+        accumulator.load(Value.of(givenAccumulator));
+
+        var value = Value.of(input);
+
+        // when
+        alu.subtractWithCarry(accumulator, value);
+
+        // then
+        assertAll(
+                () -> assertEquals(Value.of(expectedAccumulator), accumulator.value()),
+                () -> assertEquals(status.flags().toBuilder().negative(expectedNegative)
+                                         .overflow(expectedOverflow)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(), status.flags())
+        );
+    }
+
+    @ParameterizedTest
+    @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_sbc_decimal.csv", numLinesToSkip = 1)
+    void subtractWithCarryDecimalMode(int givenAccumulator,
+                                      int givenCarry,
+                                      int input,
+                                      int expectedAccumulator,
+                                      boolean expectedNegative,
+                                      boolean expectedOverflow,
+                                      boolean expectedZero,
+                                      boolean expectedCarry)
+    {
+        // given
+        var status = new StatusRegister();
+        status.setDecimal(true).setCarry(givenCarry != 0);
+        var alu = new ALU(status);
+
+        var accumulator = new Register();
+        accumulator.load(Value.of(givenAccumulator));
+
+        var value = Value.of(input);
+
+        // when
+        alu.subtractWithCarry(accumulator, value);
+
+        // then
+        assertAll(
+                () -> assertEquals(Value.of(expectedAccumulator), accumulator.value()),
+                () -> assertEquals(status.flags().toBuilder().negative(expectedNegative)
+                                         .overflow(expectedOverflow)
+                                         .zero(expectedZero)
+                                         .carry(expectedCarry)
+                                         .build(), status.flags())
+        );
+    }
+
+    // call if needed to regen test data
+    private void generateDate(boolean decimal, boolean add) throws IOException
+    {
+        var dir = "src/test/resources/org/syphr/emulator/cpu";
+        var filename = "alu_" + (add ? "adc" : "sbc") + "_" + (decimal ? "decimal" : "binary") + ".csv";
+
+        try (var out = new BufferedWriter(new FileWriter("%s/%s".formatted(dir, filename)))) {
+            out.write(
+                    "givenAccumulator,givenCarry,input,expectedAccumulator,expectedNegative,expectedOverflow,expectedZero,expectedCarry");
+            out.newLine();
+
+            for (int carry : IntStream.rangeClosed(0, 1).toArray()) {
+                for (int n1 : IntStream.rangeClosed(0, 255).toArray()) {
+                    for (int n2 : IntStream.rangeClosed(0, 255).toArray()) {
+                        Value n1Value = Value.of(n1);
+                        Value n2Value = Value.of(n2);
+
+                        var status = new StatusRegister().setDecimal(decimal).setCarry(carry != 0);
+                        var alu = new ALU(status);
+
+                        var accumulator = new Register();
+                        accumulator.load(n1Value);
+
+                        if (add) {
+                            alu.addWithCarry(accumulator, n2Value);
+                        } else {
+                            alu.subtractWithCarry(accumulator, n2Value);
+                        }
+
+                        out.write("%s,%d,%s,%d,%b,%b,%b,%b".formatted(n1Value,
+                                                                      carry,
+                                                                      n2Value,
+                                                                      accumulator.value().data(),
+                                                                      status.negative(),
+                                                                      status.overflow(),
+                                                                      status.zero(),
+                                                                      status.carry()));
+                        out.newLine();
+                    }
+                }
+            }
+        }
     }
 }
