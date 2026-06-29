@@ -1451,6 +1451,21 @@ public sealed interface Operation
         }
     }
 
+    record WAI() implements Operation
+    {
+        public static final byte IMPLIED = (byte) 0xCB;
+
+        public AddressMode mode()
+        {
+            return implied();
+        }
+
+        public Value code()
+        {
+            return Value.of(IMPLIED);
+        }
+    }
+
     // @formatter:off
     static ADC adc(AddressMode mode) { return new ADC(mode); }
     static AND and(AddressMode mode) { return new AND(mode); }
@@ -1549,7 +1564,7 @@ public sealed interface Operation
     static TXA txa() { return new TXA(); }
     static TXS txs() { return new TXS(); }
     static TYA tya() { return new TYA(); }
-    // TODO WAI
+    static WAI wai() { return new WAI(); }
     // @formatter:on
 
     static List<Value> toValues(Operation operation)

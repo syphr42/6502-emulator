@@ -36,6 +36,7 @@ import java.util.function.Function;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.catchException;
 import static org.junit.jupiter.api.Assertions.assertAll;
 import static org.mockito.Mockito.*;
 import static org.syphr.emulator.cpu.AddressMode.*;
@@ -2175,14 +2176,15 @@ class CPUTest
         cpu.executeNext();
 
         // then
-        verify(clock, times(2)).awaitNextCycle();
-        assertState(state.accumulator(),
-                    state.x(),
-                    state.y(),
-                    state.flags(),
-                    state.programCounter().plus(Value.of(1)),
-                    state.stackPointer(),
-                    state.stackData());
+        assertAll(
+                () -> verify(clock, times(2)).awaitNextCycle(),
+                () -> assertState(state.accumulator(),
+                                  state.x(),
+                                  state.y(),
+                                  state.flags(),
+                                  state.programCounter().plus(Value.of(1)),
+                                  state.stackPointer(),
+                                  state.stackData()));
     }
 
     static Stream<Arguments> execute_ORA()
@@ -3378,6 +3380,28 @@ class CPUTest
                                     state.stackData()));
     }
 
+    @Test
+    void execute_STP_Immediate()
+    {
+        // given
+        setNextOp(stp());
+
+        // when
+        CPUState state = cpu.getState();
+        Exception result = catchException(() -> cpu.executeNext());
+
+        // then
+        assertAll(() -> verify(clock, times(3)).awaitNextCycle(),
+                  () -> assertState(state.accumulator(),
+                                    state.x(),
+                                    state.y(),
+                                    state.flags(),
+                                    state.programCounter().plus(Value.of(1)),
+                                    state.stackPointer(),
+                                    state.stackData()),
+                  () -> assertThat(result).isInstanceOf(HaltException.class));
+    }
+
     static Stream<Arguments> execute_STX()
     {
         return Stream.of(stxInputs(modeAbsolute(), 3, 4),
@@ -3733,6 +3757,28 @@ class CPUTest
                                     state.programCounter().plus(Value.of(1)),
                                     state.stackPointer(),
                                     state.stackData()));
+    }
+
+    @Test
+    void execute_WAI_Immediate()
+    {
+        // given
+        setNextOp(wai());
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(
+                () -> verify(clock, times(3)).awaitNextCycle(),
+                () -> assertState(state.accumulator(),
+                                  state.x(),
+                                  state.y(),
+                                  state.flags(),
+                                  state.programCounter().plus(Value.of(1)),
+                                  state.stackPointer(),
+                                  state.stackData()));
     }
 
     private void setNextOp(Operation op)

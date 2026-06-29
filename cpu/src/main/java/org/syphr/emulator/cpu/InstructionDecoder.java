@@ -287,6 +287,8 @@ class InstructionDecoder
             case TXS.IMPLIED -> txs();
             case TYA.IMPLIED -> tya();
 
+            case WAI.IMPLIED -> wai();
+
             default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
             // @formatter:on
         };
