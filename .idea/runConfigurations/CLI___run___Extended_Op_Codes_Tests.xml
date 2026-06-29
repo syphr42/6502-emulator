@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CLI | run | Extended Op Codes Tests" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.syphr.emulator.cli.Application" />
+    <module name="cli" />
+    <option name="PROGRAM_PARAMETERS" value="run --rom $ProjectFileDir$/src/test/assembly/65C02_extended_opcodes_test.bin --execution-start 0x0400" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>

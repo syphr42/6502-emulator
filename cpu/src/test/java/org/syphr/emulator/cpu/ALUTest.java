@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cpu;
 
+import org.junit.jupiter.api.Tag;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.CsvFileSource;
 import org.syphr.emulator.common.Register;
@@ -30,6 +31,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ALUTest
 {
+    @Tag("slow")
     @ParameterizedTest
     @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_adc_binary.csv", numLinesToSkip = 1)
     void addWithCarryBinaryMode(int givenAccumulator,
@@ -65,6 +67,7 @@ class ALUTest
         );
     }
 
+    @Tag("slow")
     @ParameterizedTest
     @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_adc_decimal.csv", numLinesToSkip = 1)
     void addWithCarryDecimalMode(int givenAccumulator,
@@ -100,6 +103,7 @@ class ALUTest
         );
     }
 
+    @Tag("slow")
     @ParameterizedTest
     @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_sbc_binary.csv", numLinesToSkip = 1)
     void subtractWithCarryBinaryMode(int givenAccumulator,
@@ -135,6 +139,7 @@ class ALUTest
         );
     }
 
+    @Tag("slow")
     @ParameterizedTest
     @CsvFileSource(resources = "/org/syphr/emulator/cpu/alu_sbc_decimal.csv", numLinesToSkip = 1)
     void subtractWithCarryDecimalMode(int givenAccumulator,

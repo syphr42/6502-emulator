@@ -1,0 +1,11 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="CLI | help" type="Application" factoryName="Application">
+    <option name="MAIN_CLASS_NAME" value="org.syphr.emulator.cli.Application" />
+    <module name="cli" />
+    <option name="PROGRAM_PARAMETERS" value="help" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
+    <method v="2">
+      <option name="Make" enabled="true" />
+    </method>
+  </configuration>
+</component>
