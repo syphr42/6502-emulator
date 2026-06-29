@@ -94,9 +94,13 @@ class ALU
     {
         if (status.decimal()) {
             subtractWithCarryDecimalMode(register, value);
-            return;
+        } else {
+            subtractWithCarryBinaryMode(register, value);
         }
+    }
 
+    private void subtractWithCarryBinaryMode(Register register, Value value)
+    {
         byte r = register.value().data();
         byte m = value.data();
         byte c = (byte) (status.carry() ? 0x00 : 0x01);
@@ -120,18 +124,15 @@ class ALU
 
         int a = Byte.toUnsignedInt(r);
         int b = Byte.toUnsignedInt(m);
-
-        // Compute signed (binary) difference to determine overflow (V) as real hardware does
-        int signedDiff = r - m - c; // r and m are signed bytes
-        boolean overflow = signedDiff > Byte.MAX_VALUE || signedDiff < Byte.MIN_VALUE;
-
         int al = (a & 0x0F) - (b & 0x0F) - c;
 
         int unsignedResult = a - b - c;
         unsignedResult = unsignedResult < 0x00 ? unsignedResult - 0x60 : unsignedResult;
         unsignedResult = al < 0x00 ? unsignedResult - 0x06 : unsignedResult;
-
         boolean carry = (a - b - c) >= 0;
+
+        int signedResult = r - m - c;
+        boolean overflow = signedResult > Byte.MAX_VALUE || signedResult < Byte.MIN_VALUE;
 
         Value result = Value.of(unsignedResult);
         register.load(result);
