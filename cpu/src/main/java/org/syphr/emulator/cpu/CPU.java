@@ -445,14 +445,14 @@ public class CPU implements Runnable, ClockListener
                 var pointer = address.plusUnsigned(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
-            case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, x.value());
-            case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, y.value());
+            case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, a -> a.plusUnsigned(x.value()));
+            case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, a -> a.plusUnsigned(y.value()));
             case AbsoluteIndirect(Address address) -> {
                 clock.awaitNextCycle(); // burn a cycle to fix page boundary bug
                 yield Address.of(reader.read(address), reader.read(address.increment()));
             }
-            case Relative(Value displacement) ->
-                    waitToCrossPageBoundary(programManager.getProgramCounter(), displacement);
+            case Relative(Value displacement) -> waitToCrossPageBoundary(programManager.getProgramCounter(),
+                                                                         a -> a.plus(displacement));
             case ZeroPage(Value offset) -> Address.zeroPage(offset);
             case ZeroPageIndexedXIndirect(Value offset) -> {
                 throwawayRead(Address.zeroPage(offset));
@@ -474,7 +474,7 @@ public class CPU implements Runnable, ClockListener
             case ZeroPageIndirectIndexedY(Value offset) -> {
                 var pointer = Address.zeroPage(offset);
                 Address intermediate = Address.of(reader.read(pointer), reader.read(pointer.increment()));
-                yield waitToCrossPageBoundary(intermediate, y.value());
+                yield waitToCrossPageBoundary(intermediate, a -> a.plusUnsigned(y.value()));
             }
             default -> throw new UnsupportedOperationException("Mode " + mode + " does not support address conversion");
         };
@@ -531,12 +531,12 @@ public class CPU implements Runnable, ClockListener
         }
     }
 
-    private Address waitToCrossPageBoundary(Address address, Value offset)
+    private Address waitToCrossPageBoundary(Address source, Function<Address, Address> toTarget)
     {
-        Address target = address.plus(offset);
+        Address target = toTarget.apply(source);
 
         // wait one cycle if a page boundary will be crossed
-        if (!address.high().equals(target.high())) {
+        if (!source.high().equals(target.high())) {
             clock.awaitNextCycle();
             log.info("Crossed page boundary");
         }

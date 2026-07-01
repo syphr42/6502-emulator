@@ -3863,12 +3863,12 @@ class CPUTest
     private static Function<ModeInput, ModeOutput> modeAbsoluteXSamePage()
     {
         return (ModeInput input) -> {
-            Address intermediate = Address.of(0x1234);
+            Address intermediate = Address.of(0x1200);
 
             Value offset = Value.of(0xFF);
             input.x().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
@@ -3880,12 +3880,12 @@ class CPUTest
     private static Function<ModeInput, ModeOutput> modeAbsoluteXCrossPage()
     {
         return (ModeInput input) -> {
-            Address intermediate = Address.of(0x12FE);
+            Address intermediate = Address.of(0x1201);
 
-            Value offset = Value.of(0x02);
+            Value offset = Value.of(0xFF);
             input.x().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
@@ -3897,12 +3897,12 @@ class CPUTest
     private static Function<ModeInput, ModeOutput> modeAbsoluteYSamePage()
     {
         return (ModeInput input) -> {
-            Address intermediate = Address.of(0x1234);
+            Address intermediate = Address.of(0x1200);
 
             Value offset = Value.of(0xFF);
             input.y().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
@@ -3914,12 +3914,12 @@ class CPUTest
     private static Function<ModeInput, ModeOutput> modeAbsoluteYCrossPage()
     {
         return (ModeInput input) -> {
-            Address intermediate = Address.of(0x12FE);
+            Address intermediate = Address.of(0x1201);
 
-            Value offset = Value.of(0x02);
+            Value offset = Value.of(0xFF);
             input.y().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
@@ -4044,7 +4044,7 @@ class CPUTest
             Value pointerOffset = Value.of(0x12);
 
             Address pointer = Address.zeroPage(pointerOffset);
-            Address intermediate = Address.of(0x1232);
+            Address intermediate = Address.of(0x1200);
 
             when(input.reader().read(pointer)).thenReturn(intermediate.low());
             when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
@@ -4052,7 +4052,7 @@ class CPUTest
             Value offset = Value.of(0xFF);
             input.y().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
@@ -4067,15 +4067,15 @@ class CPUTest
             Value pointerOffset = Value.of(0x12);
 
             Address pointer = Address.zeroPage(pointerOffset);
-            Address intermediate = Address.of(0x12FE);
+            Address intermediate = Address.of(0x1201);
 
             when(input.reader().read(pointer)).thenReturn(intermediate.low());
             when(input.reader().read(pointer.increment())).thenReturn(intermediate.high());
 
-            Value offset = Value.of(0x02);
+            Value offset = Value.of(0xFF);
             input.y().load(offset);
 
-            Address target = intermediate.plus(offset);
+            Address target = intermediate.plusUnsigned(offset);
             if (input.value() != null) {
                 when(input.reader().read(target)).thenReturn(input.value());
             }
