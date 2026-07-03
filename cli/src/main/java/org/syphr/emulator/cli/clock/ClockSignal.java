@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,7 +73,13 @@ public class ClockSignal implements Runnable, ClockGenerator
                 if (stepping.get()) {
                     awaitStep();
                 } else {
-                    Thread.sleep(period.get());
+                    Duration duration = period.get();
+                    // spinWait typically executes much faster than sleep, but can consume more CPU
+                    if (duration.toNanos() < 60_000) {
+                        spinWait(duration);
+                    } else {
+                        sleep(duration);
+                    }
                 }
             } catch (InterruptedException e) {
                 break;
@@ -82,6 +88,20 @@ public class ClockSignal implements Runnable, ClockGenerator
             fireCycleEnded();
         }
     }
+
+    private void sleep(Duration duration) throws InterruptedException
+    {
+        Thread.sleep(duration);
+    }
+
+    private void spinWait(Duration duration)
+    {
+        long start = System.nanoTime();
+        while (System.nanoTime() - start < duration.toNanos()) {
+            Thread.onSpinWait();
+        }
+    }
+
 
     public void toggleStepping()
     {
