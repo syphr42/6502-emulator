@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,6 @@ class Clock
         try {
             this.cycleCount = cycleCount;
             updateLoggingContext();
-            log.info("Clock cycle {}", cycleCount);
             newCycle = true;
             cycle.signal();
         } finally {

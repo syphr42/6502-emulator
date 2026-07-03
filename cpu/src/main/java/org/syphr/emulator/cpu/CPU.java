@@ -272,6 +272,8 @@ public class CPU implements Runnable, ClockListener
 
     void executeNext()
     {
+        long opStartTime = System.nanoTime();
+
         log.info("Reading next operation");
         Operation op = decoder.nextOp(programManager);
         long startCycle = clock.getCycleCount();
@@ -279,10 +281,16 @@ public class CPU implements Runnable, ClockListener
             log.info("Executing op {}", op);
             execute(op);
             log.info("Completed op {}", op);
-            log.info(getState().toString());
-        }
 
-        fireOperationCompleted(getState(), op, startCycle, clock.getCycleCount());
+            CPUState state = getState();
+            log.atInfo().setMessage("{}").addArgument(state::toString).log();
+
+            fireOperationCompleted(state, op, startCycle, clock.getCycleCount());
+            log.atDebug()
+               .setMessage("Op execution time: {} ns")
+               .addArgument(() -> System.nanoTime() - opStartTime)
+               .log();
+        }
     }
 
     void execute(Operation operation)

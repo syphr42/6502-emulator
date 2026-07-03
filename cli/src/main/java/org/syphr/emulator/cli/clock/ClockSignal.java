@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cli.clock;
 
+import lombok.extern.slf4j.Slf4j;
 import org.syphr.emulator.common.clock.ClockEvent;
 import org.syphr.emulator.common.clock.ClockGenerator;
 import org.syphr.emulator.common.clock.ClockListener;
@@ -27,6 +28,7 @@ import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Slf4j
 public class ClockSignal implements Runnable, ClockGenerator
 {
     private final Lock stepper = new ReentrantLock();
@@ -62,6 +64,7 @@ public class ClockSignal implements Runnable, ClockGenerator
     public void run()
     {
         while (!Thread.interrupted()) {
+            long cycleStartTime = System.nanoTime();
             long cycle = ++cycleCount;
             fireCycleStarted();
 
@@ -86,6 +89,7 @@ public class ClockSignal implements Runnable, ClockGenerator
             }
 
             fireCycleEnded();
+            log.atDebug().setMessage("Cycle period: {} ns").addArgument(() -> System.nanoTime() - cycleStartTime).log();
         }
     }
 
