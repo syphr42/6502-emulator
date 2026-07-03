@@ -40,8 +40,9 @@ public class CLI
     private static final String ARG_DESC_BREAK_AFTER_CYCLE = "Switch to stepping mode after the clock executes the given cycle count (counter starts at 1)";
     private static final String ARG_DESC_CLOCK_FREQUENCY = "Frequency at which the clock runs in continuous mode (format: '#unit' where unit is hz, khz, or mhz)";
     private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address";
-    private static final String ARG_DESC_ROM = "Path to binary program file";
-    private static final String ARG_DESC_ROM_START = "Start address when a ROM is provided";
+    private static final String ARG_DESC_BIN = "Path to binary data file";
+    private static final String ARG_DESC_BIN_START = "Start address for provided binary data";
+    private static final String ARG_DESC_BIN_WRITABLE = "Allow the binary data to be writable in memory";
     private static final String ARG_DESC_STEPPING = "Start clock in single-step mode (default is continuous mode)";
 
     private final Terminal terminal;
@@ -50,15 +51,18 @@ public class CLI
     public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE, longName = "break-after-cycle") long breakAfterCycle,
                     @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY, longName = "clock-frequency") String clockFrequency,
                     @Option(description = ARG_DESC_EXECUTION_START, longName = "execution-start") @Nullable Address executionStart,
-                    @Option(description = ARG_DESC_ROM, longName = "rom") @Nullable Path rom,
-                    @Option(defaultValue = "0x0000", description = ARG_DESC_ROM_START, longName = "rom-start") Address romStart,
+                    @Option(description = ARG_DESC_BIN, longName = "bin") @Nullable Path bin,
+                    @Option(defaultValue = "0x0000", description = ARG_DESC_BIN_START, longName = "bin-start") Address binStart,
+                    @Option(defaultValue = "false", description = ARG_DESC_BIN_WRITABLE, longName = "bin-writable") boolean binWritable,
                     @Option(defaultValue = "false", description = ARG_DESC_STEPPING, longName = "stepping") boolean stepping) throws IOException
     {
         if (Terminal.TYPE_DUMB.equals(terminal.getType())) {
             System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");
         }
 
-        MemoryMap memoryMap = rom == null ? Programs.simpleLoopWithSubRoutine() : MemoryMap.of(romStart, rom);
+        MemoryMap memoryMap = bin == null
+                              ? Programs.simpleLoopWithSubRoutine()
+                              : MemoryMap.of(binStart, bin, binWritable);
         new ProgramRunner(terminal,
                           memoryMap,
                           ClockPeriod.of(clockFrequency),

@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@ package org.syphr.emulator.cli.memory;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
 
+import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 
@@ -29,6 +30,17 @@ public class RAM extends Segment
     {
         super(start, end);
         this.data = new TreeMap<>();
+    }
+
+    public RAM(Address start, List<Value> values)
+    {
+        this(start, start.plus(values.size() - 1));
+
+        var pointer = start;
+        for (Value value : values) {
+            data.put(pointer, value);
+            pointer = pointer.increment();
+        }
     }
 
     @Override

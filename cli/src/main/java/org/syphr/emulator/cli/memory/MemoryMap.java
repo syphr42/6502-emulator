@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,23 +37,40 @@ public class MemoryMap implements Addressable
     }
 
     /**
-     * Build a memory map using the given ROM file and fill any remaining address space with RAM.
+     * Build a memory map using the given binary data file represented as read-only memory (ROM) and fill any remaining
+     * address space with random-access memory (RAM).
      *
      * @param start ROM start address
-     * @param rom   pointer to ROM file
+     * @param bin   pointer to binary data file
      * @return complete 64k memory map with unused address space represented as RAM
-     * @throws IOException if the ROM file cannot be read
+     * @throws IOException if the binary file cannot be read
      */
-    public static MemoryMap of(Address start, Path rom) throws IOException
+    public static MemoryMap of(Address start, Path bin) throws IOException
     {
-        byte[] bytes = Files.readAllBytes(rom);
+        return of(start, bin, false);
+    }
+
+    /**
+     * Build a memory map using the given binary data file represented as read-only memory (ROM) or writable
+     * random-access memory (RAM) and fill any remaining address space with RAM.
+     *
+     * @param start data start address
+     * @param bin   pointer to binary data file
+     * @return complete 64k memory map with unused address space represented as RAM
+     * @throws IOException if the binary file cannot be read
+     */
+    public static MemoryMap of(Address start, Path bin, boolean writable) throws IOException
+    {
+        byte[] bytes = Files.readAllBytes(bin);
+
         if (bytes.length == 0) {
-            throw new IllegalArgumentException("ROM is empty");
+            throw new IllegalArgumentException("Binary file is empty");
         }
 
         Address end = start.plus(bytes.length - 1);
         if (start.compareTo(end) > 0) {
-            throw new IllegalArgumentException("ROM is too large to fit in addressable memory starting at " + start);
+            throw new IllegalArgumentException("Binary file is too large to fit in addressable memory starting at " +
+                                               start);
         }
 
         List<Value> values = new ArrayList<>();
@@ -61,7 +78,8 @@ public class MemoryMap implements Addressable
             values.add(Value.of(b));
         }
 
-        return fillRam(new ROM(start, values));
+        Segment segment = writable ? new RAM(start, values) : new ROM(start, values);
+        return fillRam(segment);
     }
 
     /**
