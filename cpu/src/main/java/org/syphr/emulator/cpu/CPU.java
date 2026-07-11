@@ -441,6 +441,23 @@ public class CPU implements Runnable, ClockListener
                 log.warn("WAI skipped as NOP");
                 clock.awaitNextCycle(); // burn a cycle - reason undetermined
             }
+
+            case UNUSED(Value code, AddressMode mode) -> {
+                log.warn("Unsupported op code detected: {}", code);
+
+                switch (mode) {
+                    case Implied _ -> {}
+                    default -> toValue(mode);
+                }
+
+                if (Value.of(UNUSED.X5C).equals(code)) {
+                    // burn four cycles - reason undetermined
+                    clock.awaitNextCycle();
+                    clock.awaitNextCycle();
+                    clock.awaitNextCycle();
+                    clock.awaitNextCycle();
+                }
+            }
         }
     }
 

@@ -3781,6 +3781,78 @@ class CPUTest
                                   state.stackData()));
     }
 
+    static Stream<Arguments> execute_UnusedOpCodes()
+    {
+        return Stream.of(Arguments.of("03", modeImplied(), 1, 1),
+                         Arguments.of("13", modeImplied(), 1, 1),
+                         Arguments.of("23", modeImplied(), 1, 1),
+                         Arguments.of("33", modeImplied(), 1, 1),
+                         Arguments.of("43", modeImplied(), 1, 1),
+                         Arguments.of("53", modeImplied(), 1, 1),
+                         Arguments.of("63", modeImplied(), 1, 1),
+                         Arguments.of("73", modeImplied(), 1, 1),
+                         Arguments.of("83", modeImplied(), 1, 1),
+                         Arguments.of("93", modeImplied(), 1, 1),
+                         Arguments.of("A3", modeImplied(), 1, 1),
+                         Arguments.of("B3", modeImplied(), 1, 1),
+                         Arguments.of("C3", modeImplied(), 1, 1),
+                         Arguments.of("D3", modeImplied(), 1, 1),
+                         Arguments.of("E3", modeImplied(), 1, 1),
+                         Arguments.of("F3", modeImplied(), 1, 1),
+                         Arguments.of("0B", modeImplied(), 1, 1),
+                         Arguments.of("1B", modeImplied(), 1, 1),
+                         Arguments.of("2B", modeImplied(), 1, 1),
+                         Arguments.of("3B", modeImplied(), 1, 1),
+                         Arguments.of("4B", modeImplied(), 1, 1),
+                         Arguments.of("5B", modeImplied(), 1, 1),
+                         Arguments.of("6B", modeImplied(), 1, 1),
+                         Arguments.of("7B", modeImplied(), 1, 1),
+                         Arguments.of("8B", modeImplied(), 1, 1),
+                         Arguments.of("9B", modeImplied(), 1, 1),
+                         Arguments.of("AB", modeImplied(), 1, 1),
+                         Arguments.of("BB", modeImplied(), 1, 1),
+                         Arguments.of("EB", modeImplied(), 1, 1),
+                         Arguments.of("FB", modeImplied(), 1, 1),
+                         Arguments.of("02", modeImmediate(), 2, 2),
+                         Arguments.of("22", modeImmediate(), 2, 2),
+                         Arguments.of("42", modeImmediate(), 2, 2),
+                         Arguments.of("62", modeImmediate(), 2, 2),
+                         Arguments.of("82", modeImmediate(), 2, 2),
+                         Arguments.of("C2", modeImmediate(), 2, 2),
+                         Arguments.of("E2", modeImmediate(), 2, 2),
+                         Arguments.of("44", modeZeroPage(), 2, 3),
+                         Arguments.of("54", modeZeroPageX(), 2, 4),
+                         Arguments.of("D4", modeZeroPageX(), 2, 4),
+                         Arguments.of("F4", modeZeroPageX(), 2, 4),
+                         Arguments.of("5C", modeUnknown(), 3, 8),
+                         Arguments.of("DC", modeAbsolute(), 3, 4),
+                         Arguments.of("FC", modeAbsolute(), 3, 4));
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    void execute_UnusedOpCodes(String opCode, Function<ModeInput, ModeOutput> modeGen, int numBytes, int cycles)
+    {
+        // given
+        ModeOutput modeOutput = modeGen.apply(modeInput(0));
+        setNextOp(unused(Value.ofHex(opCode), modeOutput.mode()));
+
+        // when
+        CPUState state = cpu.getState();
+        cpu.executeNext();
+
+        // then
+        assertAll(
+                () -> verify(clock, times(cycles)).awaitNextCycle(),
+                () -> assertState(state.accumulator(),
+                                  state.x(),
+                                  state.y(),
+                                  state.flags(),
+                                  state.programCounter().plus(Value.of(numBytes)),
+                                  state.stackPointer(),
+                                  state.stackData()));
+    }
+
     private void setNextOp(Operation op)
     {
         Address pc = programManager.getProgramCounter();
@@ -3790,8 +3862,8 @@ class CPUTest
             when(reader.read(pc.plus(Value.of(i)))).thenReturn(values.get(i));
         }
 
-        // single byte operations always perform a second dummy read
-        if (values.size() == 1) {
+        // single byte operations always perform a second dummy read (except the unused op codes)
+        if (!(op instanceof UNUSED) && values.size() == 1) {
             when(reader.read(pc.increment())).thenReturn(Value.ZERO);
         }
     }
@@ -3800,7 +3872,7 @@ class CPUTest
     private void printClockCycles()
     {
         doAnswer(_ -> {
-            // TODO locate the location in the stack trace that called Clock::nextCycle
+            // TODO find the location in the stack trace that called Clock::nextCycle
             StackTraceElement currentExecution = new Exception().getStackTrace()[8];
             System.out.printf("Clock::nextCycle %s.%s(%s:%d)%n",
                               currentExecution.getClassName(),
@@ -3948,6 +4020,11 @@ class CPUTest
         };
     }
 
+    private static Function<ModeInput, ModeOutput> modeImplied()
+    {
+        return (ModeInput _) -> new ModeOutput(implied(), Optional.empty());
+    }
+
     private static Function<ModeInput, ModeOutput> modeZeroPage()
     {
         return (ModeInput input) -> {
@@ -4081,6 +4158,17 @@ class CPUTest
             }
 
             return new ModeOutput(zpIndirectY(pointerOffset), Optional.of(target));
+        };
+    }
+
+    private static Function<ModeInput, ModeOutput> modeUnknown()
+    {
+        return (ModeInput input) -> {
+            if (input.value() != null) {
+                when(input.reader().read(any())).thenReturn(input.value());
+            }
+
+            return new ModeOutput(absolute(Address.MIN), Optional.empty());
         };
     }
 }

@@ -289,14 +289,26 @@ class InstructionDecoder
 
             case WAI.IMPLIED -> wai();
 
-            default -> { log.warn("Unsupported op code: {} (acting as NOP)", opCode); yield nop(); }
+            case UNUSED.X02, UNUSED.X22, UNUSED.X42, UNUSED.X62, UNUSED.X82, UNUSED.XC2, UNUSED.XE2 -> unused(opCode, immediate(programManager.nextValue()));
+            case UNUSED.X44 -> unused(opCode, zp(programManager.nextValue()));
+            case UNUSED.X54, UNUSED.XD4, UNUSED.XF4 -> unused(opCode, zpX(programManager.nextValue()));
+            case UNUSED.X5C -> {
+                programManager.nextAddress(); // perform a 2-byte read advancing the program counter
+                // $5C on real hardware actually reads from some valid address using an unknown address mode
+                Address target = Address.of((int)(Math.random() * 0x10000)); // pick a random address to read from
+                yield unused(opCode, absolute(target));
+            }
+            case UNUSED.XDC, UNUSED.XFC -> unused(opCode, absolute(programManager.nextAddress()));
+            default -> unused(opCode, implied());
             // @formatter:on
         };
 
-        // a throwaway read occurs on all single-byte addressing modes
-        switch (op.mode()) {
-            case Accumulator _, Implied _, AddressMode.Stack _ -> programManager.read();
-            default -> {}
+        // a throwaway read occurs on all single-byte addressing modes (except the unused op codes)
+        if (!(op instanceof UNUSED)) {
+            switch (op.mode()) {
+                case Accumulator _, Implied _, AddressMode.Stack _ -> programManager.read();
+                default -> {}
+            }
         }
 
         return op;

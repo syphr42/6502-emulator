@@ -781,6 +781,59 @@ public sealed interface Operation
         }
     }
 
+    record UNUSED(Value code, AddressMode mode) implements Operation
+    {
+        // one byte
+        public static final byte X03 = 0x03;
+        public static final byte X13 = 0x13;
+        public static final byte X23 = 0x23;
+        public static final byte X33 = 0x33;
+        public static final byte X43 = 0x43;
+        public static final byte X53 = 0x53;
+        public static final byte X63 = 0x63;
+        public static final byte X73 = 0x73;
+        public static final byte X83 = (byte) 0x83;
+        public static final byte X93 = (byte) 0x93;
+        public static final byte XA3 = (byte) 0xA3;
+        public static final byte XB3 = (byte) 0xB3;
+        public static final byte XC3 = (byte) 0xC3;
+        public static final byte XD3 = (byte) 0xD3;
+        public static final byte XE3 = (byte) 0xE3;
+        public static final byte XF3 = (byte) 0xF3;
+        public static final byte X0B = 0x03;
+        public static final byte X1B = 0x1B;
+        public static final byte X2B = 0x2B;
+        public static final byte X3B = 0x3B;
+        public static final byte X4B = 0x4B;
+        public static final byte X5B = 0x5B;
+        public static final byte X6B = 0x6B;
+        public static final byte X7B = 0x7B;
+        public static final byte X8B = (byte) 0x8B;
+        public static final byte X9B = (byte) 0x9B;
+        public static final byte XAB = (byte) 0xAB;
+        public static final byte XBB = (byte) 0xBB;
+        public static final byte XEB = (byte) 0xEB;
+        public static final byte XFB = (byte) 0xFB;
+
+        // two bytes
+        public static final byte X02 = 0x02;
+        public static final byte X22 = 0x22;
+        public static final byte X42 = 0x42;
+        public static final byte X62 = 0x62;
+        public static final byte X82 = (byte) 0x82;
+        public static final byte XC2 = (byte) 0xC2;
+        public static final byte XE2 = (byte) 0xE2;
+        public static final byte X44 = 0x44;
+        public static final byte X54 = 0x54;
+        public static final byte XD4 = (byte) 0xD4;
+        public static final byte XF4 = (byte) 0xF4;
+
+        // three bytes
+        public static final byte X5C = 0x5C;
+        public static final byte XDC = (byte) 0xDC;
+        public static final byte XFC = (byte) 0xFC;
+    }
+
     record ORA(AddressMode mode) implements Operation
     {
         public static final byte ABSOLUTE = 0x0D;
@@ -1565,6 +1618,8 @@ public sealed interface Operation
     static TXS txs() { return new TXS(); }
     static TYA tya() { return new TYA(); }
     static WAI wai() { return new WAI(); }
+
+    static UNUSED unused(Value code, AddressMode mode) { return new UNUSED(code, mode); }
     // @formatter:on
 
     static List<Value> toValues(Operation operation)
