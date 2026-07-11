@@ -3,7 +3,7 @@
     <option name="MAIN_CLASS_NAME" value="org.syphr.emulator.cli.Application" />
     <module name="cli" />
     <option name="PROGRAM_PARAMETERS" value="run --bin $ProjectFileDir$/src/test/assembly/6502_functional_test.bin --bin-writable --execution-start 0x0400 --clock-frequency 999mhz" />
-    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED" />
+    <option name="VM_PARAMETERS" value="--enable-native-access=ALL-UNNAMED -Dlogging.level.org.syphr.emulator=WARN" />
     <method v="2">
       <option name="Make" enabled="true" />
     </method>
