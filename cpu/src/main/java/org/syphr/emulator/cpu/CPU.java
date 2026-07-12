@@ -249,7 +249,7 @@ public class CPU implements Runnable, ClockListener
             stack.pushAll(programManager.getProgramCounter().bytes().reversed());
 
             // cycle 5: push status to stack
-            pushToStack(status.copy().setBreakCommand(BREAK == interrupt));
+            pushToStack(status.copy().setUser(true).setBreakCommand(BREAK == interrupt));
         }
 
         // cycle 6: read low byte of the vector
@@ -262,9 +262,6 @@ public class CPU implements Runnable, ClockListener
         programManager.setProgramCounter(Address.of(low, high));
 
         // set flags
-        if (RESET == interrupt) {
-            status.setUser(true).setBreakCommand(true);
-        }
         status.setDecimal(false).setIrqDisable(true);
 
         log.info(getState().toString());
@@ -367,7 +364,7 @@ public class CPU implements Runnable, ClockListener
             case NOP _ -> {}
             case ORA(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.or(toValue(mode)));
             case PHA _ -> pushToStack(accumulator);
-            case PHP _ -> pushToStack(status);
+            case PHP _ -> pushToStack(status.copy().setUser(true).setBreakCommand(true));
             case PHX _ -> pushToStack(x);
             case PHY _ -> pushToStack(y);
             case PLA _ -> alu.update(accumulator, this::pullFromStack);

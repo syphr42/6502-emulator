@@ -149,7 +149,11 @@ class CPUTest
                                     state.flags().toBuilder().decimal(false).irqDisable(true).build(),
                                     target,
                                     offsetLow(state.stackPointer(), -3),
-                                    List.of(StatusRegister.of(state.flags().toBuilder().breakCommand(false).build())
+                                    List.of(StatusRegister.of(state.flags()
+                                                                   .toBuilder()
+                                                                   .user(true)
+                                                                   .breakCommand(false)
+                                                                   .build())
                                                           .value(),
                                             state.programCounter().low(),
                                             state.programCounter().high())));
@@ -178,8 +182,6 @@ class CPUTest
                                     state.y(),
                                     state.flags()
                                          .toBuilder()
-                                         .user(true)
-                                         .breakCommand(true)
                                          .decimal(false)
                                          .irqDisable(true)
                                          .build(),
@@ -1290,7 +1292,11 @@ class CPUTest
                                     state.flags().toBuilder().decimal(false).irqDisable(true).build(),
                                     irq,
                                     offsetLow(state.stackPointer(), -3),
-                                    List.of(StatusRegister.of(state.flags().toBuilder().breakCommand(true).build())
+                                    List.of(StatusRegister.of(state.flags()
+                                                                   .toBuilder()
+                                                                   .user(true)
+                                                                   .breakCommand(true)
+                                                                   .build())
                                                           .value(),
                                             start.plus(Value.of(2)).low(),
                                             start.plus(Value.of(2)).high())));
@@ -2314,7 +2320,12 @@ class CPUTest
                                     state.flags(),
                                     state.programCounter().plus(Value.of(1)),
                                     offsetLow(state.stackPointer(), -1),
-                                    List.of(status.value())));
+                                    List.of(StatusRegister.of(state.flags()
+                                                                   .toBuilder()
+                                                                   .user(true)
+                                                                   .breakCommand(true)
+                                                                   .build())
+                                                          .value())));
     }
 
     @ParameterizedTest
