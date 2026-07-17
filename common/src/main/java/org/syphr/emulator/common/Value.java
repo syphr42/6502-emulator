@@ -102,6 +102,11 @@ public record Value(byte data)
         return Value.of(data + Byte.toUnsignedInt(other.data()));
     }
 
+    public String toHex()
+    {
+        return "%02X".formatted(data);
+    }
+
     @Override
     public String toString()
     {

@@ -26,12 +26,17 @@ import org.syphr.emulator.cli.demo.Programs;
 import org.syphr.emulator.cli.gui.CPUManager;
 import org.syphr.emulator.cli.gui.GUI;
 import org.syphr.emulator.cli.memory.MemoryMap;
+import org.syphr.emulator.cli.simple.Format;
+import org.syphr.emulator.cli.simple.ProgramResult;
 import org.syphr.emulator.cli.simple.ProgramRunner;
+import org.syphr.emulator.cli.simple.State;
 import org.syphr.emulator.cpu.Address;
+import tools.jackson.databind.json.JsonMapper;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.Map;
 
 @Component
 @RequiredArgsConstructor
@@ -44,6 +49,8 @@ public class CLI
     private static final String ARG_DESC_BIN_START = "Start address for provided binary data";
     private static final String ARG_DESC_BIN_WRITABLE = "Allow the binary data to be writable in memory";
     private static final String ARG_DESC_STEPPING = "Start clock in single-step mode (default is continuous mode)";
+    private static final String ARG_DESC_OUTPUT_FILE = "Path to output file that will be written with execution details";
+    private static final String ARG_DESC_OUTPUT_FORMAT = "Format for the output file if specified";
 
     private final Terminal terminal;
 
@@ -54,7 +61,9 @@ public class CLI
                     @Option(description = ARG_DESC_BIN, longName = "bin") @Nullable Path bin,
                     @Option(defaultValue = "0x0000", description = ARG_DESC_BIN_START, longName = "bin-start") Address binStart,
                     @Option(defaultValue = "false", description = ARG_DESC_BIN_WRITABLE, longName = "bin-writable") boolean binWritable,
-                    @Option(defaultValue = "false", description = ARG_DESC_STEPPING, longName = "stepping") boolean stepping) throws IOException
+                    @Option(defaultValue = "false", description = ARG_DESC_STEPPING, longName = "stepping") boolean stepping,
+                    @Option(description = ARG_DESC_OUTPUT_FILE, longName = "output") @Nullable Path outputFile,
+                    @Option(defaultValue = "json", description = ARG_DESC_OUTPUT_FORMAT, longName = "format") Format outputFormat) throws IOException
     {
         if (Terminal.TYPE_DUMB.equals(terminal.getType())) {
             System.out.println("WARNING: Some inputs do not work inside a dumb terminal.");
@@ -63,12 +72,27 @@ public class CLI
         MemoryMap memoryMap = bin == null
                               ? Programs.simpleLoopWithSubRoutine()
                               : MemoryMap.of(binStart, bin, binWritable);
-        new ProgramRunner(terminal,
-                          memoryMap,
-                          ClockPeriod.of(clockFrequency),
-                          stepping,
-                          breakAfterCycle,
-                          executionStart).run();
+        ProgramResult result = new ProgramRunner(terminal,
+                                                 memoryMap,
+                                                 ClockPeriod.of(clockFrequency),
+                                                 stepping,
+                                                 breakAfterCycle,
+                                                 executionStart).run();
+
+        if (outputFile != null) {
+            writeResult(result, outputFile, outputFormat);
+        }
+    }
+
+    private void writeResult(ProgramResult result, Path outputFile, Format outputFormat)
+    {
+        switch (outputFormat) {
+            case JSON -> new JsonMapper().writeValue(outputFile,
+                                                     Map.of("initialState",
+                                                            State.from(result.initialState()),
+                                                            "finalState",
+                                                            State.from(result.finalState())));
+        }
     }
 
     @Command(name = "gui", description = "Start the graphical interface")

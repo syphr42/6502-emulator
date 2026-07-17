@@ -21,6 +21,7 @@ import org.syphr.emulator.cli.clock.ClockSignal;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.CPU;
+import org.syphr.emulator.cpu.CPUState;
 
 import java.time.Duration;
 
@@ -56,9 +57,10 @@ public class ProgramRunner
         inputThread = new Thread(inputManager, "Input");
     }
 
-    public void run()
+    public ProgramResult run()
     {
-        System.out.println("CPU initial state: " + cpu.getState());
+        CPUState initialState = cpu.getState();
+        System.out.println("CPU initial state: " + initialState);
         try {
             cpuThread.start();
             clockThread.start();
@@ -71,7 +73,11 @@ public class ProgramRunner
             inputThread.interrupt();
             clockThread.interrupt();
             cpuThread.interrupt();
-            System.out.println("CPU final state: " + cpu.getState());
         }
+
+        CPUState finalState = cpu.getState();
+        System.out.println("CPU final state: " + finalState);
+
+        return new ProgramResult(initialState, finalState);
     }
 }

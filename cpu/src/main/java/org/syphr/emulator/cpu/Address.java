@@ -103,6 +103,11 @@ public record Address(short data) implements Comparable<Address>
         return Short.toUnsignedInt(data);
     }
 
+    public String toHex()
+    {
+        return "%04X".formatted(data);
+    }
+
     @Override
     public int compareTo(Address o)
     {
