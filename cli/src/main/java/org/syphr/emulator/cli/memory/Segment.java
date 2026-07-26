@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,25 @@
 package org.syphr.emulator.cli.memory;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.Addressable;
 
-@RequiredArgsConstructor
 public abstract class Segment implements Addressable
 {
     @Getter
     private final Address start;
     @Getter
     private final Address end;
+
+    public Segment(Address start, Address end)
+    {
+        if (start.compareTo(end) > 0) {
+            throw new IllegalArgumentException("Start address " + start + " is greater than end address " + end);
+        }
+
+        this.start = start;
+        this.end = end;
+    }
 
     public boolean contains(Address address)
     {
