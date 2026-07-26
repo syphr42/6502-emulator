@@ -31,6 +31,8 @@ import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 
 import javax.swing.event.EventListenerList;
 import java.util.Objects;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 import java.util.function.Function;
 
 import static org.syphr.emulator.cpu.AddressMode.*;
@@ -45,6 +47,7 @@ public class CPU implements Runnable, ClockListener
 {
     private final HardwareInterruptState interrupts = new HardwareInterruptState();
     private final EventListenerList listeners = new EventListenerList();
+    private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @ToString.Include
     private final Register accumulator;
@@ -131,6 +134,21 @@ public class CPU implements Runnable, ClockListener
         if (start != null) {
             programManager.setProgramCounter(start);
         }
+
+        clock.addListener(new ClockListener()
+        {
+            @Override
+            public void cycleStarted(ClockEvent event)
+            {
+                // nop
+            }
+
+            @Override
+            public void cycleEnded(ClockEvent event)
+            {
+                fireClockCycleCompleted(event.cycle());
+            }
+        });
     }
 
     public void run()
@@ -185,13 +203,13 @@ public class CPU implements Runnable, ClockListener
     @Override
     public void cycleStarted(ClockEvent event)
     {
-        clock.cycleStarted(event.cycle());
+        clock.allowNextCycle();
     }
 
     @Override
     public void cycleEnded(ClockEvent event)
     {
-        fireClockCycleCompleted(event.cycle());
+        // nop
     }
 
     public void reset()
@@ -228,8 +246,7 @@ public class CPU implements Runnable, ClockListener
             programManager.setProgramCounter(programManager.getProgramCounter().increment());
         } else {
             // cycles 1-2: microcode selection
-            clock.awaitNextCycle();
-            clock.awaitNextCycle();
+            clock.waitCycles(2);
         }
 
         if (RESET == interrupt) {
@@ -269,24 +286,24 @@ public class CPU implements Runnable, ClockListener
 
     void executeNext()
     {
+        log.info("Reading next operation");
+        long opStartCycle = clock.getCycleCount() + 1;
         long opStartTime = System.nanoTime();
 
-        log.info("Reading next operation");
         Operation op = decoder.nextOp(programManager);
-        long startCycle = clock.getCycleCount();
         try (MDC.MDCCloseable _ = MDC.putCloseable("op", op.getClass().getSimpleName())) {
             log.info("Executing op {}", op);
             execute(op);
             log.info("Completed op {}", op);
+            log.atTrace()
+               .setMessage("Op execution time: {} ns")
+               .addArgument(() -> System.nanoTime() - opStartTime)
+               .log();
 
             CPUState state = getState();
             log.atInfo().setMessage("{}").addArgument(state::toString).log();
 
-            fireOperationCompleted(state, op, startCycle, clock.getCycleCount());
-            log.atDebug()
-               .setMessage("Op execution time: {} ns")
-               .addArgument(() -> System.nanoTime() - opStartTime)
-               .log();
+            fireOperationCompleted(state, op, opStartCycle, clock.getCycleCount());
         }
     }
 
@@ -296,7 +313,7 @@ public class CPU implements Runnable, ClockListener
             case ADC(AddressMode mode) -> {
                 alu.addWithCarry(accumulator, toValue(mode));
                 if (status.decimal()) {
-                    clock.awaitNextCycle(); // burn a cycle to update status flags
+                    clock.waitCycles(1); // burn a cycle to update status flags
                 }
             }
             case AND(AddressMode mode) -> alu.calculate(accumulator, reg -> reg.and(toValue(mode)));
@@ -353,7 +370,7 @@ public class CPU implements Runnable, ClockListener
             case INY _ -> alu.calculate(y, Value::increment);
             case JMP(AddressMode mode) -> programManager.setProgramCounter(toAddress(mode));
             case JSR(AddressMode mode) -> {
-                clock.awaitNextCycle(); // burn a cycle for internal operation
+                clock.waitCycles(1); // burn a cycle for internal operation
                 stack.pushAll(programManager.getProgramCounter().decrement().bytes().reversed());
                 programManager.setProgramCounter(toAddress(mode));
             }
@@ -387,15 +404,15 @@ public class CPU implements Runnable, ClockListener
                 programManager.setProgramCounter(address);
             }
             case RTS _ -> {
-                clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
+                clock.waitCycles(1); // burn a cycle to increment the stack pointer
                 var address = Address.of(stack.pop(), stack.pop());
-                clock.awaitNextCycle(); // burn a cycle to update the PC
+                clock.waitCycles(1); // burn a cycle to update the PC
                 programManager.setProgramCounter(address.increment());
             }
             case SBC(AddressMode mode) -> {
                 alu.subtractWithCarry(accumulator, toValue(mode));
                 if (status.decimal()) {
-                    clock.awaitNextCycle(); // burn a cycle to update status flags
+                    clock.waitCycles(1); // burn a cycle to update status flags
                 }
             }
             case SEC _ -> status.setCarry(true);
@@ -413,7 +430,7 @@ public class CPU implements Runnable, ClockListener
             case STP _ -> {
                 // TODO - STP should put the CPU in an idle state and wait for RESET
                 log.warn("STP triggering CPU shutdown");
-                clock.awaitNextCycle(); // burn a cycle - reason undetermined
+                clock.waitCycles(1); // burn a cycle - reason undetermined
                 throw new HaltException("Stop requested");
             }
             case STX(AddressMode mode) -> writer.write(toAddress(mode), x.value());
@@ -436,7 +453,7 @@ public class CPU implements Runnable, ClockListener
             case WAI _ -> {
                 // TODO - WAI should put the CPU in an idle state waiting for any interrupt
                 log.warn("WAI skipped as NOP");
-                clock.awaitNextCycle(); // burn a cycle - reason undetermined
+                clock.waitCycles(1); // burn a cycle - reason undetermined
             }
 
             case UNUSED(Value code, AddressMode mode) -> {
@@ -448,11 +465,7 @@ public class CPU implements Runnable, ClockListener
                 }
 
                 if (Value.of(UNUSED.X5C).equals(code)) {
-                    // burn four cycles - reason undetermined
-                    clock.awaitNextCycle();
-                    clock.awaitNextCycle();
-                    clock.awaitNextCycle();
-                    clock.awaitNextCycle();
+                    clock.waitCycles(4); // burn four cycles - reason undetermined
                 }
             }
         }
@@ -463,14 +476,14 @@ public class CPU implements Runnable, ClockListener
         return switch (mode) {
             case Absolute(Address address) -> address;
             case AbsoluteIndexedXIndirect(Address address) -> {
-                clock.awaitNextCycle(); // burn a cycle to fix page boundary bug
+                clock.waitCycles(1); // burn a cycle to fix page boundary bug
                 var pointer = address.plusUnsigned(x.value());
                 yield Address.of(reader.read(pointer), reader.read(pointer.increment()));
             }
             case AbsoluteIndexedX(Address address) -> waitToCrossPageBoundary(address, a -> a.plusUnsigned(x.value()));
             case AbsoluteIndexedY(Address address) -> waitToCrossPageBoundary(address, a -> a.plusUnsigned(y.value()));
             case AbsoluteIndirect(Address address) -> {
-                clock.awaitNextCycle(); // burn a cycle to fix page boundary bug
+                clock.waitCycles(1); // burn a cycle to fix page boundary bug
                 yield Address.of(reader.read(address), reader.read(address.increment()));
             }
             case Relative(Value displacement) -> waitToCrossPageBoundary(programManager.getProgramCounter(),
@@ -540,7 +553,7 @@ public class CPU implements Runnable, ClockListener
 
     private void pullFromStack(Register register)
     {
-        clock.awaitNextCycle(); // burn a cycle to increment the stack pointer
+        clock.waitCycles(1); // burn a cycle to increment the stack pointer
         register.load(stack.pop());
     }
 
@@ -548,7 +561,7 @@ public class CPU implements Runnable, ClockListener
     {
         if (condition) {
             Address target = toAddress(mode);
-            clock.awaitNextCycle();
+            clock.waitCycles(1); // burn a cycle when branch is taken
             programManager.setProgramCounter(target);
         }
     }
@@ -559,7 +572,7 @@ public class CPU implements Runnable, ClockListener
 
         // wait one cycle if a page boundary will be crossed
         if (!source.high().equals(target.high())) {
-            clock.awaitNextCycle();
+            clock.waitCycles(1);
             log.info("Crossed page boundary");
         }
 
@@ -568,32 +581,34 @@ public class CPU implements Runnable, ClockListener
 
     private boolean isBitSet(Value value, int position)
     {
-        // burn a cycle performing the bit test
-        clock.awaitNextCycle();
-
+        clock.waitCycles(1); // burn a cycle performing the bit test
         return value.isSet(position);
     }
 
     private void fireClockCycleCompleted(long cycleCount)
     {
-        ClockCycleEvent event = null;
-        for (ClockCycleListener listener : listeners.getListeners(ClockCycleListener.class)) {
-            if (event == null) {
-                event = new ClockCycleEvent(getState(), cycleCount);
+        executor.submit(() -> {
+            ClockCycleEvent event = null;
+            for (ClockCycleListener listener : listeners.getListeners(ClockCycleListener.class)) {
+                if (event == null) {
+                    event = new ClockCycleEvent(getState(), cycleCount);
+                }
+                listener.clockCycleCompleted(event);
             }
-            listener.clockCycleCompleted(event);
-        }
+        });
     }
 
     private void fireOperationCompleted(CPUState state, Operation op, long startCycle, long endCycle)
     {
-        OperationEvent event = null;
-        for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
-            if (event == null) {
-                event = new OperationEvent(state, op, startCycle, endCycle);
+        executor.submit(() -> {
+            OperationEvent event = null;
+            for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
+                if (event == null) {
+                    event = new OperationEvent(state, op, startCycle, endCycle);
+                }
+                listener.operationCompleted(event);
             }
-            listener.operationCompleted(event);
-        }
+        });
     }
 
     @RequiredArgsConstructor
@@ -604,12 +619,11 @@ public class CPU implements Runnable, ClockListener
 
         public Value read(Address address)
         {
-            clock.awaitNextCycle();
-
-            Value value = reader.read(address);
-            log.info("Read {} from {}", value, address);
-
-            return value;
+            return clock.runCycle(() -> {
+                Value value = reader.read(address);
+                log.info("Read {} from {}", value, address);
+                return value;
+            });
         }
     }
 
@@ -621,10 +635,10 @@ public class CPU implements Runnable, ClockListener
 
         public void write(Address address, Value value)
         {
-            clock.awaitNextCycle();
-
-            writer.write(address, value);
-            log.info("Wrote {} to {}", value, address);
+            clock.runCycle(() -> {
+                writer.write(address, value);
+                log.info("Wrote {} to {}", value, address);
+            });
         }
     }
 }

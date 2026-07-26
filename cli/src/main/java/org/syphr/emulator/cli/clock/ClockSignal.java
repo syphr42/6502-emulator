@@ -16,6 +16,7 @@
 package org.syphr.emulator.cli.clock;
 
 import lombok.extern.slf4j.Slf4j;
+import org.slf4j.MDC;
 import org.syphr.emulator.common.clock.ClockEvent;
 import org.syphr.emulator.common.clock.ClockGenerator;
 import org.syphr.emulator.common.clock.ClockListener;
@@ -64,9 +65,12 @@ public class ClockSignal implements Runnable, ClockGenerator
     public void run()
     {
         while (!Thread.interrupted()) {
-            long cycleStartTime = System.nanoTime();
             long cycle = ++cycleCount;
+            updateLoggingContext();
+
             fireCycleStarted();
+            log.trace("Clock signal {} started", cycleCount);
+            long cycleStartTime = System.nanoTime();
 
             if (cycle == breakAfterCycle) {
                 stepping.set(true);
@@ -88,24 +92,14 @@ public class ClockSignal implements Runnable, ClockGenerator
                 break;
             }
 
+            log.atTrace()
+               .setMessage("Clock signal {} completed; runtime: {} ns")
+               .addArgument(cycleCount)
+               .addArgument(() -> System.nanoTime() - cycleStartTime)
+               .log();
             fireCycleEnded();
-            log.atDebug().setMessage("Cycle period: {} ns").addArgument(() -> System.nanoTime() - cycleStartTime).log();
         }
     }
-
-    private void sleep(Duration duration) throws InterruptedException
-    {
-        Thread.sleep(duration);
-    }
-
-    private void spinWait(Duration duration)
-    {
-        long start = System.nanoTime();
-        while (System.nanoTime() - start < duration.toNanos()) {
-            Thread.onSpinWait();
-        }
-    }
-
 
     public void toggleStepping()
     {
@@ -135,6 +129,11 @@ public class ClockSignal implements Runnable, ClockGenerator
         period.getAndUpdate(p -> p.multipliedBy(2));
     }
 
+    private void updateLoggingContext()
+    {
+        MDC.put("clock", String.valueOf(cycleCount));
+    }
+
     private void awaitStep() throws InterruptedException
     {
         stepper.lock();
@@ -145,6 +144,19 @@ public class ClockSignal implements Runnable, ClockGenerator
             takeStep = false;
         } finally {
             stepper.unlock();
+        }
+    }
+
+    private void sleep(Duration duration) throws InterruptedException
+    {
+        Thread.sleep(duration);
+    }
+
+    private void spinWait(Duration duration)
+    {
+        long start = System.nanoTime();
+        while (System.nanoTime() - start < duration.toNanos()) {
+            Thread.onSpinWait();
         }
     }
 
