@@ -152,7 +152,7 @@ CPU cpu = CPU.builder()
 ### Testing Patterns
 
 - **Test Framework**: JUnit 5 with parameterized tests
-- **Assertions**: AssertJ (`assertThat(...)`)
+- **Assertions**: AssertJ (`assertThat(...)`); always wrap multiple assertions in `assertAll(...)` for better reporting
 - **Mocking**: Mockito with `@ExtendWith(MockitoExtension.class)`
 - **Test Organization**: Place `@BeforeEach` setup to initialize mocks and get references to CPU state
 
