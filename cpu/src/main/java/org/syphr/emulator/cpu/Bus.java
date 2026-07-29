@@ -15,18 +15,26 @@
  */
 package org.syphr.emulator.cpu;
 
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.ToString;
 import org.syphr.emulator.common.Value;
 
-import java.util.List;
+@Getter
+@ToString
+@EqualsAndHashCode
+@NoArgsConstructor
+public class Bus
+{
+    private volatile Address address = Address.MIN;
+    private volatile Value data = Value.ZERO;
+    private volatile BusAction lastAction = BusAction.READ;
 
-public record CPUState(Address programCounter,
-                       Value accumulator,
-                       Value x,
-                       Value y,
-                       Address stackPointer,
-                       List<Value> stackData,
-                       Flags flags,
-                       Address addressBus,
-                       Value dataBus,
-                       BusAction lastBusAction)
-{}
+    public void update(Address address, Value data, BusAction action)
+    {
+        this.address = address;
+        this.data = data;
+        this.lastAction = action;
+    }
+}

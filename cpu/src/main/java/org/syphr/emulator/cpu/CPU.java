@@ -70,6 +70,8 @@ public class CPU implements Runnable, ClockListener
 
     private final ProgramManager programManager;
 
+    private final Bus bus;
+
     public static Builder builder()
     {
         return new Builder();
@@ -123,13 +125,14 @@ public class CPU implements Runnable, ClockListener
         this.y = new Register();
         this.status = new StatusRegister();
         this.clock = clock;
-        this.reader = new ClockedReader(reader, clock);
-        this.writer = new ClockedWriter(writer, clock);
+        this.reader = new CPUReader(reader, clock);
+        this.writer = new CPUWriter(writer, clock);
 
         stack = new Stack(this.reader, this.writer);
         programManager = new ProgramManager(this.reader);
         alu = new ALU(status);
         decoder = new InstructionDecoder();
+        bus = new Bus();
 
         if (start != null) {
             programManager.setProgramCounter(start);
@@ -146,6 +149,7 @@ public class CPU implements Runnable, ClockListener
             @Override
             public void cycleEnded(ClockEvent event)
             {
+                log.atTrace().setMessage("Bus state after cycle: {}").addArgument(bus).log();
                 fireClockCycleCompleted(event.cycle());
             }
         });
@@ -171,7 +175,10 @@ public class CPU implements Runnable, ClockListener
                             y.value(),
                             stack.getPointer(),
                             stack.getData(),
-                            status.flags());
+                            status.flags(),
+                            bus.getAddress(),
+                            bus.getData(),
+                            bus.getLastAction());
     }
 
     // --------------- Start Listener Management ------------------
@@ -612,7 +619,7 @@ public class CPU implements Runnable, ClockListener
     }
 
     @RequiredArgsConstructor
-    private static class ClockedReader implements Reader
+    private class CPUReader implements Reader
     {
         private final Reader reader;
         private final Clock clock;
@@ -621,6 +628,7 @@ public class CPU implements Runnable, ClockListener
         {
             return clock.runCycle(() -> {
                 Value value = reader.read(address);
+                bus.update(address, value, BusAction.READ);
                 log.info("Read {} from {}", value, address);
                 return value;
             });
@@ -628,7 +636,7 @@ public class CPU implements Runnable, ClockListener
     }
 
     @RequiredArgsConstructor
-    private static class ClockedWriter implements Writer
+    private class CPUWriter implements Writer
     {
         private final Writer writer;
         private final Clock clock;
@@ -637,6 +645,7 @@ public class CPU implements Runnable, ClockListener
         {
             clock.runCycle(() -> {
                 writer.write(address, value);
+                bus.update(address, value, BusAction.WRITE);
                 log.info("Wrote {} to {}", value, address);
             });
         }
