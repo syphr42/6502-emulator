@@ -154,7 +154,11 @@ CPU cpu = CPU.builder()
 - **Test Framework**: JUnit 5 with parameterized tests
 - **Assertions**: AssertJ (`assertThat(...)`); always wrap multiple assertions in `assertAll(...)` for better reporting
 - **Mocking**: Mockito with `@ExtendWith(MockitoExtension.class)`
-- **Test Organization**: Place `@BeforeEach` setup to initialize mocks and get references to CPU state
+- **Test Organization**: Place `@BeforeEach` setup at after fields and before any tests if extra setup is needed
+- **Test Method Naming**: Generally follow a `method_StateUnderTest_ExpectedBehavior` pattern (`CPUTest` follows a
+  `execute_OpCode_AddressMode` pattern for operations)
+- **Test Method Structure**: Use a given-when-then structure and insert comments for each section (omit given if no
+  setup is needed)
 
 Example:
 
