@@ -96,6 +96,9 @@ class CPUView
         table.getColumn(CycleLogTableModel.Column.X.getDisplayName()).setPreferredWidth(250);
         table.getColumn(CycleLogTableModel.Column.Y.getDisplayName()).setPreferredWidth(250);
         table.getColumn(CycleLogTableModel.Column.STACK_POINTER.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.ADDRESS_BUS.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.DATA_BUS.getDisplayName()).setPreferredWidth(250);
+        table.getColumn(CycleLogTableModel.Column.BUS_ACTION.getDisplayName()).setPreferredWidth(250);
 
         var scrollPane = new JScrollPane(table);
         setAutoScroll(scrollPane);
