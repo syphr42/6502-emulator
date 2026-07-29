@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,17 @@ class CPUView
 
     private static void setAutoScroll(JScrollPane scrollPane)
     {
-        scrollPane.getVerticalScrollBar()
-                  .addAdjustmentListener(event -> event.getAdjustable().setValue(event.getAdjustable().getMaximum()));
+        JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
+
+        final boolean[] isAtBottom = {true};
+        scrollBar.addAdjustmentListener(event -> {
+            JScrollBar sb = (JScrollBar) event.getAdjustable();
+
+            if (event.getValueIsAdjusting()) {
+                isAtBottom[0] = sb.getValue() == sb.getMaximum() - sb.getVisibleAmount();
+            } else if (isAtBottom[0]) {
+                sb.setValue(sb.getMaximum() - sb.getVisibleAmount());
+            }
+        });
     }
 }
