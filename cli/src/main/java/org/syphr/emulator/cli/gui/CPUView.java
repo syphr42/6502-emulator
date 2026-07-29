@@ -62,9 +62,33 @@ class CPUView
         addressTable.setDefaultRenderer(Value.class, new DefaultTableCellRenderer()
         {
             @Override
-            protected void setValue(Object value)
+            public Component getTableCellRendererComponent(JTable table,
+                                                           Object value,
+                                                           boolean isSelected,
+                                                           boolean hasFocus,
+                                                           int row,
+                                                           int column)
             {
+                Component component = super.getTableCellRendererComponent(table,
+                                                                          value,
+                                                                          isSelected,
+                                                                          hasFocus,
+                                                                          row,
+                                                                          column);
                 setText("%02X".formatted(((Value) value).data()));
+
+                if (!isSelected) {
+                    Address cellAddress = addressData.toAddress(row, column);
+
+                    ColorPair colors = addressData.getHighlightColor(cellAddress)
+                                                  .map(c -> new ColorPair(c, Color.BLACK))
+                                                  .orElse(new ColorPair(UIManager.getColor("Table.background"),
+                                                                        UIManager.getColor("Table.foreground")));
+                    component.setBackground(colors.background());
+                    component.setForeground(colors.foreground());
+                }
+
+                return component;
             }
         });
 
@@ -133,4 +157,6 @@ class CPUView
             prevMax[0] = sb.getMaximum();
         });
     }
+
+    private record ColorPair(Color background, Color foreground) {}
 }

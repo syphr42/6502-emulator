@@ -16,6 +16,7 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.Getter;
+import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cli.memory.RAM;
 import org.syphr.emulator.cli.memory.ROM;
@@ -26,9 +27,11 @@ import org.syphr.emulator.cpu.Addressable;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 public class AddressTableModel extends AbstractTableModel
 {
@@ -36,10 +39,17 @@ public class AddressTableModel extends AbstractTableModel
     private static final int ADDRESSES_PER_ROW = 16;
     private static final int ROW_COUNT = (MAX_ADDRESS + ADDRESSES_PER_ROW) / ADDRESSES_PER_ROW;
 
+    private static final Color READ_HIGHLIGHT = new Color(100, 181, 246);     // Light blue
+    private static final Color WRITE_HIGHLIGHT = new Color(255, 167, 38);     // Light orange
+
     private final Map<Address, Value> map = new HashMap<>();
 
     @Getter
     private Addressable memoryMap = new MemoryMap(List.of(new RAM(Address.MIN, Address.MAX)));
+
+    @Nullable
+    private Address lastAccessedAddress;
+    private boolean lastAccessWasWrite = false;
 
     @Override
     public int getRowCount()
@@ -92,13 +102,47 @@ public class AddressTableModel extends AbstractTableModel
         throw new IllegalArgumentException("Invalid object type: " + value.getClass());
     }
 
-    public void updateAddress(Address address, Value value)
+    private void updateAddress(Address address, Value value)
     {
         map.put(address, value);
 
         int rowIndex = address.data() / ADDRESSES_PER_ROW;
         int columnIndex = (address.data() % ADDRESSES_PER_ROW) + 1;
         fireTableCellUpdated(rowIndex, columnIndex);
+    }
+
+    public void updateAddressRead(Address address, Value value)
+    {
+        clearPreviousHighlight();
+        lastAccessedAddress = address;
+        lastAccessWasWrite = false;
+        updateAddress(address, value);
+    }
+
+    public void updateAddressWrite(Address address, Value value)
+    {
+        clearPreviousHighlight();
+        lastAccessedAddress = address;
+        lastAccessWasWrite = true;
+        updateAddress(address, value);
+    }
+
+    private void clearPreviousHighlight()
+    {
+        if (lastAccessedAddress != null) {
+            int rowIndex = lastAccessedAddress.data() / ADDRESSES_PER_ROW;
+            int columnIndex = (lastAccessedAddress.data() % ADDRESSES_PER_ROW) + 1;
+            fireTableCellUpdated(rowIndex, columnIndex);
+        }
+    }
+
+    public Optional<Color> getHighlightColor(Address address)
+    {
+        if (address.equals(lastAccessedAddress)) {
+            return Optional.of(lastAccessWasWrite ? WRITE_HIGHLIGHT : READ_HIGHLIGHT);
+        }
+
+        return Optional.empty();
     }
 
     public void loadMemoryMap(MemoryMap memoryMap)
@@ -119,7 +163,7 @@ public class AddressTableModel extends AbstractTableModel
             public Value read(Address address)
             {
                 Value result = memoryMap.read(address);
-                SwingUtilities.invokeLater(() -> updateAddress(address, result));
+                SwingUtilities.invokeLater(() -> updateAddressRead(address, result));
                 return result;
             }
 
@@ -127,12 +171,12 @@ public class AddressTableModel extends AbstractTableModel
             public void write(Address address, Value value)
             {
                 memoryMap.write(address, value);
-                SwingUtilities.invokeLater(() -> updateAddress(address, value));
+                SwingUtilities.invokeLater(() -> updateAddressWrite(address, value));
             }
         };
     }
 
-    private Address toAddress(int rowIndex, int columnIndex)
+    public Address toAddress(int rowIndex, int columnIndex)
     {
         var baseAddress = Address.of(ADDRESSES_PER_ROW * rowIndex);
         if (columnIndex == 0) {
@@ -145,6 +189,8 @@ public class AddressTableModel extends AbstractTableModel
     private void clear()
     {
         map.clear();
+        lastAccessedAddress = null;
+        lastAccessWasWrite = false;
         fireTableDataChanged();
     }
 }
