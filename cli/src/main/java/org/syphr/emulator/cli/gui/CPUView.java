@@ -108,14 +108,26 @@ class CPUView
         JScrollBar scrollBar = scrollPane.getVerticalScrollBar();
 
         final boolean[] isAtBottom = {true};
+        final int[] prevMax = {scrollBar.getMaximum()};
+
         scrollBar.addAdjustmentListener(event -> {
             JScrollBar sb = (JScrollBar) event.getAdjustable();
+            int max = sb.getMaximum() - sb.getVisibleAmount();
 
             if (event.getValueIsAdjusting()) {
-                isAtBottom[0] = sb.getValue() == sb.getMaximum() - sb.getVisibleAmount();
-            } else if (isAtBottom[0]) {
-                sb.setValue(sb.getMaximum() - sb.getVisibleAmount());
+                // User is dragging the scroll bar knob
+                isAtBottom[0] = sb.getValue() >= max;
+            } else if (sb.getMaximum() != prevMax[0]) {
+                // Non-adjusting event but maximum changed → model change (new rows)
+                if (isAtBottom[0] && sb.getValue() != max) {
+                    sb.setValue(max);
+                }
+            } else {
+                // Non-adjusting event, maximum unchanged → mouse wheel scroll
+                isAtBottom[0] = sb.getValue() >= max;
             }
+
+            prevMax[0] = sb.getMaximum();
         });
     }
 }
