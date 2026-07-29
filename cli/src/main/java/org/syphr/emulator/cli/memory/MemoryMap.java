@@ -25,12 +25,11 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
 
-public class MemoryMap implements Addressable
+public record MemoryMap(List<Segment> segments) implements Addressable
 {
-    private final List<Segment> segments;
-
     public static MemoryMap of(Segment... segments)
     {
         return new MemoryMap(List.of(segments));
@@ -125,7 +124,31 @@ public class MemoryMap implements Addressable
 
     public MemoryMap(List<Segment> segments)
     {
+        if (segments.isEmpty()) {
+            throw new IllegalArgumentException("Memory segment list is empty");
+        }
+        if (isOverlapping(segments)) {
+            throw new IllegalArgumentException("Memory segments cannot overlap");
+        }
+
         this.segments = List.copyOf(segments);
+    }
+
+    private boolean isOverlapping(List<Segment> segments)
+    {
+        List<Segment> sorted = segments.stream()
+                                       .sorted(Comparator.comparing(Segment::getStart))
+                                       .toList();
+
+        for (int i = 0; i < sorted.size() - 1; i++) {
+            Segment s1 = sorted.get(i);
+            Segment s2 = sorted.get(i + 1);
+            if (s1.getEnd().compareTo(s2.getStart()) >= 0) {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     @Override
@@ -146,10 +169,5 @@ public class MemoryMap implements Addressable
                 .findFirst()
                 .orElseThrow(() -> new IllegalArgumentException("No memory segment contains address " + address))
                 .write(address, value);
-    }
-
-    public List<Segment> getSegments()
-    {
-        return List.copyOf(segments);
     }
 }

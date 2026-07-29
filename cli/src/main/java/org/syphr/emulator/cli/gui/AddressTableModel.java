@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -105,7 +105,7 @@ public class AddressTableModel extends AbstractTableModel
     {
         clear();
 
-        for (Segment segment : memoryMap.getSegments()) {
+        for (Segment segment : memoryMap.segments()) {
             if (segment instanceof ROM rom) {
                 for (Address address = rom.getStart(); !address.equals(rom.getEnd()); address = address.increment()) {
                     updateAddress(address, rom.read(address));
