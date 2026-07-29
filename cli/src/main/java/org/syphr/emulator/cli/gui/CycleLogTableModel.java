@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,10 @@ public class CycleLogTableModel extends AbstractTableModel
         ACCUMULATOR("Accumulator"),
         X("X Register"),
         Y("Y Register"),
-        STACK_POINTER("Stack Pointer");
+        STACK_POINTER("Stack Pointer"),
+        ADDRESS_BUS("Address Bus"),
+        DATA_BUS("Data Bus"),
+        BUS_ACTION("Bus Action");
 
         private final String displayName;
 
@@ -87,6 +90,9 @@ public class CycleLogTableModel extends AbstractTableModel
             case X -> event.state().x();
             case Y -> event.state().y();
             case STACK_POINTER -> event.state().stackPointer();
+            case ADDRESS_BUS -> event.state().addressBus();
+            case DATA_BUS -> event.state().dataBus();
+            case BUS_ACTION -> event.state().lastBusAction();
         };
     }
 
