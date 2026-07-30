@@ -25,7 +25,7 @@ import org.syphr.emulator.common.Value;
 @ToString
 @EqualsAndHashCode
 @NoArgsConstructor
-public class Bus
+class Bus
 {
     private volatile Address address = Address.MIN;
     private volatile Value data = Value.ZERO;
