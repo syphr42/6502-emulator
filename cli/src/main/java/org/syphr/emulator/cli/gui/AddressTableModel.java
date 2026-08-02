@@ -94,6 +94,7 @@ public class AddressTableModel extends AbstractTableModel
         if (value instanceof Value v) {
             map.put(toAddress(rowIndex, columnIndex), v);
             fireTableCellUpdated(rowIndex, columnIndex);
+            return;
         }
 
         throw new IllegalArgumentException("Invalid object type: " + value.getClass());
