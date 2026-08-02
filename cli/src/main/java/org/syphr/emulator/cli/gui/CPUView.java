@@ -52,9 +52,33 @@ class CPUView
 
     private static JScrollPane createAddressTableScrollPane(AddressTableModel addressData)
     {
-        JTable addressTable = new JTable();
-        addressTable.setModel(addressData);
-        addressTable.getColumnModel().getColumn(0).setPreferredWidth(200);
+        JTable addressTable = new JTable(addressData);
+        addressTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
+        addressTable.getTableHeader().setReorderingAllowed(false);
+        addressTable.getTableHeader().setResizingAllowed(false);
+
+        // set widths initially
+        for (int i = 0; i < addressData.getColumnCount(); i++) {
+            var col = addressTable.getColumnModel().getColumn(i);
+            if (i == 0) {
+                col.setMinWidth(40);
+                col.setPreferredWidth(50);
+                col.setMaxWidth(60);
+            } else {
+                col.setMinWidth(20);
+                col.setPreferredWidth(25);
+                col.setMaxWidth(30);
+            }
+        }
+
+        // keep widths stable on model changes
+        addressData.addTableModelListener(_ -> SwingUtilities.invokeLater(() -> {
+            for (int i = 0; i < addressData.getColumnCount(); i++) {
+                var col = addressTable.getColumnModel().getColumn(i);
+                if (i == 0) { col.setPreferredWidth(50); } else { col.setPreferredWidth(25); }
+            }
+        }));
+
         addressTable.setDefaultRenderer(Address.class, new DefaultTableCellRenderer()
         {
             @Override
