@@ -104,8 +104,8 @@ public class AddressTableModel extends AbstractTableModel
     {
         map.put(address, value);
 
-        int rowIndex = address.data() / ADDRESSES_PER_ROW;
-        int columnIndex = (address.data() % ADDRESSES_PER_ROW) + 1;
+        int rowIndex = address.toUnsignedInt() / ADDRESSES_PER_ROW;
+        int columnIndex = (address.toUnsignedInt() % ADDRESSES_PER_ROW) + 1;
         fireTableCellUpdated(rowIndex, columnIndex);
     }
 
@@ -128,8 +128,8 @@ public class AddressTableModel extends AbstractTableModel
     private void clearPreviousHighlight()
     {
         if (lastAccessedAddress != null) {
-            int rowIndex = lastAccessedAddress.data() / ADDRESSES_PER_ROW;
-            int columnIndex = (lastAccessedAddress.data() % ADDRESSES_PER_ROW) + 1;
+            int rowIndex = lastAccessedAddress.toUnsignedInt() / ADDRESSES_PER_ROW;
+            int columnIndex = (lastAccessedAddress.toUnsignedInt() % ADDRESSES_PER_ROW) + 1;
             fireTableCellUpdated(rowIndex, columnIndex);
         }
     }
