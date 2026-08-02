@@ -18,6 +18,7 @@ package org.syphr.emulator.cli.gui;
 import lombok.Getter;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
+import org.syphr.emulator.cpu.BusAction;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
@@ -25,6 +26,9 @@ import java.awt.*;
 
 class CPUView
 {
+    private static final Color READ_HIGHLIGHT = new Color(100, 181, 246);     // Light blue
+    private static final Color WRITE_HIGHLIGHT = new Color(255, 167, 38);     // Light orange
+
     @Getter
     private final JPanel root;
 
@@ -80,7 +84,10 @@ class CPUView
                 if (!isSelected) {
                     Address cellAddress = addressData.toAddress(row, column);
 
-                    ColorPair colors = addressData.getHighlightColor(cellAddress)
+                    ColorPair colors = addressData.getBusAction(cellAddress)
+                                                  .map(busAction -> busAction == BusAction.READ
+                                                                    ? READ_HIGHLIGHT
+                                                                    : WRITE_HIGHLIGHT)
                                                   .map(c -> new ColorPair(c, Color.BLACK))
                                                   .orElse(new ColorPair(UIManager.getColor("Table.background"),
                                                                         UIManager.getColor("Table.foreground")));

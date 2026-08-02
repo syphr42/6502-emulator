@@ -24,10 +24,10 @@ import org.syphr.emulator.cli.memory.Segment;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.Addressable;
+import org.syphr.emulator.cpu.BusAction;
 
 import javax.swing.*;
 import javax.swing.table.AbstractTableModel;
-import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -38,9 +38,6 @@ public class AddressTableModel extends AbstractTableModel
     private static final int MAX_ADDRESS = Address.MAX.toUnsignedInt();
     private static final int ADDRESSES_PER_ROW = 16;
     private static final int ROW_COUNT = (MAX_ADDRESS + ADDRESSES_PER_ROW) / ADDRESSES_PER_ROW;
-
-    private static final Color READ_HIGHLIGHT = new Color(100, 181, 246);     // Light blue
-    private static final Color WRITE_HIGHLIGHT = new Color(255, 167, 38);     // Light orange
 
     private final Map<Address, Value> map = new HashMap<>();
 
@@ -136,10 +133,10 @@ public class AddressTableModel extends AbstractTableModel
         }
     }
 
-    public Optional<Color> getHighlightColor(Address address)
+    public Optional<BusAction> getBusAction(Address address)
     {
         if (address.equals(lastAccessedAddress)) {
-            return Optional.of(lastAccessWasWrite ? WRITE_HIGHLIGHT : READ_HIGHLIGHT);
+            return Optional.of(lastAccessWasWrite ? BusAction.WRITE : BusAction.READ);
         }
 
         return Optional.empty();
