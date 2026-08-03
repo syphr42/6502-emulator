@@ -16,6 +16,7 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.RequiredArgsConstructor;
+import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.demo.Programs;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
@@ -81,7 +82,7 @@ public class GUI
                         SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
                     }
                 };
-                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
+                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener, ClockPeriod.of("2hz"));
             }
         };
         startCpuAction.setEnabled(true);

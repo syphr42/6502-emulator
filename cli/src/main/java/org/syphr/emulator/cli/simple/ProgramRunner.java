@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,12 +17,11 @@ package org.syphr.emulator.cli.simple;
 
 import org.jline.terminal.Terminal;
 import org.jspecify.annotations.Nullable;
+import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.clock.ClockSignal;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.Address;
 import org.syphr.emulator.cpu.CPU;
-
-import java.time.Duration;
 
 public class ProgramRunner
 {
@@ -34,7 +33,7 @@ public class ProgramRunner
 
     public ProgramRunner(Terminal terminal,
                          MemoryMap memoryMap,
-                         Duration clockPeriod,
+                         ClockPeriod clockPeriod,
                          boolean stepping,
                          long breakAfterCycle,
                          @Nullable Address executionStart)
@@ -48,7 +47,7 @@ public class ProgramRunner
         }
         cpuThread = new Thread(cpu, "CPU");
 
-        var clockSignal = new ClockSignal(clockPeriod, stepping, breakAfterCycle);
+        var clockSignal = new ClockSignal(clockPeriod.duration(), stepping, breakAfterCycle);
         clockSignal.addListener(cpu);
         clockThread = new Thread(clockSignal, "Clock");
 

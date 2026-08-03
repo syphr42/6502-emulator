@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import java.time.Duration;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-public final class ClockPeriod
+public record ClockPeriod(Duration duration)
 {
     public static final Duration ONE_HZ = Duration.ofSeconds(1);
     public static final Duration ONE_KHZ = Duration.ofMillis(1);
@@ -27,7 +27,7 @@ public final class ClockPeriod
 
     private static final Pattern FREQUENCY_PATTERN = Pattern.compile("^\\s*(\\d{1,3})\\s*([mk]?hz)\\s*$");
 
-    public static Duration of(String frequency)
+    public static ClockPeriod of(String frequency)
     {
         Matcher m = FREQUENCY_PATTERN.matcher(frequency.toLowerCase());
         if (!m.matches()) {
@@ -43,13 +43,20 @@ public final class ClockPeriod
 
         try {
             int frequencyMultiplier = Integer.parseInt(m.group(1));
-            return basePeriod.dividedBy(frequencyMultiplier);
+            return new ClockPeriod(basePeriod.dividedBy(frequencyMultiplier));
         } catch (NumberFormatException e) {
             throw new IllegalArgumentException("Invalid clock frequency: " + frequency);
         }
     }
 
-    private ClockPeriod()
+    public ClockPeriod
     {
+        if (duration.toNanos() < 1) {
+            throw new IllegalArgumentException("Clock period cannot be less than one nanosecond");
+        }
+
+        if (duration.toSeconds() > 1) {
+            throw new IllegalArgumentException("Clock period cannot be greater than one second");
+        }
     }
 }

@@ -45,7 +45,10 @@ public class CPUManager
         listeners.remove(listener);
     }
 
-    public void start(Addressable memoryMap, OperationListener opListener, ClockCycleListener cycleListener)
+    public void start(Addressable memoryMap,
+                      OperationListener opListener,
+                      ClockCycleListener cycleListener,
+                      ClockPeriod clockPeriod)
     {
         stop();
 
@@ -55,7 +58,7 @@ public class CPUManager
         cpu.reset();
         cpuThread = new Thread(cpu, "CPU");
 
-        clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
+        clockSignal = new ClockSignal(clockPeriod.duration(), false, 0);
         clockSignal.addListener(cpu);
         clockThread = new Thread(clockSignal, "Clock");
 
