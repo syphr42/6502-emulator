@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,9 +48,9 @@ class ClockPeriodTest
     void of_ValidFrequency_ReturnsClockSpeed(String frequency, long periodNanos)
     {
         // when
-        Duration result = ClockPeriod.of(frequency);
+        ClockPeriod result = ClockPeriod.of(frequency);
 
         // then
-        assertThat(result).isEqualTo(Duration.ofNanos(periodNanos));
+        assertThat(result.duration()).isEqualTo(Duration.ofNanos(periodNanos));
     }
 }
