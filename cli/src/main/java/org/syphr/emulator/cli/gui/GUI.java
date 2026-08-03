@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,15 @@ public class GUI
 
     public void show()
     {
+        var toggleSteppingCpuAction = new AbstractAction("Toggle Stepping")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                cpuManager.toggleStepping();
+            }
+        };
+        toggleSteppingCpuAction.setEnabled(false);
         var stopCpuAction = new AbstractAction("Stop")
         {
             @Override
@@ -47,6 +56,58 @@ public class GUI
                 cpuManager.stop();
             }
         };
+        stopCpuAction.setEnabled(false);
+        var startCpuAction = new AbstractAction("Start")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                opLogData.clear();
+                cycleLogData.clear();
+
+                var opListener = new OperationListener()
+                {
+                    @Override
+                    public void operationCompleted(OperationEvent event)
+                    {
+                        SwingUtilities.invokeLater(() -> opLogData.addEvent(event));
+                    }
+                };
+                var cycleListener = new ClockCycleListener()
+                {
+                    @Override
+                    public void clockCycleCompleted(ClockCycleEvent event)
+                    {
+                        SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
+                    }
+                };
+                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
+            }
+        };
+        startCpuAction.setEnabled(true);
+
+        cpuManager.addListener(new CPUManagerListener()
+        {
+            @Override
+            public void cpuStarted()
+            {
+                SwingUtilities.invokeLater(() -> {
+                    startCpuAction.setEnabled(false);
+                    stopCpuAction.setEnabled(true);
+                    toggleSteppingCpuAction.setEnabled(true);
+                });
+            }
+
+            @Override
+            public void cpuStopped()
+            {
+                SwingUtilities.invokeLater(() -> {
+                    startCpuAction.setEnabled(true);
+                    stopCpuAction.setEnabled(false);
+                    toggleSteppingCpuAction.setEnabled(false);
+                });
+            }
+        });
 
         setLookAndFeel();
 
@@ -93,34 +154,9 @@ public class GUI
         });
         menuBar.add(addressingMenu);
         var cpuMenu = new JMenu("CPU");
-        cpuMenu.add(new AbstractAction("Start")
-        {
-            @Override
-            public void actionPerformed(ActionEvent e)
-            {
-                opLogData.clear();
-                cycleLogData.clear();
-
-                var opListener = new OperationListener()
-                {
-                    @Override
-                    public void operationCompleted(OperationEvent event)
-                    {
-                        SwingUtilities.invokeLater(() -> opLogData.addEvent(event));
-                    }
-                };
-                var cycleListener = new ClockCycleListener()
-                {
-                    @Override
-                    public void clockCycleCompleted(ClockCycleEvent event)
-                    {
-                        SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
-                    }
-                };
-                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
-            }
-        });
+        cpuMenu.add(startCpuAction);
         cpuMenu.add(stopCpuAction);
+        cpuMenu.add(toggleSteppingCpuAction);
         menuBar.add(cpuMenu);
         frame.setJMenuBar(menuBar);
 

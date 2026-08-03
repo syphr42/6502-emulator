@@ -1,5 +1,5 @@
 /*
- * Copyright © 2025 Gregory P. Moyer
+ * Copyright © 2025-2026 Gregory P. Moyer
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,27 @@ import org.syphr.emulator.cpu.CPU;
 import org.syphr.emulator.cpu.ClockCycleListener;
 import org.syphr.emulator.cpu.OperationListener;
 
+import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
+
 public class CPUManager
 {
+    private final List<CPUManagerListener> listeners = new CopyOnWriteArrayList<>();
+
+    private @Nullable ClockSignal clockSignal;
+
     private @Nullable Thread clockThread;
     private @Nullable Thread cpuThread;
+
+    public void addListener(CPUManagerListener listener)
+    {
+        listeners.add(listener);
+    }
+
+    public void removeListener(CPUManagerListener listener)
+    {
+        listeners.remove(listener);
+    }
 
     public void start(Addressable memoryMap, OperationListener opListener, ClockCycleListener cycleListener)
     {
@@ -38,16 +55,27 @@ public class CPUManager
         cpu.reset();
         cpuThread = new Thread(cpu, "CPU");
 
-        var clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
+        clockSignal = new ClockSignal(ClockPeriod.of("2hz"), false, 0);
         clockSignal.addListener(cpu);
         clockThread = new Thread(clockSignal, "Clock");
 
         cpuThread.start();
         clockThread.start();
+
+        fireCpuStarted();
+    }
+
+    public void toggleStepping()
+    {
+        if (clockSignal != null) {
+            clockSignal.toggleStepping();
+        }
     }
 
     public void stop()
     {
+        clockSignal = null;
+
         if (clockThread != null) {
             clockThread.interrupt();
             clockThread = null;
@@ -56,6 +84,22 @@ public class CPUManager
         if (cpuThread != null) {
             cpuThread.interrupt();
             cpuThread = null;
+        }
+
+        fireCpuStopped();
+    }
+
+    private void fireCpuStarted()
+    {
+        for (var listener : listeners) {
+            listener.cpuStarted();
+        }
+    }
+
+    private void fireCpuStopped()
+    {
+        for (var listener : listeners) {
+            listener.cpuStopped();
         }
     }
 }
