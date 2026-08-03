@@ -16,7 +16,6 @@
 package org.syphr.emulator.cli.gui;
 
 import lombok.RequiredArgsConstructor;
-import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.demo.Programs;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
@@ -82,7 +81,7 @@ public class GUI
                         SwingUtilities.invokeLater(() -> cycleLogData.addEvent(event));
                     }
                 };
-                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener, ClockPeriod.of("2hz"));
+                cpuManager.start(addressData.getMemoryMap(), opListener, cycleListener);
             }
         };
         startCpuAction.setEnabled(true);
@@ -155,6 +154,18 @@ public class GUI
         });
         menuBar.add(addressingMenu);
         var cpuMenu = new JMenu("CPU");
+        cpuMenu.add(new AbstractAction("Set Frequency...")
+        {
+            @Override
+            public void actionPerformed(ActionEvent e)
+            {
+                var dialog = new FrequencySelectionDialog(frame,
+                                                          cpuManager.getClockPeriod(),
+                                                          cpuManager::setClockPeriod);
+                dialog.setVisible(true);
+            }
+        });
+        cpuMenu.addSeparator();
         cpuMenu.add(startCpuAction);
         cpuMenu.add(stopCpuAction);
         cpuMenu.add(toggleSteppingCpuAction);

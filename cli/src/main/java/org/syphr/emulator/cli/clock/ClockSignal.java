@@ -129,6 +129,11 @@ public class ClockSignal implements Runnable, ClockGenerator
         period.getAndUpdate(p -> p.multipliedBy(2));
     }
 
+    public void setPeriod(Duration duration)
+    {
+        period.set(duration);
+    }
+
     private void updateLoggingContext()
     {
         MDC.put("clock", String.valueOf(cycleCount));

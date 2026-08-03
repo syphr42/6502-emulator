@@ -15,6 +15,7 @@
  */
 package org.syphr.emulator.cli.gui;
 
+import lombok.Getter;
 import org.jspecify.annotations.Nullable;
 import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.clock.ClockSignal;
@@ -29,6 +30,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CPUManager
 {
     private final List<CPUManagerListener> listeners = new CopyOnWriteArrayList<>();
+
+    @Getter
+    private ClockPeriod clockPeriod = ClockPeriod.of("2hz");
 
     private @Nullable ClockSignal clockSignal;
 
@@ -45,10 +49,7 @@ public class CPUManager
         listeners.remove(listener);
     }
 
-    public void start(Addressable memoryMap,
-                      OperationListener opListener,
-                      ClockCycleListener cycleListener,
-                      ClockPeriod clockPeriod)
+    public void start(Addressable memoryMap, OperationListener opListener, ClockCycleListener cycleListener)
     {
         stop();
 
@@ -72,6 +73,15 @@ public class CPUManager
     {
         if (clockSignal != null) {
             clockSignal.toggleStepping();
+        }
+    }
+
+    public void setClockPeriod(ClockPeriod clockPeriod)
+    {
+        this.clockPeriod = clockPeriod;
+
+        if (clockSignal != null) {
+            clockSignal.setPeriod(clockPeriod.duration());
         }
     }
 
