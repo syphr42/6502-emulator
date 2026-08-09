@@ -68,7 +68,7 @@
 
         <!-- Dependencies -->
         <jspecify.version>1.0.0</jspecify.version>
-        <spring-boot.version>4.0.7</spring-boot.version>
+        <spring-boot.version>4.1.0</spring-boot.version>
 
         <!-- Testing -->
         <archunit.version>1.4.2</archunit.version>
