@@ -15,13 +15,11 @@
  */
 package org.syphr.emulator.cpu;
 
-public sealed interface CPUEvent
+public record ClockCycleBreakpoint(long cycle) implements Breakpoint
 {
-    CPUState state();
-
-    record BreakpointEvent(CPUState state, Breakpoint breakpoint) implements CPUEvent {}
-
-    record ClockCycleEvent(CPUState state) implements CPUEvent {}
-
-    record OperationEvent(CPUState state, Operation op, long startCycle, long endCycle) implements CPUEvent {}
+    @Override
+    public boolean conditionMet(CPUState cpuState)
+    {
+        return cpuState.clockCycle() == cycle;
+    }
 }

@@ -28,10 +28,14 @@ import org.syphr.emulator.cli.gui.GUI;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cli.simple.ProgramRunner;
 import org.syphr.emulator.cpu.Address;
+import org.syphr.emulator.cpu.Breakpoint;
+import org.syphr.emulator.cpu.ClockCycleBreakpoint;
 
 import javax.swing.*;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 
 @Component
 @RequiredArgsConstructor
@@ -63,11 +67,17 @@ public class CLI
         MemoryMap memoryMap = bin == null
                               ? Programs.simpleLoopWithSubRoutine()
                               : MemoryMap.of(binStart, bin, binWritable);
+
+        List<Breakpoint> breakpoints = new ArrayList<>();
+        if (breakAfterCycle > 0) {
+            breakpoints.add(new ClockCycleBreakpoint(breakAfterCycle));
+        }
+
         new ProgramRunner(terminal,
                           memoryMap,
                           ClockPeriod.of(clockFrequency),
                           stepping,
-                          breakAfterCycle,
+                          breakpoints,
                           executionStart).run();
     }
 

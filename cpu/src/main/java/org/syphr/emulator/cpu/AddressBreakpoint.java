@@ -15,13 +15,18 @@
  */
 package org.syphr.emulator.cpu;
 
-public sealed interface CPUEvent
+public record AddressBreakpoint(Address address, boolean onRead, boolean onWrite) implements Breakpoint
 {
-    CPUState state();
+    @Override
+    public boolean conditionMet(CPUState cpuState)
+    {
+        if (!cpuState.addressBus().equals(address)) {
+            return false;
+        }
 
-    record BreakpointEvent(CPUState state, Breakpoint breakpoint) implements CPUEvent {}
-
-    record ClockCycleEvent(CPUState state) implements CPUEvent {}
-
-    record OperationEvent(CPUState state, Operation op, long startCycle, long endCycle) implements CPUEvent {}
+        return switch (cpuState.lastBusAction()) {
+            case READ -> onRead;
+            case WRITE -> onWrite;
+        };
+    }
 }

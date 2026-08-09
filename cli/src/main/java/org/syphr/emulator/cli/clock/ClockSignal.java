@@ -38,17 +38,15 @@ public class ClockSignal implements Runnable, ClockGenerator
 
     private final AtomicReference<Duration> period;
     private final AtomicReference<Boolean> stepping;
-    private final long breakAfterCycle;
 
     private final List<ClockListener> listeners = new CopyOnWriteArrayList<>();
 
     private long cycleCount = 0;
 
-    public ClockSignal(Duration period, boolean stepping, long breakAfterCycle)
+    public ClockSignal(Duration period, boolean stepping)
     {
         this.period = new AtomicReference<>(period);
         this.stepping = new AtomicReference<>(stepping);
-        this.breakAfterCycle = breakAfterCycle;
     }
 
     public void addListener(ClockListener listener)
@@ -65,21 +63,19 @@ public class ClockSignal implements Runnable, ClockGenerator
     public void run()
     {
         while (!Thread.interrupted()) {
-            long cycle = ++cycleCount;
-            updateLoggingContext();
-
-            fireCycleStarted();
-            log.trace("Clock signal {} started", cycleCount);
-            long cycleStartTime = System.nanoTime();
-
-            if (cycle == breakAfterCycle) {
-                stepping.set(true);
-            }
-
             try {
+                cycleCount++;
+                updateLoggingContext();
+
                 if (stepping.get()) {
                     awaitStep();
-                } else {
+                }
+
+                fireCycleStarted();
+                log.trace("Clock signal {} started", cycleCount);
+                long cycleStartTime = System.nanoTime();
+
+                if (!stepping.get()) {
                     Duration duration = period.get();
                     // spinWait typically executes much faster than sleep, but can consume more CPU
                     if (duration.toNanos() < 60_000) {
@@ -88,16 +84,29 @@ public class ClockSignal implements Runnable, ClockGenerator
                         sleep(duration);
                     }
                 }
+
+                log.atTrace()
+                   .setMessage("Clock signal {} completed; runtime: {} ns")
+                   .addArgument(cycleCount)
+                   .addArgument(() -> System.nanoTime() - cycleStartTime)
+                   .log();
             } catch (InterruptedException e) {
                 break;
             }
 
-            log.atTrace()
-               .setMessage("Clock signal {} completed; runtime: {} ns")
-               .addArgument(cycleCount)
-               .addArgument(() -> System.nanoTime() - cycleStartTime)
-               .log();
             fireCycleEnded();
+        }
+    }
+
+    public void pause()
+    {
+        stepping.set(true);
+    }
+
+    public void resume()
+    {
+        if (stepping.getAndSet(false)) {
+            step();
         }
     }
 

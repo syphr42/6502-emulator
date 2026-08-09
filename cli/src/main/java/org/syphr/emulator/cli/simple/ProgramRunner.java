@@ -21,7 +21,11 @@ import org.syphr.emulator.cli.clock.ClockPeriod;
 import org.syphr.emulator.cli.clock.ClockSignal;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cpu.Address;
+import org.syphr.emulator.cpu.Breakpoint;
+import org.syphr.emulator.cpu.BreakpointListener;
 import org.syphr.emulator.cpu.CPU;
+
+import java.util.List;
 
 public class ProgramRunner
 {
@@ -35,20 +39,22 @@ public class ProgramRunner
                          MemoryMap memoryMap,
                          ClockPeriod clockPeriod,
                          boolean stepping,
-                         long breakAfterCycle,
+                         List<Breakpoint> breakpoints,
                          @Nullable Address executionStart)
     {
         cpu = CPU.builder()
                  .addressable(memoryMap)
                  .start(executionStart)
+                 .breakpoints(breakpoints)
                  .build();
         if (executionStart == null) {
             cpu.reset();
         }
         cpuThread = new Thread(cpu, "CPU");
 
-        var clockSignal = new ClockSignal(clockPeriod.duration(), stepping, breakAfterCycle);
+        var clockSignal = new ClockSignal(clockPeriod.duration(), stepping);
         clockSignal.addListener(cpu);
+        cpu.addListener((BreakpointListener) _ -> clockSignal.pause());
         clockThread = new Thread(clockSignal, "Clock");
 
         var inputManager = new InputManager(terminal, clockSignal, new Interrupter(cpu));

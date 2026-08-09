@@ -83,7 +83,7 @@ class CPUTest
     void beforeEach()
     {
         // set pc clear of the zero page and stack for testing
-        cpu = new CPU(clock, reader, writer, Address.of(0x8000));
+        cpu = new CPU(clock, reader, writer, Address.of(0x8000), List.of());
 
         accumulator = cpu.getAccumulator();
         x = cpu.getX();
@@ -100,7 +100,7 @@ class CPUTest
         var start = Address.of(0x1234);
 
         // when
-        var cpu = new CPU(clock, reader, writer, start);
+        var cpu = new CPU(clock, reader, writer, start, List.of());
 
         // then
         assertThat(cpu.getProgramManager().getProgramCounter()).isEqualTo(start);

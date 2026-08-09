@@ -28,5 +28,6 @@ public record CPUState(Address programCounter,
                        Flags flags,
                        Address addressBus,
                        Value dataBus,
-                       BusAction lastBusAction)
+                       BusAction lastBusAction,
+                       long clockCycle)
 {}

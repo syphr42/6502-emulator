@@ -22,6 +22,7 @@ import org.syphr.emulator.common.clock.ClockListener;
 
 import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
@@ -37,6 +38,7 @@ class Clock
     private final Lock lock = new ReentrantLock();
     private final Condition cycle = lock.newCondition();
     private final AtomicLong cycleCount = new AtomicLong(0L);
+    private final AtomicBoolean ignorePending = new AtomicBoolean(false);
 
     private volatile long cycleStartTime;
 
@@ -50,11 +52,24 @@ class Clock
     {
         lock.lock();
         try {
+            if (ignorePending.compareAndExchange(true, false)) {
+                return;
+            }
+
             newCycle = true;
             cycle.signal();
         } finally {
             lock.unlock();
         }
+    }
+
+    /**
+     * Signal the clock to ignore any pending cycle wake-ups. This is useful just after signaling a clock generator to
+     * pause in case it has already sent another clock pulse to make the pause more reliable.
+     */
+    public void ignorePending()
+    {
+        ignorePending.set(true);
     }
 
     /**
@@ -183,6 +198,7 @@ class Clock
         @Override
         public Void get()
         {
+            log.info("Waiting one clock cycle for internal CPU operations");
             return null;
         }
     }

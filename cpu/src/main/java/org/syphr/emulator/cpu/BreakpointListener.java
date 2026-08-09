@@ -15,13 +15,11 @@
  */
 package org.syphr.emulator.cpu;
 
-public sealed interface CPUEvent
+import org.syphr.emulator.cpu.CPUEvent.BreakpointEvent;
+
+import java.util.EventListener;
+
+public interface BreakpointListener extends EventListener
 {
-    CPUState state();
-
-    record BreakpointEvent(CPUState state, Breakpoint breakpoint) implements CPUEvent {}
-
-    record ClockCycleEvent(CPUState state) implements CPUEvent {}
-
-    record OperationEvent(CPUState state, Operation op, long startCycle, long endCycle) implements CPUEvent {}
+    void conditionMet(BreakpointEvent event);
 }
