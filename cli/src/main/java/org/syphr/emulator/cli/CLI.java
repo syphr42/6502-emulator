@@ -28,6 +28,7 @@ import org.syphr.emulator.cli.gui.GUI;
 import org.syphr.emulator.cli.memory.MemoryMap;
 import org.syphr.emulator.cli.simple.ProgramRunner;
 import org.syphr.emulator.cpu.Address;
+import org.syphr.emulator.cpu.AddressBreakpoint;
 import org.syphr.emulator.cpu.Breakpoint;
 import org.syphr.emulator.cpu.ClockCycleBreakpoint;
 
@@ -42,10 +43,11 @@ import java.util.List;
 public class CLI
 {
     private static final String ARG_DESC_BREAK_AFTER_CYCLE = "Switch to stepping mode after the clock executes the given cycle count (counter starts at 1)";
+    private static final String ARG_DESC_BREAK_AFTER_READ = "Switch to stepping mode after the given address is read (format: 0x####)";
     private static final String ARG_DESC_CLOCK_FREQUENCY = "Frequency at which the clock runs in continuous mode (format: '#unit' where unit is hz, khz, or mhz)";
-    private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address";
+    private static final String ARG_DESC_EXECUTION_START = "Do not reset the CPU on start and instead begin execution at this address (format: 0x####)";
     private static final String ARG_DESC_BIN = "Path to binary data file";
-    private static final String ARG_DESC_BIN_START = "Start address for provided binary data";
+    private static final String ARG_DESC_BIN_START = "Start address for provided binary data (format: 0x####)";
     private static final String ARG_DESC_BIN_WRITABLE = "Allow the binary data to be writable in memory";
     private static final String ARG_DESC_STEPPING = "Start clock in single-step mode (default is continuous mode)";
 
@@ -53,6 +55,7 @@ public class CLI
 
     @Command(name = "run", description = "Execute a program")
     public void run(@Option(defaultValue = "0", description = ARG_DESC_BREAK_AFTER_CYCLE, longName = "break-after-cycle") long breakAfterCycle,
+                    @Option(description = ARG_DESC_BREAK_AFTER_READ, longName = "break-after-read") @Nullable Address breakAfterRead,
                     @Option(defaultValue = "2hz", description = ARG_DESC_CLOCK_FREQUENCY, longName = "clock-frequency") String clockFrequency,
                     @Option(description = ARG_DESC_EXECUTION_START, longName = "execution-start") @Nullable Address executionStart,
                     @Option(description = ARG_DESC_BIN, longName = "bin") @Nullable Path bin,
@@ -71,6 +74,9 @@ public class CLI
         List<Breakpoint> breakpoints = new ArrayList<>();
         if (breakAfterCycle > 0) {
             breakpoints.add(new ClockCycleBreakpoint(breakAfterCycle));
+        }
+        if (breakAfterRead != null) {
+            breakpoints.add(new AddressBreakpoint(breakAfterRead, true, false));
         }
 
         new ProgramRunner(terminal,
