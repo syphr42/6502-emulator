@@ -26,11 +26,15 @@ import org.syphr.emulator.common.Register;
 import org.syphr.emulator.common.Value;
 import org.syphr.emulator.common.clock.ClockEvent;
 import org.syphr.emulator.common.clock.ClockListener;
+import org.syphr.emulator.cpu.CPUEvent.BreakpointEvent;
 import org.syphr.emulator.cpu.CPUEvent.ClockCycleEvent;
 import org.syphr.emulator.cpu.CPUEvent.OperationEvent;
 
 import javax.swing.event.EventListenerList;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
@@ -47,6 +51,7 @@ public class CPU implements Runnable, ClockListener
 {
     private final HardwareInterruptState interrupts = new HardwareInterruptState();
     private final EventListenerList listeners = new EventListenerList();
+    private final List<Breakpoint> breakpoints = new CopyOnWriteArrayList<>();
     private final ExecutorService executor = Executors.newVirtualThreadPerTaskExecutor();
 
     @ToString.Include
@@ -86,6 +91,8 @@ public class CPU implements Runnable, ClockListener
         @Nullable
         private Address start;
 
+        private final List<Breakpoint> breakpoints = new ArrayList<>();
+
         public Builder addressable(Addressable addressable)
         {
             return reader(addressable).writer(addressable);
@@ -109,16 +116,23 @@ public class CPU implements Runnable, ClockListener
             return this;
         }
 
+        public Builder breakpoints(List<Breakpoint> breakpoints)
+        {
+            this.breakpoints.addAll(breakpoints);
+            return this;
+        }
+
         public CPU build()
         {
             return new CPU(new Clock(),
                            Objects.requireNonNull(reader),
                            Objects.requireNonNull(writer),
-                           start);
+                           start,
+                           breakpoints);
         }
     }
 
-    CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start)
+    CPU(Clock clock, Reader reader, Writer writer, @Nullable Address start, List<Breakpoint> breakpoints)
     {
         this.accumulator = new Register();
         this.x = new Register();
@@ -138,6 +152,8 @@ public class CPU implements Runnable, ClockListener
             programManager.setProgramCounter(start);
         }
 
+        this.breakpoints.addAll(breakpoints);
+
         clock.addListener(new ClockListener()
         {
             @Override
@@ -150,7 +166,8 @@ public class CPU implements Runnable, ClockListener
             public void cycleEnded(ClockEvent event)
             {
                 log.atTrace().setMessage("Bus state after cycle: {}").addArgument(bus).log();
-                fireClockCycleCompleted(event.cycle());
+                checkBreakpoints();
+                fireClockCycleCompleted(getState());
             }
         });
     }
@@ -178,10 +195,54 @@ public class CPU implements Runnable, ClockListener
                             status.flags(),
                             bus.getAddress(),
                             bus.getData(),
-                            bus.getLastAction());
+                            bus.getLastAction(),
+                            clock.getCycleCount());
     }
 
+    // --------------- Start Breakpoint Management ------------------
+
+    public void addBreakpoint(Breakpoint breakpoint)
+    {
+        breakpoints.add(breakpoint);
+    }
+
+    public void removeBreakpoint(Breakpoint breakpoint)
+    {
+        breakpoints.remove(breakpoint);
+    }
+
+    private void checkBreakpoints()
+    {
+        CPUState state = getState();
+        breakpoints.stream()
+                   .filter(b -> b.conditionMet(state))
+                   .findFirst()
+                   .ifPresent(b -> fireBreakpointConditionMet(state, b));
+    }
+
+    // --------------- End Breakpoint Management ------------------
+
     // --------------- Start Listener Management ------------------
+
+    public void addListener(BreakpointListener listener)
+    {
+        listeners.add(BreakpointListener.class, listener);
+    }
+
+    public void removeListener(BreakpointListener listener)
+    {
+        listeners.remove(BreakpointListener.class, listener);
+    }
+
+    public void addListener(ClockCycleListener listener)
+    {
+        listeners.add(ClockCycleListener.class, listener);
+    }
+
+    public void removeListener(ClockCycleListener listener)
+    {
+        listeners.remove(ClockCycleListener.class, listener);
+    }
 
     public void addListener(OperationListener listener)
     {
@@ -193,14 +254,44 @@ public class CPU implements Runnable, ClockListener
         listeners.remove(OperationListener.class, listener);
     }
 
-    public void addListener(ClockCycleListener listener)
+    private void fireBreakpointConditionMet(CPUState state, Breakpoint breakpoint)
     {
-        listeners.add(ClockCycleListener.class, listener);
+        // note: breakpoint events must fire synchronously to provide a chance to pause the clock
+        BreakpointEvent event = null;
+        for (BreakpointListener listener : listeners.getListeners(BreakpointListener.class)) {
+            if (event == null) {
+                event = new BreakpointEvent(state, breakpoint);
+            }
+            listener.conditionMet(event);
+        }
+
+        clock.ignorePending();
     }
 
-    public void removeListener(ClockCycleListener listener)
+    private void fireClockCycleCompleted(CPUState state)
     {
-        listeners.remove(ClockCycleListener.class, listener);
+        executor.submit(() -> {
+            ClockCycleEvent event = null;
+            for (ClockCycleListener listener : listeners.getListeners(ClockCycleListener.class)) {
+                if (event == null) {
+                    event = new ClockCycleEvent(state);
+                }
+                listener.clockCycleCompleted(event);
+            }
+        });
+    }
+
+    private void fireOperationCompleted(CPUState state, Operation op, long startCycle, long endCycle)
+    {
+        executor.submit(() -> {
+            OperationEvent event = null;
+            for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
+                if (event == null) {
+                    event = new OperationEvent(state, op, startCycle, endCycle);
+                }
+                listener.operationCompleted(event);
+            }
+        });
     }
 
     // --------------- End Listener Management ------------------
@@ -590,32 +681,6 @@ public class CPU implements Runnable, ClockListener
     {
         clock.waitCycles(1); // burn a cycle performing the bit test
         return value.isSet(position);
-    }
-
-    private void fireClockCycleCompleted(long cycleCount)
-    {
-        executor.submit(() -> {
-            ClockCycleEvent event = null;
-            for (ClockCycleListener listener : listeners.getListeners(ClockCycleListener.class)) {
-                if (event == null) {
-                    event = new ClockCycleEvent(getState(), cycleCount);
-                }
-                listener.clockCycleCompleted(event);
-            }
-        });
-    }
-
-    private void fireOperationCompleted(CPUState state, Operation op, long startCycle, long endCycle)
-    {
-        executor.submit(() -> {
-            OperationEvent event = null;
-            for (OperationListener listener : listeners.getListeners(OperationListener.class)) {
-                if (event == null) {
-                    event = new OperationEvent(state, op, startCycle, endCycle);
-                }
-                listener.operationCompleted(event);
-            }
-        });
     }
 
     @RequiredArgsConstructor

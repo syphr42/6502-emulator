@@ -59,7 +59,7 @@ public class CPUManager
         cpu.reset();
         cpuThread = new Thread(cpu, "CPU");
 
-        clockSignal = new ClockSignal(clockPeriod.duration(), false, 0);
+        clockSignal = new ClockSignal(clockPeriod.duration(), false);
         clockSignal.addListener(cpu);
         clockThread = new Thread(clockSignal, "Clock");
 

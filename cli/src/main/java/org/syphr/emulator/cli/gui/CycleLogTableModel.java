@@ -83,7 +83,7 @@ public class CycleLogTableModel extends AbstractTableModel
         ClockCycleEvent event = events.get(rowIndex);
 
         return switch (Column.fromIndex(columnIndex)) {
-            case CLOCK_CYCLE -> event.clockCycle();
+            case CLOCK_CYCLE -> event.state().clockCycle();
             case PROGRAM_COUNTER -> event.state().programCounter();
             case STATUS -> flagsAsBits(event.state().flags());
             case ACCUMULATOR -> event.state().accumulator();
