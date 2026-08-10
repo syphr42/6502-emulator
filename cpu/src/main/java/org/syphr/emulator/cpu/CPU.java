@@ -166,8 +166,10 @@ public class CPU implements Runnable, ClockListener
             public void cycleEnded(ClockEvent event)
             {
                 log.atTrace().setMessage("Bus state after cycle: {}").addArgument(bus).log();
-                checkBreakpoints();
-                fireClockCycleCompleted(getState());
+
+                CPUState state = getState();
+                checkBreakpoints(state);
+                fireClockCycleCompleted(state);
             }
         });
     }
@@ -211,9 +213,8 @@ public class CPU implements Runnable, ClockListener
         breakpoints.remove(breakpoint);
     }
 
-    private void checkBreakpoints()
+    private void checkBreakpoints(CPUState state)
     {
-        CPUState state = getState();
         breakpoints.stream()
                    .filter(b -> b.conditionMet(state))
                    .findFirst()
